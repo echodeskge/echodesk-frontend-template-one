@@ -48,6 +48,28 @@
     "new": "New",
     "sku": "SKU"
   },
+  "productsPage": {
+    "title": "Products",
+    "productsFound": "{count} products found",
+    "filters": "Filters",
+    "priceRange": "Price Range",
+    "applyPriceFilter": "Apply Price Filter",
+    "quickFilters": "Quick Filters",
+    "onSale": "On Sale",
+    "clearAllFilters": "Clear All Filters",
+    "noProductsFound": "No products found",
+    "clearFilters": "Clear Filters",
+    "sortBy": "Sort by",
+    "newest": "Newest",
+    "priceLowToHigh": "Price: Low to High",
+    "priceHighToLow": "Price: High to Low",
+    "nameAToZ": "Name: A to Z",
+    "nameZToA": "Name: Z to A",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of"
+  },
   "cart": {
     "title": "Shopping Cart",
     "empty": "Your cart is empty",

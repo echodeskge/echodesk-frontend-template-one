@@ -30,11 +30,13 @@ import { useProducts } from "@/hooks/use-products";
 import { Filter, SlidersHorizontal, Grid3X3, LayoutList } from "lucide-react";
 import { useFilterableAttributes } from "@/hooks/use-attributes";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useLanguage } from "@/contexts/language-context";
 
 function ProductsContent() {
   const config = useStoreConfig();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, getLocalizedValue } = useLanguage();
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState([0, 1000]);
@@ -105,9 +107,7 @@ function ProductsContent() {
             return (
               <div key={attr.id} className="space-y-4">
                 <Label className="font-semibold">
-                  {typeof attr.name === "string"
-                    ? attr.name
-                    : attr.name?.en || attr.key}
+                  {getLocalizedValue(attr.name)}
                 </Label>
                 <div className="space-y-2">
                   {attr.options?.map((option: any, index: number) => {
@@ -115,7 +115,7 @@ function ProductsContent() {
                     const optionValue =
                       typeof option === "string" ? option : option?.value || option?.en || "";
                     const optionLabel =
-                      typeof option === "string" ? option : option?.en || option?.value || "";
+                      typeof option === "string" ? option : getLocalizedValue(option);
                     const isSelected = currentFilter === optionValue;
 
                     return (
@@ -149,7 +149,7 @@ function ProductsContent() {
 
       {/* Price Range */}
       <div className="space-y-4">
-        <Label className="font-semibold">Price Range</Label>
+        <Label className="font-semibold">{t("productsPage.priceRange")}</Label>
         <Slider
           value={priceRange}
           min={0}
@@ -178,7 +178,7 @@ function ProductsContent() {
           />
         </div>
         <Button onClick={applyPriceFilter} className="w-full">
-          Apply Price Filter
+          {t("productsPage.applyPriceFilter")}
         </Button>
       </div>
 
@@ -186,7 +186,7 @@ function ProductsContent() {
 
       {/* Quick Filters */}
       <div className="space-y-4">
-        <Label className="font-semibold">Quick Filters</Label>
+        <Label className="font-semibold">{t("productsPage.quickFilters")}</Label>
         <div className="space-y-2">
           <Button
             variant={filters.onSale ? "default" : "outline"}
@@ -198,7 +198,7 @@ function ProductsContent() {
               })
             }
           >
-            On Sale
+            {t("productsPage.onSale")}
           </Button>
           <Button
             variant={filters.isFeatured ? "default" : "outline"}
@@ -210,7 +210,7 @@ function ProductsContent() {
               })
             }
           >
-            Featured
+            {t("product.featured")}
           </Button>
         </div>
       </div>
@@ -218,7 +218,7 @@ function ProductsContent() {
       <Separator />
 
       <Button variant="outline" onClick={clearFilters} className="w-full">
-        Clear All Filters
+        {t("productsPage.clearAllFilters")}
       </Button>
     </div>
   );
@@ -228,11 +228,11 @@ function ProductsContent() {
       <div className="container py-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Products</h1>
+            <h1 className="text-3xl font-bold">{t("productsPage.title")}</h1>
             <p className="mt-1 text-muted-foreground">
               {isLoading
-                ? "Loading..."
-                : `${productsData?.count || 0} products found`}
+                ? t("common.loading")
+                : t("productsPage.productsFound", { count: productsData?.count || 0 })}
             </p>
           </div>
 
@@ -246,7 +246,7 @@ function ProductsContent() {
               </SheetTrigger>
               <SheetContent side="right">
                 <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
+                  <SheetTitle>{t("productsPage.filters")}</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6">
                   <FilterContent />
@@ -260,14 +260,14 @@ function ProductsContent() {
               onValueChange={(value) => updateFilters({ ordering: value })}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder={t("productsPage.sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="-created_at">Newest</SelectItem>
-                <SelectItem value="price">Price: Low to High</SelectItem>
-                <SelectItem value="-price">Price: High to Low</SelectItem>
-                <SelectItem value="name">Name: A to Z</SelectItem>
-                <SelectItem value="-name">Name: Z to A</SelectItem>
+                <SelectItem value="-created_at">{t("productsPage.newest")}</SelectItem>
+                <SelectItem value="price">{t("productsPage.priceLowToHigh")}</SelectItem>
+                <SelectItem value="-price">{t("productsPage.priceHighToLow")}</SelectItem>
+                <SelectItem value="name">{t("productsPage.nameAToZ")}</SelectItem>
+                <SelectItem value="-name">{t("productsPage.nameZToA")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -299,7 +299,7 @@ function ProductsContent() {
             <div className="sticky top-20">
               <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
                 <Filter className="h-5 w-5" />
-                Filters
+                {t("productsPage.filters")}
               </h2>
               <FilterContent />
             </div>
@@ -325,9 +325,9 @@ function ProductsContent() {
               </div>
             ) : !productsData?.results?.length ? (
               <div className="py-12 text-center">
-                <p className="text-lg text-muted-foreground">No products found</p>
+                <p className="text-lg text-muted-foreground">{t("productsPage.noProductsFound")}</p>
                 <Button variant="outline" onClick={clearFilters} className="mt-4">
-                  Clear Filters
+                  {t("productsPage.clearFilters")}
                 </Button>
               </div>
             ) : (
@@ -344,11 +344,7 @@ function ProductsContent() {
                       key={product.id}
                       id={String(product.id)}
                       slug={product.slug}
-                      name={
-                        typeof product.name === "string"
-                          ? product.name
-                          : product.name?.en || "Product"
-                      }
+                      name={getLocalizedValue(product.name)}
                       image={product.image || "/placeholder.svg"}
                       price={parseFloat(product.price)}
                       compareAtPrice={
@@ -373,10 +369,10 @@ function ProductsContent() {
                         updateFilters({ page: String(filters.page - 1) })
                       }
                     >
-                      Previous
+                      {t("productsPage.previous")}
                     </Button>
                     <span className="flex items-center px-4">
-                      Page {filters.page} of{" "}
+                      {t("productsPage.page")} {filters.page} {t("productsPage.of")}{" "}
                       {Math.ceil(productsData.count / 20)}
                     </span>
                     <Button
@@ -386,7 +382,7 @@ function ProductsContent() {
                         updateFilters({ page: String(filters.page + 1) })
                       }
                     >
-                      Next
+                      {t("productsPage.next")}
                     </Button>
                   </div>
                 )}

@@ -48,6 +48,28 @@
     "new": "ახალი",
     "sku": "SKU"
   },
+  "productsPage": {
+    "title": "პროდუქტები",
+    "productsFound": "ნაპოვნია {count} პროდუქტი",
+    "filters": "ფილტრები",
+    "priceRange": "ფასის დიაპაზონი",
+    "applyPriceFilter": "ფასის ფილტრის გამოყენება",
+    "quickFilters": "სწრაფი ფილტრები",
+    "onSale": "ფასდაკლება",
+    "clearAllFilters": "ყველა ფილტრის გასუფთავება",
+    "noProductsFound": "პროდუქტები არ მოიძებნა",
+    "clearFilters": "ფილტრების გასუფთავება",
+    "sortBy": "დალაგება",
+    "newest": "უახლესი",
+    "priceLowToHigh": "ფასი: დაბალიდან მაღალზე",
+    "priceHighToLow": "ფასი: მაღალიდან დაბალზე",
+    "nameAToZ": "სახელი: ა-დან ჰ-მდე",
+    "nameZToA": "სახელი: ჰ-დან ა-მდე",
+    "previous": "წინა",
+    "next": "შემდეგი",
+    "page": "გვერდი",
+    "of": "-დან"
+  },
   "cart": {
     "title": "კალათა",
     "empty": "თქვენი კალათა ცარიელია",

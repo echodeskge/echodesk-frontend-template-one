@@ -48,6 +48,28 @@
     "new": "Новый",
     "sku": "Артикул"
   },
+  "productsPage": {
+    "title": "Товары",
+    "productsFound": "Найдено {count} товаров",
+    "filters": "Фильтры",
+    "priceRange": "Диапазон цен",
+    "applyPriceFilter": "Применить фильтр цен",
+    "quickFilters": "Быстрые фильтры",
+    "onSale": "Распродажа",
+    "clearAllFilters": "Очистить все фильтры",
+    "noProductsFound": "Товары не найдены",
+    "clearFilters": "Очистить фильтры",
+    "sortBy": "Сортировка",
+    "newest": "Новые",
+    "priceLowToHigh": "Цена: по возрастанию",
+    "priceHighToLow": "Цена: по убыванию",
+    "nameAToZ": "Название: А-Я",
+    "nameZToA": "Название: Я-А",
+    "previous": "Назад",
+    "next": "Вперед",
+    "page": "Страница",
+    "of": "из"
+  },
   "cart": {
     "title": "Корзина",
     "empty": "Ваша корзина пуста",
