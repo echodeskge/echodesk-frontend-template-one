@@ -62,7 +62,7 @@ export default function CartPage() {
   };
 
   // Calculate totals from cart data
-  const subtotal = cart?.total_price ? parseFloat(cart.total_price) : 0;
+  const subtotal = cart?.total_amount ? parseFloat(cart.total_amount) : 0;
   const shipping = subtotal > 50 ? 0 : 10;
   const tax = subtotal * 0.18;
   const total = subtotal + shipping + tax;
@@ -152,11 +152,11 @@ export default function CartPage() {
                       <div className="flex gap-4">
                         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border">
                           <Image
-                            src={item.product_image || "/placeholder.svg"}
+                            src={typeof item.product === 'object' ? (item.product as any).image || "/placeholder.svg" : "/placeholder.svg"}
                             alt={
-                              typeof item.product_name === "object"
-                                ? getLocalizedValue(item.product_name)
-                                : item.product_name || "Product"
+                              typeof item.product === 'object'
+                                ? getLocalizedValue((item.product as any).name)
+                                : "Product"
                             }
                             fill
                             className="object-cover"
@@ -165,12 +165,12 @@ export default function CartPage() {
                         <div className="flex flex-1 flex-col justify-between">
                           <div>
                             <Link
-                              href={`/products/${item.product_slug || item.product}`}
+                              href={`/products/${typeof item.product === 'object' ? (item.product as any).slug : item.product}`}
                               className="font-medium hover:text-primary"
                             >
-                              {typeof item.product_name === "object"
-                                ? getLocalizedValue(item.product_name)
-                                : item.product_name || "Product"}
+                              {typeof item.product === 'object'
+                                ? getLocalizedValue((item.product as any).name)
+                                : "Product"}
                             </Link>
                           </div>
                           <div className="flex items-center gap-4">
@@ -244,7 +244,7 @@ export default function CartPage() {
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {formatPrice(
-                              parseFloat(item.price),
+                              parseFloat(item.price_at_add),
                               config.locale.currency,
                               config.locale.locale
                             )}{" "}
