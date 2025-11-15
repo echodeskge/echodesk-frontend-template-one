@@ -18,12 +18,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useCartCount } from "@/hooks/use-cart";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { useState } from "react";
 
 export function Header() {
   const config = useStoreConfig();
   const { user, isAuthenticated, logout } = useAuth();
+  const { t } = useLanguage();
   const cartCount = useCartCount();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,21 +52,21 @@ export function Header() {
           <SheetContent side="left" className="w-[300px]">
             <nav className="flex flex-col gap-4">
               <Link href="/" className="text-lg font-semibold">
-                Home
+                {t("common.home")}
               </Link>
               <Link href="/products" className="text-lg font-semibold">
-                Products
+                {t("common.products")}
               </Link>
               <Link href="/products?on_sale=true" className="text-lg font-semibold text-red-600">
-                Sale
+                {t("common.sale")}
               </Link>
               {isAuthenticated && (
                 <>
                   <Link href="/account" className="text-lg font-semibold">
-                    My Account
+                    {t("common.myAccount")}
                   </Link>
                   <Link href="/account/orders" className="text-lg font-semibold">
-                    My Orders
+                    {t("common.myOrders")}
                   </Link>
                 </>
               )}
@@ -93,13 +96,13 @@ export function Header() {
             href="/products"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
-            Products
+            {t("common.products")}
           </Link>
           <Link
             href="/products?on_sale=true"
             className="text-sm font-medium text-red-600 transition-colors hover:text-red-700"
           >
-            Sale
+            {t("common.sale")}
           </Link>
         </nav>
 
@@ -110,7 +113,7 @@ export function Header() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search products..."
+                placeholder={t("common.search")}
                 className="w-full pl-8 md:w-[200px] lg:w-[300px]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -118,12 +121,15 @@ export function Header() {
             </div>
           </form>
 
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
           {/* Wishlist (if enabled) */}
           {config.features.wishlist && isAuthenticated && (
             <Button variant="ghost" size="icon" asChild>
               <Link href="/wishlist">
                 <Heart className="h-5 w-5" />
-                <span className="sr-only">Wishlist</span>
+                <span className="sr-only">{t("common.wishlist")}</span>
               </Link>
             </Button>
           )}
@@ -140,7 +146,7 @@ export function Header() {
                   {cartCount > 99 ? "99+" : cartCount}
                 </Badge>
               )}
-              <span className="sr-only">Cart</span>
+              <span className="sr-only">{t("common.cart")}</span>
             </Link>
           </Button>
 
@@ -150,7 +156,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <User className="h-5 w-5" />
-                  <span className="sr-only">Account</span>
+                  <span className="sr-only">{t("common.account")}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -164,20 +170,20 @@ export function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/account">My Account</Link>
+                  <Link href="/account">{t("common.myAccount")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/account/orders">My Orders</Link>
+                  <Link href="/account/orders">{t("common.myOrders")}</Link>
                 </DropdownMenuItem>
                 {config.features.wishlist && (
                   <DropdownMenuItem asChild>
-                    <Link href="/wishlist">Wishlist</Link>
+                    <Link href="/wishlist">{t("common.wishlist")}</Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+                  {t("common.signOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -185,7 +191,7 @@ export function Header() {
             <Button variant="ghost" size="icon" asChild>
               <Link href="/login">
                 <User className="h-5 w-5" />
-                <span className="sr-only">Sign In</span>
+                <span className="sr-only">{t("common.signIn")}</span>
               </Link>
             </Button>
           )}

@@ -4,6 +4,7 @@ import "./globals.css";
 import { StoreConfigProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { AuthProvider } from "@/contexts/auth-context";
+import { LanguageProvider } from "@/contexts/language-context";
 import { Toaster } from "@/components/ui/sonner";
 import { getStoreConfig } from "@/lib/store-config";
 
@@ -46,10 +47,12 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <QueryProvider>
           <AuthProvider>
-            <StoreConfigProvider>
-              {children}
-              <Toaster position="top-right" />
-            </StoreConfigProvider>
+            <LanguageProvider>
+              <StoreConfigProvider>
+                {children}
+                <Toaster position="top-right" />
+              </StoreConfigProvider>
+            </LanguageProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

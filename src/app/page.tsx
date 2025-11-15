@@ -4,6 +4,7 @@ import { StoreLayout } from "@/components/layout/store-layout";
 import { ProductCard } from "@/components/product/product-card";
 import { Button } from "@/components/ui/button";
 import { useStoreConfig } from "@/components/providers/theme-provider";
+import { useLanguage } from "@/contexts/language-context";
 import { useFeaturedProducts, useItemLists } from "@/hooks/use-products";
 import { useCategoryOptions } from "@/hooks/use-attributes";
 import Link from "next/link";
@@ -12,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HomePage() {
   const config = useStoreConfig();
+  const { t, getLocalizedValue, currentLanguage } = useLanguage();
   const { data: featuredProducts, isLoading: isLoadingFeatured } = useFeaturedProducts(8);
   const { data: itemLists, isLoading: isLoadingCategories } = useItemLists();
   const { options: categoryOptions } = useCategoryOptions();
@@ -23,7 +25,7 @@ export default function HomePage() {
         <div className="container py-20 md:py-32">
           <div className="max-w-2xl">
             <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
-              Welcome to {config.store.name}
+              {t("home.welcomeTo")} {config.store.name}
             </h1>
             <p className="mt-6 text-lg text-muted-foreground">
               {config.store.description}
@@ -31,12 +33,12 @@ export default function HomePage() {
             <div className="mt-8 flex gap-4">
               <Button size="lg" asChild>
                 <Link href="/products">
-                  Shop Now
+                  {t("common.shopNow")}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="/products?on_sale=true">View Sale</Link>
+                <Link href="/products?on_sale=true">{t("common.viewSale")}</Link>
               </Button>
             </div>
           </div>
@@ -46,10 +48,10 @@ export default function HomePage() {
       {/* Featured Products */}
       <section className="container py-16">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold">Featured Products</h2>
+          <h2 className="text-3xl font-bold">{t("home.featuredProducts")}</h2>
           <Button variant="ghost" asChild>
             <Link href="/products?is_featured=true">
-              View All
+              {t("common.viewAll")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -70,7 +72,7 @@ export default function HomePage() {
                 key={product.id}
                 id={String(product.id)}
                 slug={product.slug}
-                name={typeof product.name === "string" ? product.name : product.name?.en || "Product"}
+                name={getLocalizedValue(product.name)}
                 image={product.image || "/placeholder.jpg"}
                 price={parseFloat(product.price)}
                 compareAtPrice={
@@ -85,7 +87,7 @@ export default function HomePage() {
             ))
           ) : (
             <div className="col-span-full text-center py-8 text-muted-foreground">
-              No featured products available
+              {t("home.noFeaturedProducts")}
             </div>
           )}
         </div>
@@ -94,12 +96,11 @@ export default function HomePage() {
       {/* Categories Section */}
       <section className="bg-muted/50 py-16">
         <div className="container">
-          <h2 className="text-3xl font-bold">Shop by Category</h2>
+          <h2 className="text-3xl font-bold">{t("home.shopByCategory")}</h2>
           <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             {categoryOptions.length > 0 ? (
               categoryOptions.map((option: any, index: number) => {
-                const categoryName =
-                  typeof option === "string" ? option : option?.en || "";
+                const categoryName = getLocalizedValue(option);
                 return (
                   <Link
                     key={index}
@@ -133,7 +134,7 @@ export default function HomePage() {
                     </h3>
                     {list.items_count && (
                       <p className="text-sm text-white/80">
-                        {list.items_count} items
+                        {list.items_count} {t("home.items")}
                       </p>
                     )}
                   </div>
@@ -141,7 +142,7 @@ export default function HomePage() {
               ))
             ) : (
               <div className="col-span-full text-center py-8 text-muted-foreground">
-                No categories available
+                {t("home.noCategories")}
               </div>
             )}
           </div>
@@ -167,9 +168,9 @@ export default function HomePage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold">Free Shipping</h3>
+            <h3 className="text-lg font-semibold">{t("home.freeShipping")}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              On orders over {config.locale.currencySymbol}50
+              {t("home.freeShippingDesc", { symbol: config.locale.currencySymbol })}
             </p>
           </div>
           <div className="text-center">
@@ -188,9 +189,9 @@ export default function HomePage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold">Easy Returns</h3>
+            <h3 className="text-lg font-semibold">{t("home.easyReturns")}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              30-day return policy
+              {t("home.easyReturnsDesc")}
             </p>
           </div>
           <div className="text-center">
@@ -209,9 +210,9 @@ export default function HomePage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold">Secure Payment</h3>
+            <h3 className="text-lg font-semibold">{t("home.securePayment")}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              100% secure checkout
+              {t("home.securePaymentDesc")}
             </p>
           </div>
         </div>
