@@ -130,6 +130,41 @@ export function useProduct(id: number | null) {
   });
 }
 
+// Hook for fetching single product by slug
+export function useProductBySlug(slug: string | null, language?: string) {
+  return useQuery({
+    queryKey: ["product", "slug", slug, language],
+    queryFn: async () => {
+      if (!slug) {
+        throw new Error("Slug is required");
+      }
+      // Search for product by slug
+      const result = await ecommerceClientProductsList(
+        undefined, // attrCategory
+        undefined, // attrMaterial
+        undefined, // attrNumberOfLamps
+        undefined, // attrSubcategory
+        undefined, // isFeatured
+        language, // language
+        undefined, // maxPrice
+        undefined, // minPrice
+        undefined, // onSale
+        undefined, // ordering
+        undefined, // page
+        slug // search - will match against slug
+      );
+      // Find exact slug match
+      const product = result.results.find((p) => p.slug === slug);
+      if (!product) {
+        throw new Error("Product not found");
+      }
+      return product;
+    },
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 // Hook for fetching product attributes (for filters)
 export function useProductAttributes() {
   return useQuery({

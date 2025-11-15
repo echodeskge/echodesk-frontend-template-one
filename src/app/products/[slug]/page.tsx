@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { StoreLayout } from "@/components/layout/store-layout";
 import { ProductCard } from "@/components/product/product-card";
@@ -9,7 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useStoreConfig } from "@/components/providers/theme-provider";
+import { useLanguage } from "@/contexts/language-context";
+import { useProductBySlug, useFeaturedProducts } from "@/hooks/use-products";
+import { useCart, useAddToCart } from "@/hooks/use-cart";
 import { formatPrice } from "@/lib/store-config";
 import {
   ShoppingCart,
@@ -21,106 +26,101 @@ import {
   RotateCcw,
   Shield,
   Star,
+  AlertCircle,
 } from "lucide-react";
-
-// Placeholder product data - will be fetched from API
-const productData = {
-  id: "1",
-  slug: "premium-wireless-headphones",
-  name: "Premium Wireless Headphones",
-  shortDescription: "High-quality wireless headphones with active noise cancellation",
-  description: `
-    Experience crystal-clear audio with our Premium Wireless Headphones.
-    Featuring advanced active noise cancellation technology, these headphones
-    deliver immersive sound quality whether you're commuting, working, or relaxing.
-
-    With up to 30 hours of battery life and quick charging capabilities,
-    you'll never miss a beat. The ergonomic design ensures comfort during
-    extended listening sessions, while the premium materials provide durability
-    that lasts.
-  `,
-  images: ["/placeholder.jpg", "/placeholder.jpg", "/placeholder.jpg"],
-  price: 99.99,
-  compareAtPrice: 129.99,
-  sku: "WH-001",
-  quantity: 50,
-  isOnSale: true,
-  isFeatured: true,
-  isNew: false,
-  attributes: [
-    { name: "Color", value: "Black" },
-    { name: "Connectivity", value: "Bluetooth 5.0" },
-    { name: "Battery Life", value: "30 hours" },
-    { name: "Weight", value: "250g" },
-  ],
-};
-
-const relatedProducts = [
-  {
-    id: "2",
-    slug: "product-2",
-    name: "Smart Watch Pro",
-    image: "/placeholder.jpg",
-    price: 249.99,
-    isFeatured: true,
-    isNew: true,
-  },
-  {
-    id: "3",
-    slug: "product-3",
-    name: "Portable Bluetooth Speaker",
-    image: "/placeholder.jpg",
-    price: 79.99,
-    compareAtPrice: 99.99,
-  },
-  {
-    id: "4",
-    slug: "product-4",
-    name: "USB-C Hub Adapter",
-    image: "/placeholder.jpg",
-    price: 49.99,
-  },
-  {
-    id: "5",
-    slug: "product-5",
-    name: "Ergonomic Mouse",
-    image: "/placeholder.jpg",
-    price: 69.99,
-    compareAtPrice: 89.99,
-    isOnSale: true,
-  },
-];
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const slug = params.slug as string;
   const config = useStoreConfig();
+  const { t, getLocalizedValue, currentLanguage } = useLanguage();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
-  const product = productData; // In real app, fetch based on params.slug
+  const { data: product, isLoading, error } = useProductBySlug(slug, currentLanguage);
+  const { data: relatedProducts } = useFeaturedProducts(4);
+  const { data: cart } = useCart();
+  const addToCart = useAddToCart();
 
-  const discountPercentage =
-    product.compareAtPrice && product.compareAtPrice > product.price
-      ? Math.round(
-          ((product.compareAtPrice - product.price) / product.compareAtPrice) *
-            100
-        )
-      : 0;
+  const handleAddToCart = () => {
+    if (product && cart) {
+      addToCart.mutate({
+        cart: cart.id,
+        product: product.id,
+        variant: undefined,
+        quantity,
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <StoreLayout>
+        <div className="container py-8">
+          <Skeleton className="mb-8 h-6 w-64" />
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div className="space-y-4">
+              <Skeleton className="aspect-square w-full rounded-lg" />
+              <div className="flex gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-square w-20 rounded-md" />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-10 w-1/3" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </div>
+        </div>
+      </StoreLayout>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <StoreLayout>
+        <div className="container py-16 text-center">
+          <AlertCircle className="mx-auto h-16 w-16 text-destructive" />
+          <h1 className="mt-4 text-2xl font-bold">
+            {t("common.noResults")}
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            The product you are looking for could not be found.
+          </p>
+          <Button asChild className="mt-6">
+            <Link href="/products">{t("common.products")}</Link>
+          </Button>
+        </div>
+      </StoreLayout>
+    );
+  }
+
+  const productName = getLocalizedValue(product.name);
+  // ProductList doesn't have description field, use short_description
+  const productDescription = getLocalizedValue(product.short_description || "");
+  const productShortDescription = getLocalizedValue(product.short_description || "");
+
+  // ProductList uses single image field
+  const productImages = [product.image || "/placeholder.jpg"];
+
+  const discountPercentage = product.discount_percentage || 0;
 
   return (
     <StoreLayout>
       <div className="container py-8">
         {/* Breadcrumb */}
         <nav className="mb-8 text-sm text-muted-foreground">
-          <a href="/" className="hover:text-primary">
-            Home
-          </a>
+          <Link href="/" className="hover:text-primary">
+            {t("common.home")}
+          </Link>
           <span className="mx-2">/</span>
-          <a href="/products" className="hover:text-primary">
-            Products
-          </a>
+          <Link href="/products" className="hover:text-primary">
+            {t("common.products")}
+          </Link>
           <span className="mx-2">/</span>
-          <span className="text-foreground">{product.name}</span>
+          <span className="text-foreground">{productName}</span>
         </nav>
 
         {/* Product Details */}
@@ -129,8 +129,8 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <div className="relative aspect-square overflow-hidden rounded-lg border">
               <Image
-                src={product.images[selectedImage] || "/placeholder.jpg"}
-                alt={product.name}
+                src={productImages[selectedImage] || "/placeholder.jpg"}
+                alt={productName}
                 fill
                 className="object-cover"
                 priority
@@ -140,60 +140,63 @@ export default function ProductDetailPage() {
                   variant="destructive"
                   className="absolute left-4 top-4 text-sm"
                 >
-                  -{discountPercentage}%
+                  {t("product.discount", { percent: discountPercentage })}
                 </Badge>
               )}
             </div>
-            <div className="flex gap-2">
-              {product.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`relative aspect-square w-20 overflow-hidden rounded-md border ${
-                    selectedImage === index
-                      ? "ring-2 ring-primary"
-                      : "hover:border-primary"
-                  }`}
-                >
-                  <Image
-                    src={image}
-                    alt={`${product.name} ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </button>
-              ))}
-            </div>
+            {productImages.length > 1 && (
+              <div className="flex gap-2">
+                {productImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`relative aspect-square w-20 overflow-hidden rounded-md border ${
+                      selectedImage === index
+                        ? "ring-2 ring-primary"
+                        : "hover:border-primary"
+                    }`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${productName} ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
           <div className="space-y-6">
             <div>
               <div className="flex items-center gap-2">
-                {product.isNew && <Badge className="bg-blue-500">New</Badge>}
-                {product.isFeatured && (
-                  <Badge className="bg-amber-500">Featured</Badge>
+                {product.is_featured && (
+                  <Badge className="bg-amber-500">{t("product.featured")}</Badge>
                 )}
               </div>
-              <h1 className="mt-2 text-3xl font-bold">{product.name}</h1>
-              <p className="mt-2 text-muted-foreground">
-                SKU: {product.sku}
-              </p>
+              <h1 className="mt-2 text-3xl font-bold">{productName}</h1>
+              {product.sku && (
+                <p className="mt-2 text-muted-foreground">
+                  {t("product.sku")}: {product.sku}
+                </p>
+              )}
             </div>
 
             <div className="flex items-baseline gap-3">
               <span className="text-3xl font-bold">
                 {formatPrice(
-                  product.price,
+                  parseFloat(product.price),
                   config.locale.currency,
                   config.locale.locale
                 )}
               </span>
-              {product.compareAtPrice &&
-                product.compareAtPrice > product.price && (
+              {product.compare_at_price &&
+                parseFloat(product.compare_at_price) > parseFloat(product.price) && (
                   <span className="text-xl text-muted-foreground line-through">
                     {formatPrice(
-                      product.compareAtPrice,
+                      parseFloat(product.compare_at_price),
                       config.locale.currency,
                       config.locale.locale
                     )}
@@ -201,13 +204,15 @@ export default function ProductDetailPage() {
                 )}
             </div>
 
-            <p className="text-muted-foreground">{product.shortDescription}</p>
+            {productShortDescription && (
+              <p className="text-muted-foreground">{productShortDescription}</p>
+            )}
 
             <Separator />
 
             {/* Quantity Selector */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Quantity</Label>
+              <label className="text-sm font-medium">{t("product.quantity")}</label>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -221,22 +226,29 @@ export default function ProductDetailPage() {
                   variant="outline"
                   size="icon"
                   onClick={() =>
-                    setQuantity(Math.min(product.quantity, quantity + 1))
+                    setQuantity(Math.min(product.quantity || 99, quantity + 1))
                   }
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  {product.quantity} in stock
+                  {(product.quantity || 0) > 0
+                    ? t("product.inStock", { count: product.quantity || 0 })
+                    : t("product.outOfStock")}
                 </span>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex gap-4">
-              <Button size="lg" className="flex-1">
+              <Button
+                size="lg"
+                className="flex-1"
+                onClick={handleAddToCart}
+                disabled={(product.quantity || 0) === 0 || addToCart.isPending}
+              >
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to Cart
+                {t("common.addToCart")}
               </Button>
               {config.features.wishlist && (
                 <Button size="lg" variant="outline">
@@ -254,15 +266,15 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="flex items-center gap-2 text-sm">
                 <Truck className="h-5 w-5 text-primary" />
-                <span>Free Shipping</span>
+                <span>{t("home.freeShipping")}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <RotateCcw className="h-5 w-5 text-primary" />
-                <span>30-Day Returns</span>
+                <span>{t("home.easyReturns")}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Shield className="h-5 w-5 text-primary" />
-                <span>2-Year Warranty</span>
+                <span>{t("home.securePayment")}</span>
               </div>
             </div>
           </div>
@@ -272,28 +284,38 @@ export default function ProductDetailPage() {
         <div className="mt-12">
           <Tabs defaultValue="description">
             <TabsList>
-              <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="specifications">Specifications</TabsTrigger>
+              <TabsTrigger value="description">{t("product.description")}</TabsTrigger>
+              <TabsTrigger value="specifications">{t("product.specifications")}</TabsTrigger>
               {config.features.reviews && (
-                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                <TabsTrigger value="reviews">{t("product.reviews")}</TabsTrigger>
               )}
             </TabsList>
             <TabsContent value="description" className="mt-4">
               <div className="prose max-w-none">
-                <p className="whitespace-pre-line">{product.description}</p>
+                <p className="whitespace-pre-line">{productDescription}</p>
               </div>
             </TabsContent>
             <TabsContent value="specifications" className="mt-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                {product.attributes.map((attr) => (
-                  <div
-                    key={attr.name}
-                    className="flex justify-between rounded-lg bg-muted/50 p-4"
-                  >
-                    <span className="font-medium">{attr.name}</span>
-                    <span className="text-muted-foreground">{attr.value}</span>
-                  </div>
-                ))}
+                {product.attribute_values && product.attribute_values.length > 0 ? (
+                  product.attribute_values.map((attr, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between rounded-lg bg-muted/50 p-4"
+                    >
+                      <span className="font-medium">
+                        {getLocalizedValue(attr.attribute.name)}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {attr.value_text || attr.value || ""}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">
+                    No specifications available
+                  </p>
+                )}
               </div>
             </TabsContent>
             {config.features.reviews && (
@@ -308,19 +330,35 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Related Products */}
-        <section className="mt-16">
-          <h2 className="text-2xl font-bold">Related Products</h2>
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {relatedProducts.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
-        </section>
+        {relatedProducts && relatedProducts.results.length > 0 && (
+          <section className="mt-16">
+            <h2 className="text-2xl font-bold">{t("product.relatedProducts")}</h2>
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {relatedProducts.results
+                .filter((p) => p.id !== product.id)
+                .slice(0, 4)
+                .map((relatedProduct) => (
+                  <ProductCard
+                    key={relatedProduct.id}
+                    id={String(relatedProduct.id)}
+                    slug={relatedProduct.slug}
+                    name={getLocalizedValue(relatedProduct.name)}
+                    image={relatedProduct.image || "/placeholder.jpg"}
+                    price={parseFloat(relatedProduct.price)}
+                    compareAtPrice={
+                      relatedProduct.compare_at_price
+                        ? parseFloat(relatedProduct.compare_at_price)
+                        : undefined
+                    }
+                    isFeatured={relatedProduct.is_featured}
+                    isOnSale={relatedProduct.discount_percentage > 0}
+                    isNew={false}
+                  />
+                ))}
+            </div>
+          </section>
+        )}
       </div>
     </StoreLayout>
   );
-}
-
-function Label({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <label className={className}>{children}</label>;
 }
