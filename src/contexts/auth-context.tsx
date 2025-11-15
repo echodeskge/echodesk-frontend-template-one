@@ -69,7 +69,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Automatically get or create cart when user is authenticated
   useQuery({
     queryKey: ["cart"],
-    queryFn: ecommerceClientCartGetOrCreateRetrieve,
+    queryFn: async () => {
+      const response = await ecommerceClientCartGetOrCreateRetrieve();
+      return response.cart;
+    },
     enabled: !!user && isInitialized,
     staleTime: 0,
     retry: 1,

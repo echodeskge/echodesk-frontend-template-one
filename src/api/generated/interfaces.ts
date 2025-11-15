@@ -99,6 +99,11 @@ export interface CartStatusEnum {
   [key: string]: any;
 }
 
+export interface CartGetOrCreateResponse {
+  cart: Cart;
+  created: boolean;
+}
+
 export interface ClientAddress {
   id: number;
   client: number;

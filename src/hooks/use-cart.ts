@@ -21,7 +21,10 @@ export function useCart() {
 
   return useQuery({
     queryKey: ["cart"],
-    queryFn: ecommerceClientCartGetOrCreateRetrieve,
+    queryFn: async () => {
+      const response = await ecommerceClientCartGetOrCreateRetrieve();
+      return response.cart;
+    },
     enabled: isAuthenticated,
     staleTime: 0, // Always fetch fresh cart
     retry: 1,

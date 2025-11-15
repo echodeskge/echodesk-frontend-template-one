@@ -14,6 +14,7 @@ import type {
   PaginatedCartList,
   CartRequest,
   Cart,
+  CartGetOrCreateResponse,
   PaginatedCartItemList,
   CartItemCreateRequest,
   CartItemCreate,
@@ -293,7 +294,7 @@ export async function ecommerceClientCartDestroy(id: string): Promise<any> {
   return response.data;
 }
 
-export async function ecommerceClientCartGetOrCreateRetrieve(): Promise<Cart> {
+export async function ecommerceClientCartGetOrCreateRetrieve(): Promise<CartGetOrCreateResponse> {
   const response = await axios.get(`/api/ecommerce/client/cart/get_or_create/`);
   return response.data;
 }
