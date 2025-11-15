@@ -14,8 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { useProductBySlug, useFeaturedProducts } from "@/hooks/use-products";
-import { useCart, useAddToCart } from "@/hooks/use-cart";
+import { useAddToCart, useCart } from "@/hooks/use-cart";
 import { formatPrice } from "@/lib/store-config";
+import { toast } from "sonner";
 import {
   ShoppingCart,
   Heart,
@@ -43,11 +44,14 @@ export default function ProductDetailPage() {
   const addToCart = useAddToCart();
 
   const handleAddToCart = () => {
-    if (product && cart) {
+    if (!cart) {
+      toast.error("Cart not available. Please try again.");
+      return;
+    }
+    if (product) {
       addToCart.mutate({
         cart: cart.id,
         product: product.id,
-        variant: undefined,
         quantity,
       });
     }

@@ -244,11 +244,11 @@ function ProductsContent() {
                   <SlidersHorizontal className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="overflow-y-auto p-6">
-                <SheetHeader className="pb-4">
+              <SheetContent side="right" className="overflow-y-auto p-4">
+                <SheetHeader className="pb-2">
                   <SheetTitle>{t("productsPage.filters")}</SheetTitle>
                 </SheetHeader>
-                <div className="mt-4 pb-6 px-2">
+                <div className="mt-2 pb-4">
                   <FilterContent />
                 </div>
               </SheetContent>

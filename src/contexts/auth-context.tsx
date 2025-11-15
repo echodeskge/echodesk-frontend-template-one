@@ -9,6 +9,7 @@ import {
   passwordResetRequest,
   passwordResetConfirm,
   ecommerceClientProfileMeRetrieve,
+  ecommerceClientCartGetOrCreateRetrieve,
 } from "@/api/generated/api";
 import type {
   EcommerceClient,
@@ -41,11 +42,13 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasCheckedToken, setHasCheckedToken] = useState(false);
 
   // Check if user has tokens on mount
   useEffect(() => {
     const accessToken = localStorage.getItem("ecommerce_access_token");
     setIsInitialized(!!accessToken);
+    setHasCheckedToken(true);
   }, []);
 
   // Fetch current user profile
@@ -53,12 +56,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     data: user,
     isLoading: isUserLoading,
     refetch: refetchUser,
+    isError,
   } = useQuery({
     queryKey: ["currentUser"],
     queryFn: ecommerceClientProfileMeRetrieve,
-    enabled: isInitialized,
-    retry: false,
+    enabled: isInitialized && hasCheckedToken,
+    retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
+  });
+
+  // Automatically get or create cart when user is authenticated
+  useQuery({
+    queryKey: ["cart"],
+    queryFn: ecommerceClientCartGetOrCreateRetrieve,
+    enabled: !!user && isInitialized,
+    staleTime: 0,
+    retry: 1,
   });
 
   // Login mutation
@@ -167,8 +181,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem("ecommerce_refresh_token");
     localStorage.removeItem("ecommerce_user");
     setIsInitialized(false);
+    setHasCheckedToken(true); // Keep as checked to avoid loading state
     queryClient.clear();
     toast.success("Logged out successfully");
+    // Redirect to home page after logout
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   };
 
   const requestPasswordResetFn = async (email: string) => {
@@ -179,10 +198,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await passwordResetConfirmMutation.mutateAsync(data);
   };
 
+  // Clear tokens if fetch fails (e.g., expired token)
+  useEffect(() => {
+    if (isError && isInitialized) {
+      // Token might be invalid/expired, clear it
+      localStorage.removeItem("ecommerce_access_token");
+      localStorage.removeItem("ecommerce_refresh_token");
+      localStorage.removeItem("ecommerce_user");
+      setIsInitialized(false);
+    }
+  }, [isError, isInitialized]);
+
   const value: AuthContextType = {
     user: user || null,
-    isLoading: isUserLoading,
-    isAuthenticated: !!user && isInitialized,
+    isLoading: !hasCheckedToken || (isInitialized && isUserLoading),
+    isAuthenticated: !!user && isInitialized && !isError,
     login,
     register,
     verifyEmailCode,

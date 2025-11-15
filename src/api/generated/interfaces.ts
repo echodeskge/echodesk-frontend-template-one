@@ -39,11 +39,12 @@ export interface AttributeTypeEnum {
 export interface Cart {
   id: number;
   client: number;
-  delivery_address: ClientAddress;
+  delivery_address: ClientAddress | null;
   status?: CartStatusEnum;
   notes?: string;
   items: CartItem[];
   total_amount: string;
+  total_price: string;
   total_items: number;
   created_at: string;
   updated_at: string;
@@ -52,13 +53,19 @@ export interface Cart {
 export interface CartItem {
   id: number;
   cart: number;
-  product: ProductList;
-  variant: ProductVariant;
+  product: ProductList | number;
+  variant: ProductVariant | number | null;
   quantity?: number;
   price_at_add: string;
+  price: string;
   subtotal: string;
   created_at: string;
   updated_at: string;
+  // Serialized product fields
+  product_id?: number;
+  product_name?: any;
+  product_slug?: string;
+  product_image?: string;
 }
 
 export interface CartItemCreate {

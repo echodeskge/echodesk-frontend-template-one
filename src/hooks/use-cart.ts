@@ -45,7 +45,8 @@ export function useAddToCart() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CartItemCreateRequest) => ecommerceClientCartItemsCreate(data),
+    mutationFn: (data: CartItemCreateRequest) =>
+      ecommerceClientCartItemsCreate(data),
     onSuccess: () => {
       // Invalidate cart queries to refetch
       queryClient.invalidateQueries({ queryKey: ["cart"] });

@@ -2,12 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Heart, ShoppingCart, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/store-config";
 import { useStoreConfig } from "@/components/providers/theme-provider";
+import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
+import { useAddToCart, useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { toast } from "sonner";
 
 export interface ProductCardProps {
   id: string;
@@ -33,11 +39,54 @@ export function ProductCard({
   isNew,
 }: ProductCardProps) {
   const config = useStoreConfig();
+  const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
+  const router = useRouter();
+  const { data: cart } = useCart();
+  const addToCart = useAddToCart();
+  const { toggleItem, isInWishlist } = useWishlist();
 
   const discountPercentage =
     compareAtPrice && compareAtPrice > price
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : 0;
+
+  const inWishlist = isInWishlist(id);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (!cart) {
+      toast.error("Cart not available. Please try again.");
+      return;
+    }
+
+    addToCart.mutate({
+      cart: cart.id,
+      product: parseInt(id),
+      quantity: 1,
+    });
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    toggleItem({
+      id,
+      slug,
+      name,
+      image,
+      price,
+      compareAtPrice,
+    });
+  };
 
   return (
     <Card className="group overflow-hidden">
@@ -54,8 +103,8 @@ export function ProductCard({
 
         {/* Badges */}
         <div className="absolute left-2 top-2 flex flex-col gap-1">
-          {isNew && <Badge className="bg-blue-500">New</Badge>}
-          {isFeatured && <Badge className="bg-amber-500">Featured</Badge>}
+          {isNew && <Badge className="bg-blue-500">{t("product.new")}</Badge>}
+          {isFeatured && <Badge className="bg-amber-500">{t("product.featured")}</Badge>}
           {discountPercentage > 0 && (
             <Badge variant="destructive">-{discountPercentage}%</Badge>
           )}
@@ -64,12 +113,29 @@ export function ProductCard({
         {/* Quick Actions */}
         <div className="absolute right-2 top-2 flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           {config.features.wishlist && (
-            <Button size="icon" variant="secondary" className="h-8 w-8">
-              <Heart className="h-4 w-4" />
+            <Button
+              size="icon"
+              variant="secondary"
+              className={`h-8 w-8 ${inWishlist ? "text-red-500" : ""}`}
+              onClick={handleToggleWishlist}
+            >
+              <Heart
+                className={`h-4 w-4 ${inWishlist ? "fill-current" : ""}`}
+              />
             </Button>
           )}
-          <Button size="icon" variant="secondary" className="h-8 w-8">
-            <ShoppingCart className="h-4 w-4" />
+          <Button
+            size="icon"
+            variant="secondary"
+            className="h-8 w-8"
+            onClick={handleAddToCart}
+            disabled={addToCart.isPending}
+          >
+            {addToCart.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ShoppingCart className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
@@ -96,9 +162,18 @@ export function ProductCard({
           )}
         </div>
 
-        <Button className="mt-3 w-full" size="sm">
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Add to Cart
+        <Button
+          className="mt-3 w-full"
+          size="sm"
+          onClick={handleAddToCart}
+          disabled={addToCart.isPending}
+        >
+          {addToCart.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <ShoppingCart className="mr-2 h-4 w-4" />
+          )}
+          {t("common.addToCart")}
         </Button>
       </CardContent>
     </Card>
