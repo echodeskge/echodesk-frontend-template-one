@@ -103,7 +103,7 @@ export default function ProductDetailPage() {
   const productShortDescription = getLocalizedValue(product.short_description || "");
 
   // ProductList uses single image field
-  const productImages = [product.image || "/placeholder.jpg"];
+  const productImages = [product.image || "/placeholder.svg"];
 
   const discountPercentage = product.discount_percentage || 0;
 
@@ -129,7 +129,7 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <div className="relative aspect-square overflow-hidden rounded-lg border">
               <Image
-                src={productImages[selectedImage] || "/placeholder.jpg"}
+                src={productImages[selectedImage] || "/placeholder.svg"}
                 alt={productName}
                 fill
                 className="object-cover"
@@ -343,7 +343,7 @@ export default function ProductDetailPage() {
                     id={String(relatedProduct.id)}
                     slug={relatedProduct.slug}
                     name={getLocalizedValue(relatedProduct.name)}
-                    image={relatedProduct.image || "/placeholder.jpg"}
+                    image={relatedProduct.image || "/placeholder.svg"}
                     price={parseFloat(relatedProduct.price)}
                     compareAtPrice={
                       relatedProduct.compare_at_price

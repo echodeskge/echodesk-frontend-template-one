@@ -44,7 +44,7 @@ export function ProductCard({
       <div className="relative aspect-square overflow-hidden">
         <Link href={`/products/${slug}`}>
           <Image
-            src={image || "/placeholder.jpg"}
+            src={image || "/placeholder.svg"}
             alt={name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"

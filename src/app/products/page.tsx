@@ -336,7 +336,7 @@ function ProductsContent() {
                           ? product.name
                           : product.name?.en || "Product"
                       }
-                      image={product.image || "/placeholder.jpg"}
+                      image={product.image || "/placeholder.svg"}
                       price={parseFloat(product.price)}
                       compareAtPrice={
                         product.compare_at_price

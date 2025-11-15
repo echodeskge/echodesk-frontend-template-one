@@ -73,7 +73,7 @@ export default function HomePage() {
                 id={String(product.id)}
                 slug={product.slug}
                 name={getLocalizedValue(product.name)}
-                image={product.image || "/placeholder.jpg"}
+                image={product.image || "/placeholder.svg"}
                 price={parseFloat(product.price)}
                 compareAtPrice={
                   product.compare_at_price
