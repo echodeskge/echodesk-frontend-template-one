@@ -6,6 +6,7 @@ import {
   ecommerceClientItemListsList,
   ecommerceClientItemListsRetrieve,
 } from "@/api/generated/api";
+import axios from "@/api/axios";
 import type {
   PaginatedProductListList,
   ProductDetail,
@@ -25,43 +26,44 @@ export interface ProductFilters {
   [key: string]: string | number | boolean | undefined;
 }
 
+// Custom function to fetch products with dynamic attribute filters
+async function fetchProductsWithFilters(
+  filters: ProductFilters
+): Promise<PaginatedProductListList> {
+  const params = new URLSearchParams();
+
+  // Add standard filters
+  if (filters.search) params.append("search", filters.search);
+  if (filters.minPrice !== undefined)
+    params.append("min_price", String(filters.minPrice));
+  if (filters.maxPrice !== undefined)
+    params.append("max_price", String(filters.maxPrice));
+  if (filters.isFeatured !== undefined)
+    params.append("is_featured", String(filters.isFeatured));
+  if (filters.onSale !== undefined)
+    params.append("on_sale", String(filters.onSale));
+  if (filters.ordering) params.append("ordering", filters.ordering);
+  if (filters.page !== undefined) params.append("page", String(filters.page));
+  if (filters.language) params.append("language", filters.language);
+
+  // Add dynamic attribute filters (keys starting with attr_)
+  Object.entries(filters).forEach(([key, value]) => {
+    if (key.startsWith("attr_") && value !== undefined) {
+      params.append(key, String(value));
+    }
+  });
+
+  const queryString = params.toString();
+  const url = `/api/ecommerce/client/products/${queryString ? `?${queryString}` : ""}`;
+  const response = await axios.get(url);
+  return response.data;
+}
+
 // Hook for fetching products list with filters
 export function useProducts(filters: ProductFilters = {}) {
-  const {
-    search,
-    minPrice,
-    maxPrice,
-    isFeatured,
-    onSale,
-    ordering,
-    page,
-    language,
-    ...attributeFilters
-  } = filters;
-
-  // For attribute filters, we need to pass them as attrXxx parameters
-  const attrCategory = attributeFilters.attrCategory as string | undefined;
-  const attrMaterial = attributeFilters.attrMaterial as string | undefined;
-  const attrNumberOfLamps = attributeFilters.attrNumberOfLamps as string | undefined;
-  const attrSubcategory = attributeFilters.attrSubcategory as string | undefined;
-
   return useQuery({
     queryKey: ["products", filters],
-    queryFn: () =>
-      ecommerceClientProductsList(
-        attrCategory,
-        attrMaterial,
-        attrNumberOfLamps,
-        attrSubcategory,
-        isFeatured,
-        language,
-        maxPrice,
-        minPrice,
-        onSale,
-        ordering,
-        page,
-        search
-      ),
+    queryFn: () => fetchProductsWithFilters(filters),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }

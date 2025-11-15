@@ -44,7 +44,7 @@ function ProductsContent() {
     useFilterableAttributes();
 
   // Get filters from URL
-  const filters = {
+  const filters: Record<string, any> = {
     search: searchParams.get("search") || undefined,
     minPrice: searchParams.get("min_price")
       ? Number(searchParams.get("min_price"))
@@ -56,9 +56,14 @@ function ProductsContent() {
     onSale: searchParams.get("on_sale") === "true" || undefined,
     ordering: searchParams.get("ordering") || "-created_at",
     page: searchParams.get("page") ? Number(searchParams.get("page")) : 1,
-    // Get category filter from URL
-    attrCategory: searchParams.get("attr_category") || undefined,
   };
+
+  // Dynamically add attribute filters from URL params
+  searchParams.forEach((value, key) => {
+    if (key.startsWith("attr_")) {
+      filters[key] = value;
+    }
+  });
 
   const { data: productsData, isLoading } = useProducts(filters);
 
@@ -90,46 +95,54 @@ function ProductsContent() {
 
   const FilterContent = () => (
     <div className="space-y-6">
-      {/* Category Filter */}
+      {/* Dynamic Attribute Filters */}
       {filterableAttributes && filterableAttributes.length > 0 && (
         <>
-          {filterableAttributes.map((attr) => (
-            <div key={attr.id} className="space-y-4">
-              <Label className="font-semibold">
-                {typeof attr.name === "string"
-                  ? attr.name
-                  : attr.name?.en || attr.key}
-              </Label>
-              <div className="space-y-2">
-                {attr.options?.map((option: any, index: number) => {
-                  const optionValue =
-                    typeof option === "string" ? option : option?.en || "";
-                  const isSelected = filters.attrCategory === optionValue;
+          {filterableAttributes.map((attr) => {
+            const attrKey = `attr_${attr.key}`;
+            const currentFilter = filters[attrKey] as string | undefined;
 
-                  return (
-                    <div key={index} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${attr.key}-${index}`}
-                        checked={isSelected}
-                        onCheckedChange={(checked) => {
-                          updateFilters({
-                            attr_category: checked ? optionValue : null,
-                            page: null, // Reset page when filtering
-                          });
-                        }}
-                      />
-                      <label
-                        htmlFor={`${attr.key}-${index}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {optionValue}
-                      </label>
-                    </div>
-                  );
-                })}
+            return (
+              <div key={attr.id} className="space-y-4">
+                <Label className="font-semibold">
+                  {typeof attr.name === "string"
+                    ? attr.name
+                    : attr.name?.en || attr.key}
+                </Label>
+                <div className="space-y-2">
+                  {attr.options?.map((option: any, index: number) => {
+                    // Use the value field for filtering, display name for UI
+                    const optionValue =
+                      typeof option === "string" ? option : option?.value || option?.en || "";
+                    const optionLabel =
+                      typeof option === "string" ? option : option?.en || option?.value || "";
+                    const isSelected = currentFilter === optionValue;
+
+                    return (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`${attr.key}-${index}`}
+                          checked={isSelected}
+                          onCheckedChange={(checked) => {
+                            updateFilters({
+                              [attrKey]: checked ? optionValue : null,
+                              page: null, // Reset page when filtering
+                            });
+                          }}
+                        />
+                        <label
+                          htmlFor={`${attr.key}-${index}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {optionLabel}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           <Separator />
         </>
       )}
