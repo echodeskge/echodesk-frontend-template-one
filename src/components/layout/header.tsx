@@ -49,28 +49,96 @@ export function Header() {
               <span className="sr-only">Toggle menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[300px]">
-            <nav className="flex flex-col gap-4">
-              <Link href="/" className="text-lg font-semibold">
-                {t("common.home")}
-              </Link>
-              <Link href="/products" className="text-lg font-semibold">
-                {t("common.products")}
-              </Link>
-              <Link href="/products?on_sale=true" className="text-lg font-semibold text-red-600">
-                {t("common.sale")}
-              </Link>
+          <SheetContent side="left" className="w-[300px] p-0">
+            <div className="flex flex-col h-full">
+              {/* Header with logo */}
+              <div className="p-6 border-b">
+                <Link href="/" className="flex items-center space-x-2">
+                  {config.store.logo && config.store.logo !== "/logo.png" && (
+                    <Image
+                      src={config.store.logo}
+                      alt={config.store.name}
+                      width={32}
+                      height={32}
+                      className="h-8 w-8"
+                    />
+                  )}
+                  <span className="font-bold text-lg">{config.store.name}</span>
+                </Link>
+              </div>
+
+              {/* Navigation links */}
+              <nav className="flex flex-col p-4">
+                <Link
+                  href="/"
+                  className="flex items-center px-4 py-3 text-base font-medium rounded-lg hover:bg-muted transition-colors"
+                >
+                  {t("common.home")}
+                </Link>
+                <Link
+                  href="/products"
+                  className="flex items-center px-4 py-3 text-base font-medium rounded-lg hover:bg-muted transition-colors"
+                >
+                  {t("common.products")}
+                </Link>
+                <Link
+                  href="/products?on_sale=true"
+                  className="flex items-center px-4 py-3 text-base font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  {t("common.sale")}
+                </Link>
+              </nav>
+
+              {/* Account section */}
               {isAuthenticated && (
-                <>
-                  <Link href="/account" className="text-lg font-semibold">
+                <div className="border-t p-4">
+                  <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t("common.account")}
+                  </p>
+                  <Link
+                    href="/account"
+                    className="flex items-center px-4 py-3 text-base font-medium rounded-lg hover:bg-muted transition-colors"
+                  >
                     {t("common.myAccount")}
                   </Link>
-                  <Link href="/account/orders" className="text-lg font-semibold">
+                  <Link
+                    href="/account/orders"
+                    className="flex items-center px-4 py-3 text-base font-medium rounded-lg hover:bg-muted transition-colors"
+                  >
                     {t("common.myOrders")}
                   </Link>
-                </>
+                  {config.features.wishlist && (
+                    <Link
+                      href="/wishlist"
+                      className="flex items-center px-4 py-3 text-base font-medium rounded-lg hover:bg-muted transition-colors"
+                    >
+                      {t("common.wishlist")}
+                    </Link>
+                  )}
+                </div>
               )}
-            </nav>
+
+              {/* Footer with login/logout */}
+              <div className="mt-auto border-t p-4">
+                {isAuthenticated ? (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={logout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {t("common.signOut")}
+                  </Button>
+                ) : (
+                  <Button asChild className="w-full">
+                    <Link href="/login">
+                      <User className="mr-2 h-4 w-4" />
+                      {t("common.signIn")}
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
           </SheetContent>
         </Sheet>
 

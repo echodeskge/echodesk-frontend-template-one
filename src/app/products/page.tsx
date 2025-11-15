@@ -228,8 +228,8 @@ function ProductsContent() {
       <div className="container py-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">{t("productsPage.title")}</h1>
-            <p className="mt-1 text-muted-foreground">
+            <h1 className="text-xl md:text-3xl font-bold">{t("productsPage.title")}</h1>
+            <p className="mt-1 text-xs md:text-base text-muted-foreground">
               {isLoading
                 ? t("common.loading")
                 : t("productsPage.productsFound", { count: productsData?.count || 0 })}
@@ -244,11 +244,11 @@ function ProductsContent() {
                   <SlidersHorizontal className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right">
-                <SheetHeader>
+              <SheetContent side="right" className="overflow-y-auto p-6">
+                <SheetHeader className="pb-4">
                   <SheetTitle>{t("productsPage.filters")}</SheetTitle>
                 </SheetHeader>
-                <div className="mt-6">
+                <div className="mt-4 pb-6 px-2">
                   <FilterContent />
                 </div>
               </SheetContent>
@@ -259,15 +259,15 @@ function ProductsContent() {
               value={filters.ordering}
               onValueChange={(value) => updateFilters({ ordering: value })}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[120px] md:w-[180px] text-xs md:text-sm">
                 <SelectValue placeholder={t("productsPage.sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="-created_at">{t("productsPage.newest")}</SelectItem>
-                <SelectItem value="price">{t("productsPage.priceLowToHigh")}</SelectItem>
-                <SelectItem value="-price">{t("productsPage.priceHighToLow")}</SelectItem>
-                <SelectItem value="name">{t("productsPage.nameAToZ")}</SelectItem>
-                <SelectItem value="-name">{t("productsPage.nameZToA")}</SelectItem>
+                <SelectItem value="-created_at" className="text-xs md:text-sm">{t("productsPage.newest")}</SelectItem>
+                <SelectItem value="price" className="text-xs md:text-sm">{t("productsPage.priceLowToHigh")}</SelectItem>
+                <SelectItem value="-price" className="text-xs md:text-sm">{t("productsPage.priceHighToLow")}</SelectItem>
+                <SelectItem value="name" className="text-xs md:text-sm">{t("productsPage.nameAToZ")}</SelectItem>
+                <SelectItem value="-name" className="text-xs md:text-sm">{t("productsPage.nameZToA")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -296,7 +296,7 @@ function ProductsContent() {
         <div className="mt-8 grid gap-8 md:grid-cols-[240px_1fr]">
           {/* Desktop Filters Sidebar */}
           <div className="hidden md:block">
-            <div className="sticky top-20">
+            <div className="sticky top-20 bg-background rounded-lg border p-4">
               <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
                 <Filter className="h-5 w-5" />
                 {t("productsPage.filters")}
