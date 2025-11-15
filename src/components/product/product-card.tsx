@@ -12,7 +12,7 @@ import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useAddToCart, useCart } from "@/hooks/use-cart";
-import { useWishlist } from "@/hooks/use-wishlist";
+import { useBackendWishlist } from "@/hooks/use-favorites";
 import { toast } from "sonner";
 
 export interface ProductCardProps {
@@ -44,7 +44,7 @@ export function ProductCard({
   const router = useRouter();
   const { data: cart } = useCart();
   const addToCart = useAddToCart();
-  const { toggleItem, isInWishlist } = useWishlist();
+  const { toggleWishlist, isInWishlist, isPending: isWishlistPending } = useBackendWishlist();
 
   const discountPercentage =
     compareAtPrice && compareAtPrice > price
@@ -78,14 +78,12 @@ export function ProductCard({
     e.preventDefault();
     e.stopPropagation();
 
-    toggleItem({
-      id,
-      slug,
-      name,
-      image,
-      price,
-      compareAtPrice,
-    });
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    toggleWishlist(id);
   };
 
   return (
@@ -118,10 +116,15 @@ export function ProductCard({
               variant="secondary"
               className={`h-8 w-8 ${inWishlist ? "text-red-500" : ""}`}
               onClick={handleToggleWishlist}
+              disabled={isWishlistPending}
             >
-              <Heart
-                className={`h-4 w-4 ${inWishlist ? "fill-current" : ""}`}
-              />
+              {isWishlistPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Heart
+                  className={`h-4 w-4 ${inWishlist ? "fill-current" : ""}`}
+                />
+              )}
             </Button>
           )}
           <Button

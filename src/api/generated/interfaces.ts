@@ -186,7 +186,7 @@ export interface FavoriteProductCreate {
 }
 
 export interface FavoriteProductCreateRequest {
-  client: number;
+  client?: number;
   product: number;
 }
 

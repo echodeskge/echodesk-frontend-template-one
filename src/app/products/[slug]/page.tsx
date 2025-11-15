@@ -15,6 +15,7 @@ import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { useProductBySlug, useFeaturedProducts } from "@/hooks/use-products";
 import { useAddToCart, useCart } from "@/hooks/use-cart";
+import { useBackendWishlist } from "@/hooks/use-favorites";
 import { formatPrice } from "@/lib/store-config";
 import { toast } from "sonner";
 import {
@@ -28,6 +29,7 @@ import {
   Shield,
   Star,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 export default function ProductDetailPage() {
@@ -42,6 +44,7 @@ export default function ProductDetailPage() {
   const { data: relatedProducts } = useFeaturedProducts(4);
   const { data: cart } = useCart();
   const addToCart = useAddToCart();
+  const { toggleWishlist, isInWishlist, isPending: isWishlistPending } = useBackendWishlist();
 
   const handleAddToCart = () => {
     if (!cart) {
@@ -254,9 +257,21 @@ export default function ProductDetailPage() {
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 {t("common.addToCart")}
               </Button>
-              {config.features.wishlist && (
-                <Button size="lg" variant="outline">
-                  <Heart className="h-5 w-5" />
+              {config.features.wishlist && product && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className={isInWishlist(product.id) ? "text-red-500" : ""}
+                  onClick={() => toggleWishlist(product.id)}
+                  disabled={isWishlistPending}
+                >
+                  {isWishlistPending ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Heart
+                      className={`h-5 w-5 ${isInWishlist(product.id) ? "fill-current" : ""}`}
+                    />
+                  )}
                 </Button>
               )}
               <Button size="lg" variant="outline">

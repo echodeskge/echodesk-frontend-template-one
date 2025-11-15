@@ -86,7 +86,14 @@
     "total": "Total",
     "checkout": "Proceed to Checkout",
     "remove": "Remove",
-    "updateQuantity": "Update Quantity"
+    "updateQuantity": "Update Quantity",
+    "each": "each",
+    "inYourCart": "in your cart",
+    "loginRequired": "Please login to view your cart",
+    "emptyDesc": "Looks like you haven't added any items to your cart yet.",
+    "promoCode": "Promo code",
+    "apply": "Apply",
+    "secureCheckout": "Secure checkout powered by Echodesk"
   },
   "checkout": {
     "title": "Checkout",
