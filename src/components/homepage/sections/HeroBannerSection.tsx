@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import type { HomepageSectionProps, ListItem, LocalizedText } from "@/types/homepage";
+import type { HomepageSectionProps, LocalizedText } from "@/types/homepage";
 
 export function HeroBannerSection({ section, language }: HomepageSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -16,6 +16,14 @@ export function HeroBannerSection({ section, language }: HomepageSectionProps) {
     if (!text) return "";
     if (typeof text === "string") return text;
     return text[language] || text.en || text.ka || Object.values(text)[0] || "";
+  };
+
+  // Helper to get localized value from custom_data with _en/_ka suffix
+  const getCustomDataText = (customData: Record<string, any>, key: string): string => {
+    const langKey = `${key}_${language}`;
+    const enKey = `${key}_en`;
+    const kaKey = `${key}_ka`;
+    return customData[langKey] || customData[enKey] || customData[kaKey] || customData[key] || "";
   };
 
   const nextSlide = useCallback(() => {
@@ -38,156 +46,119 @@ export function HeroBannerSection({ section, language }: HomepageSectionProps) {
     return null;
   }
 
-  const sectionStyle = {
-    backgroundColor: section.background_color || undefined,
-    backgroundImage: section.background_image_url
-      ? `url(${section.background_image_url})`
-      : undefined,
-    color: section.text_color || undefined,
-  };
-
-  // Single banner mode
-  if (section.display_mode === "single" || items.length === 1) {
-    const item = items[0];
-    const customData = item.custom_data || {};
-
-    return (
-      <section className="relative overflow-hidden" style={sectionStyle}>
-        <div className="container py-20 md:py-32">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 items-center">
-            <div className="max-w-2xl">
-              {section.title && (
-                <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
-                  {getLocalizedText(section.title)}
-                </h1>
-              )}
-              {section.subtitle && (
-                <p className="mt-6 text-lg text-muted-foreground">
-                  {getLocalizedText(section.subtitle)}
-                </p>
-              )}
-              {customData.description && (
-                <p className="mt-4 text-muted-foreground">
-                  {getLocalizedText(customData.description)}
-                </p>
-              )}
-              <div className="mt-8 flex gap-4">
-                {customData.primary_button_text && customData.primary_button_link && (
-                  <Button size="lg" asChild>
-                    <Link href={customData.primary_button_link}>
-                      {getLocalizedText(customData.primary_button_text)}
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
-                )}
-                {customData.secondary_button_text && customData.secondary_button_link && (
-                  <Button size="lg" variant="outline" asChild>
-                    <Link href={customData.secondary_button_link}>
-                      {getLocalizedText(customData.secondary_button_text)}
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </div>
-            {customData.image && (
-              <div className="relative aspect-video md:aspect-square">
-                <Image
-                  src={customData.image}
-                  alt={getLocalizedText(item.label)}
-                  fill
-                  className="object-cover rounded-lg"
-                  priority
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Slider mode
+  // Slider mode - render full-screen hero banners
   const currentItem = items[currentSlide];
   const currentCustomData = currentItem?.custom_data || {};
+  const backgroundImage = currentCustomData.background_image || currentCustomData.image;
+  const overlayColor = currentCustomData.overlay_color || "rgba(0, 0, 0, 0.4)";
+  const textColor = currentCustomData.text_color || section.text_color || "#ffffff";
+
+  // Get title parts or full title
+  const titlePart1 = getCustomDataText(currentCustomData, "title_part1");
+  const titlePart2 = getCustomDataText(currentCustomData, "title_part2");
+  const fullTitle = titlePart1 && titlePart2
+    ? null
+    : getCustomDataText(currentCustomData, "title") || getLocalizedText(section.title);
+
+  const description = getCustomDataText(currentCustomData, "description");
+  const buttonText = getCustomDataText(currentCustomData, "button_text");
+  const buttonLink = currentCustomData.button_link || "/products";
 
   return (
-    <section className="relative overflow-hidden" style={sectionStyle}>
-      <div className="container py-20 md:py-32">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 items-center">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
-              {getLocalizedText(currentItem?.label) || getLocalizedText(section.title)}
+    <section className="relative h-[600px] md:h-[700px] overflow-hidden">
+      {/* Background Image */}
+      {backgroundImage && (
+        <Image
+          src={backgroundImage}
+          alt={getLocalizedText(currentItem?.label) || "Hero Banner"}
+          fill
+          className="object-cover"
+          priority
+        />
+      )}
+
+      {/* Overlay */}
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: overlayColor }}
+      />
+
+      {/* Content */}
+      <div className="relative h-full container flex items-center">
+        <div className="max-w-3xl" style={{ color: textColor }}>
+          {titlePart1 && titlePart2 ? (
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+              <span className="block">{titlePart1}</span>
+              <span className="block mt-2">{titlePart2}</span>
             </h1>
-            {currentCustomData.description && (
-              <p className="mt-6 text-lg text-muted-foreground">
-                {getLocalizedText(currentCustomData.description)}
-              </p>
-            )}
-            <div className="mt-8 flex gap-4">
-              {currentCustomData.primary_button_text && currentCustomData.primary_button_link && (
-                <Button size="lg" asChild>
-                  <Link href={currentCustomData.primary_button_link}>
-                    {getLocalizedText(currentCustomData.primary_button_text)}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-              )}
-              {currentCustomData.secondary_button_text && currentCustomData.secondary_button_link && (
-                <Button size="lg" variant="outline" asChild>
-                  <Link href={currentCustomData.secondary_button_link}>
-                    {getLocalizedText(currentCustomData.secondary_button_text)}
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-          {currentCustomData.image && (
-            <div className="relative aspect-video md:aspect-square">
-              <Image
-                src={currentCustomData.image}
-                alt={getLocalizedText(currentItem?.label)}
-                fill
-                className="object-cover rounded-lg"
-                priority
-              />
+          ) : fullTitle ? (
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+              {fullTitle}
+            </h1>
+          ) : null}
+
+          {description && (
+            <p className="mt-6 text-lg md:text-xl opacity-90 max-w-2xl">
+              {description}
+            </p>
+          )}
+
+          {buttonText && buttonLink && (
+            <div className="mt-8">
+              <Button
+                size="lg"
+                className="bg-white text-black hover:bg-white/90"
+                asChild
+              >
+                <Link href={buttonLink}>
+                  {buttonText}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Slider Controls */}
-        {items.length > 1 && (
-          <>
-            <button
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg"
-              aria-label="Previous slide"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg"
-              aria-label="Next slide"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
+      {/* Slider Controls */}
+      {items.length > 1 && (
+        <>
+          {settings.showArrows !== false && (
+            <>
+              <button
+                onClick={prevSlide}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-3 rounded-full transition-colors"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="h-6 w-6 text-white" />
+              </button>
+              <button
+                onClick={nextSlide}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-3 rounded-full transition-colors"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="h-6 w-6 text-white" />
+              </button>
+            </>
+          )}
 
-            {/* Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          {/* Dots */}
+          {settings.showDots !== false && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
               {items.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
-                  className={`w-3 h-3 rounded-full ${
-                    index === currentSlide ? "bg-primary" : "bg-white/50"
+                  className={`w-3 h-3 rounded-full transition-colors ${
+                    index === currentSlide ? "bg-white" : "bg-white/40"
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
             </div>
-          </>
-        )}
-      </div>
+          )}
+        </>
+      )}
     </section>
   );
 }

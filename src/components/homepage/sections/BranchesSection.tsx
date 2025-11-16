@@ -18,6 +18,14 @@ export function BranchesSection({ section, language }: HomepageSectionProps) {
     return text[language] || text.en || text.ka || Object.values(text)[0] || "";
   };
 
+  // Helper to get localized value from custom_data with _en/_ka suffix
+  const getCustomDataText = (customData: Record<string, any>, key: string): string => {
+    const langKey = `${key}_${language}`;
+    const enKey = `${key}_en`;
+    const kaKey = `${key}_ka`;
+    return customData[langKey] || customData[enKey] || customData[kaKey] || customData[key] || "";
+  };
+
   const sectionStyle = {
     backgroundColor: section.background_color || undefined,
     backgroundImage: section.background_image_url
@@ -55,6 +63,13 @@ export function BranchesSection({ section, language }: HomepageSectionProps) {
           <div className="space-y-6">
             {items.map((item) => {
               const customData = item.custom_data || {};
+              const branchName = getCustomDataText(customData, "name") || getLocalizedText(item.label);
+              const cityName = getCustomDataText(customData, "city");
+              const address = getCustomDataText(customData, "address");
+              const phone = customData.phone_number || customData.phone;
+              const hours = customData.working_hours || customData.hours;
+              const mapLink = customData.google_maps_url || customData.map_link;
+
               return (
                 <Card key={item.id}>
                   <CardContent className="p-6">
@@ -63,45 +78,48 @@ export function BranchesSection({ section, language }: HomepageSectionProps) {
                         <div className="relative w-full md:w-64 h-48 flex-shrink-0">
                           <Image
                             src={customData.image}
-                            alt={getLocalizedText(item.label)}
+                            alt={branchName}
                             fill
                             className="object-cover rounded-lg"
                           />
                         </div>
                       )}
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-3">
-                          {getLocalizedText(item.label)}
+                        <h3 className="text-xl font-semibold mb-1">
+                          {branchName}
                         </h3>
+                        {cityName && (
+                          <p className="text-sm text-muted-foreground mb-3">{cityName}</p>
+                        )}
                         <div className="space-y-2">
-                          {customData.address && (
+                          {address && (
                             <div className="flex items-start gap-2 text-muted-foreground">
                               <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                              <span>{getLocalizedText(customData.address)}</span>
+                              <span>{address}</span>
                             </div>
                           )}
-                          {customData.phone && (
+                          {phone && (
                             <div className="flex items-center gap-2 text-muted-foreground">
                               <Phone className="h-5 w-5" />
                               <a
-                                href={`tel:${customData.phone}`}
+                                href={`tel:${phone.replace(/\s/g, "")}`}
                                 className="hover:text-primary"
                               >
-                                {customData.phone}
+                                {phone}
                               </a>
                             </div>
                           )}
-                          {customData.hours && (
+                          {hours && (
                             <div className="flex items-center gap-2 text-muted-foreground">
                               <Clock className="h-5 w-5" />
-                              <span>{getLocalizedText(customData.hours)}</span>
+                              <span>{hours}</span>
                             </div>
                           )}
                         </div>
-                        {customData.map_link && (
+                        {mapLink && (
                           <Button variant="outline" className="mt-4" asChild>
                             <a
-                              href={customData.map_link}
+                              href={mapLink}
                               target="_blank"
                               rel="noopener noreferrer"
                             >

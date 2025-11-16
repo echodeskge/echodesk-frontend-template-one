@@ -6,12 +6,20 @@ import type { HomepageSectionProps, LocalizedText } from "@/types/homepage";
 export function StatisticsSection({ section, language }: HomepageSectionProps) {
   const items = section.data || [];
   const settings = section.settings || {};
-  const columns = settings.columns || 4;
+  const columns = settings.columns || 3;
 
   const getLocalizedText = (text: LocalizedText | string | undefined): string => {
     if (!text) return "";
     if (typeof text === "string") return text;
     return text[language] || text.en || text.ka || Object.values(text)[0] || "";
+  };
+
+  // Helper to get localized value from custom_data with _en/_ka suffix
+  const getCustomDataText = (customData: Record<string, any>, key: string): string => {
+    const langKey = `${key}_${language}`;
+    const enKey = `${key}_en`;
+    const kaKey = `${key}_ka`;
+    return customData[langKey] || customData[enKey] || customData[kaKey] || customData[key] || "";
   };
 
   const sectionStyle = {
@@ -28,7 +36,7 @@ export function StatisticsSection({ section, language }: HomepageSectionProps) {
     4: "md:grid-cols-4",
     5: "md:grid-cols-5",
     6: "md:grid-cols-6",
-  }[columns] || "md:grid-cols-4";
+  }[columns] || "md:grid-cols-3";
 
   if (items.length === 0) {
     return null;
@@ -50,22 +58,23 @@ export function StatisticsSection({ section, language }: HomepageSectionProps) {
         <div className={`grid grid-cols-1 gap-8 ${gridCols}`}>
           {items.map((item) => {
             const customData = item.custom_data || {};
-            const value = customData.value || customData.number || 0;
+            // Support both "count" (from API) and "value"/"number" formats
+            const value = customData.count || customData.value || customData.number || item.label || "0";
             const suffix = customData.suffix || "";
             const prefix = customData.prefix || "";
             const icon = customData.icon;
-            const description = customData.description;
+            // Get label from custom_data with language suffix, or fall back to item.label
+            const label = getCustomDataText(customData, "label") || getLocalizedText(item.label);
 
             return (
               <StatCounter
                 key={item.id}
-                label={getLocalizedText(item.label)}
+                label={label}
                 value={value}
                 prefix={prefix}
                 suffix={suffix}
                 icon={icon}
-                description={description ? getLocalizedText(description) : undefined}
-                animate={settings.animate !== false}
+                animate={settings.showAnimation !== false}
               />
             );
           })}
@@ -77,7 +86,7 @@ export function StatisticsSection({ section, language }: HomepageSectionProps) {
 
 interface StatCounterProps {
   label: string;
-  value: number;
+  value: number | string;
   prefix?: string;
   suffix?: string;
   icon?: string;
@@ -94,27 +103,33 @@ function StatCounter({
   description,
   animate = true,
 }: StatCounterProps) {
-  const [count, setCount] = useState(animate ? 0 : value);
+  const [displayValue, setDisplayValue] = useState(animate ? "0" : String(value));
 
   useEffect(() => {
-    if (!animate) {
-      setCount(value);
+    if (!animate || typeof value === "string") {
+      setDisplayValue(String(value));
+      return;
+    }
+
+    const numericValue = typeof value === "number" ? value : parseInt(String(value).replace(/\D/g, ""), 10);
+    if (isNaN(numericValue)) {
+      setDisplayValue(String(value));
       return;
     }
 
     const duration = 2000; // 2 seconds
     const steps = 60;
     const stepDuration = duration / steps;
-    const increment = value / steps;
+    const increment = numericValue / steps;
     let current = 0;
 
     const timer = setInterval(() => {
       current += increment;
-      if (current >= value) {
-        setCount(value);
+      if (current >= numericValue) {
+        setDisplayValue(String(value));
         clearInterval(timer);
       } else {
-        setCount(Math.floor(current));
+        setDisplayValue(Math.floor(current).toLocaleString());
       }
     }, stepDuration);
 
@@ -129,9 +144,9 @@ function StatCounter({
           dangerouslySetInnerHTML={{ __html: icon }}
         />
       )}
-      <div className="text-4xl font-bold text-primary">
+      <div className="text-4xl md:text-5xl font-bold">
         {prefix}
-        {count.toLocaleString()}
+        {displayValue}
         {suffix}
       </div>
       <div className="mt-2 text-lg font-semibold">{label}</div>
