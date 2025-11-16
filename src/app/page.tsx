@@ -7,6 +7,8 @@ import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { useFeaturedProducts, useItemLists } from "@/hooks/use-products";
 import { useCategoryOptions } from "@/hooks/use-attributes";
+import { useHomepageSections } from "@/hooks/use-homepage";
+import { HomepageSection } from "@/components/homepage/HomepageSection";
 import Link from "next/link";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,10 +16,51 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function HomePage() {
   const config = useStoreConfig();
   const { t, getLocalizedValue, currentLanguage } = useLanguage();
+  const { data: homepageSections, isLoading: isLoadingSections } = useHomepageSections();
   const { data: featuredProducts, isLoading: isLoadingFeatured } = useFeaturedProducts(8);
   const { data: itemLists, isLoading: isLoadingCategories } = useItemLists();
   const { options: categoryOptions } = useCategoryOptions();
 
+  // If homepage sections are configured, render them dynamically
+  const hasDynamicSections = homepageSections && homepageSections.length > 0;
+
+  if (isLoadingSections) {
+    return (
+      <StoreLayout>
+        <div className="container py-20">
+          <div className="space-y-8">
+            <Skeleton className="h-96 w-full rounded-lg" />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-square w-full rounded-lg" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </StoreLayout>
+    );
+  }
+
+  // Render dynamic sections if available
+  if (hasDynamicSections) {
+    return (
+      <StoreLayout>
+        {homepageSections.map((section) => (
+          <HomepageSection
+            key={section.id}
+            section={section}
+            language={currentLanguage}
+          />
+        ))}
+      </StoreLayout>
+    );
+  }
+
+  // Fallback to static homepage content if no sections configured
   return (
     <StoreLayout>
       {/* Hero Section */}
