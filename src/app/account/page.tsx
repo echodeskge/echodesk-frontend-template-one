@@ -161,6 +161,28 @@ export default function AccountPage() {
             </CardContent>
           </Card>
 
+          {/* Payment Methods */}
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-4 pb-4">
+              <CreditCard className="h-8 w-8 text-primary" />
+              <div>
+                <CardTitle>{t("account.cardsTitle")}</CardTitle>
+                <CardDescription>{t("account.cardsDesc")}</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground">{t("account.savedCards")}</p>
+              </div>
+              <Button variant="ghost" className="w-full justify-between" asChild>
+                <Link href="/account/cards">
+                  {t("account.manageCards")}
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Wishlist */}
           {config.features.wishlist && (
             <Card>
