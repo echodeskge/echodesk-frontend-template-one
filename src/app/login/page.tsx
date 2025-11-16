@@ -12,12 +12,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const config = useStoreConfig();
   const router = useRouter();
   const { login, isLoading } = useAuth();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState({
     identifier: "",
@@ -49,19 +51,19 @@ export default function LoginPage() {
         <div className="mx-auto max-w-md">
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Welcome Back</CardTitle>
+              <CardTitle className="text-2xl">{t("auth.welcomeBack")}</CardTitle>
               <CardDescription>
-                Sign in to your {config.store.name} account
+                {t("auth.signInTo", { storeName: config.store.name })}
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-6">
                 <div className="space-y-2">
-                  <Label htmlFor="identifier">Email or Phone</Label>
+                  <Label htmlFor="identifier">{t("auth.emailOrPhone")}</Label>
                   <Input
                     id="identifier"
                     type="text"
-                    placeholder="john@example.com or +995555123456"
+                    placeholder={t("auth.emailOrPhonePlaceholder")}
                     value={formData.identifier}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, identifier: e.target.value }))
@@ -72,12 +74,12 @@ export default function LoginPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t("auth.password")}</Label>
                     <Link
                       href="/forgot-password"
                       className="text-sm text-primary hover:underline"
                     >
-                      Forgot password?
+                      {t("auth.forgotPassword")}
                     </Link>
                   </div>
                   <Input
@@ -104,17 +106,17 @@ export default function LoginPage() {
                     disabled={isSubmitting}
                   />
                   <label htmlFor="remember" className="text-sm">
-                    Remember me
+                    {t("auth.rememberMe")}
                   </label>
                 </div>
                 <Button className="w-full" type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing In...
+                      {t("auth.signingIn")}
                     </>
                   ) : (
-                    "Sign In"
+                    t("auth.signIn")
                   )}
                 </Button>
               </CardContent>
@@ -122,12 +124,12 @@ export default function LoginPage() {
             <CardFooter className="flex-col gap-4">
               <Separator />
               <p className="text-center text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                {t("auth.noAccount")}{" "}
                 <Link
                   href="/register"
                   className="text-primary hover:underline"
                 >
-                  Create one
+                  {t("auth.createAccount")}
                 </Link>
               </p>
             </CardFooter>

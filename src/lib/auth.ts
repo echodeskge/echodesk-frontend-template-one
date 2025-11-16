@@ -1,0 +1,159 @@
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import type { NextAuthConfig } from "next-auth";
+import axios from "@/api/axios";
+
+// Extend the built-in session types
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      phone?: string;
+    };
+    accessToken: string;
+    refreshToken: string;
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone?: string;
+    accessToken: string;
+    refreshToken: string;
+  }
+}
+
+declare module "@auth/core/jwt" {
+  interface JWT {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone?: string;
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpires?: number;
+  }
+}
+
+const config: NextAuthConfig = {
+  providers: [
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email or Phone", type: "text" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        try {
+          // Call the backend login API
+          const response = await axios.post("/api/ecommerce/client/login/", {
+            identifier: credentials.email,
+            password: credentials.password,
+          });
+
+          const data = response.data;
+
+          if (data.access && data.client) {
+            // Return user object that will be saved in JWT
+            return {
+              id: String(data.client.id),
+              email: data.client.email,
+              first_name: data.client.first_name,
+              last_name: data.client.last_name,
+              phone: data.client.phone,
+              accessToken: data.access,
+              refreshToken: data.refresh,
+            };
+          }
+
+          return null;
+        } catch (error) {
+          console.error("Login error:", error);
+          return null;
+        }
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      // Initial sign in
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.first_name = user.first_name;
+        token.last_name = user.last_name;
+        token.phone = user.phone;
+        token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
+        // Set token expiration (JWT tokens typically expire in 1 hour)
+        token.accessTokenExpires = Date.now() + 60 * 60 * 1000;
+      }
+
+      // Return previous token if the access token has not expired yet
+      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
+        return token;
+      }
+
+      // Access token has expired, try to refresh it
+      return refreshAccessToken(token);
+    },
+    async session({ session, token }) {
+      // Send properties to the client
+      session.user = {
+        id: token.id,
+        email: token.email,
+        first_name: token.first_name,
+        last_name: token.last_name,
+        phone: token.phone,
+      } as any;
+      session.accessToken = token.accessToken;
+      session.refreshToken = token.refreshToken;
+
+      return session;
+    },
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  secret: process.env.NEXTAUTH_SECRET || "your-secret-key-change-in-production",
+};
+
+async function refreshAccessToken(token: any) {
+  try {
+    const response = await axios.post("/api/ecommerce/client/token/refresh/", {
+      refresh: token.refreshToken,
+    });
+
+    const refreshedTokens = response.data;
+
+    return {
+      ...token,
+      accessToken: refreshedTokens.access,
+      accessTokenExpires: Date.now() + 60 * 60 * 1000, // 1 hour
+    };
+  } catch (error) {
+    console.error("Error refreshing access token:", error);
+
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
+  }
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth(config);

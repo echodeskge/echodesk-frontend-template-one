@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { StoreConfigProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { SessionProvider } from "@/components/providers/session-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import { LanguageProvider } from "@/contexts/language-context";
 import { Toaster } from "@/components/ui/sonner";
@@ -45,16 +46,18 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <QueryProvider>
-          <AuthProvider>
-            <LanguageProvider>
-              <StoreConfigProvider>
-                {children}
-                <Toaster position="top-right" />
-              </StoreConfigProvider>
-            </LanguageProvider>
-          </AuthProvider>
-        </QueryProvider>
+        <SessionProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <LanguageProvider>
+                <StoreConfigProvider>
+                  {children}
+                  <Toaster position="top-right" />
+                </StoreConfigProvider>
+              </LanguageProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </SessionProvider>
       </body>
     </html>
   );

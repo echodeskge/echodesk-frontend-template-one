@@ -119,7 +119,14 @@
     "forgotPassword": "Забыли пароль?",
     "noAccount": "Нет аккаунта?",
     "hasAccount": "Уже есть аккаунт?",
-    "createAccount": "Создать аккаунт"
+    "createAccount": "Создать аккаунт",
+    "welcomeBack": "С возвращением",
+    "signInTo": "Войдите в ваш аккаунт {storeName}",
+    "emailOrPhone": "Email или телефон",
+    "emailOrPhonePlaceholder": "john@example.com или +995555123456",
+    "rememberMe": "Запомнить меня",
+    "signingIn": "Вход...",
+    "signIn": "Войти"
   },
   "footer": {
     "aboutUs": "О нас",

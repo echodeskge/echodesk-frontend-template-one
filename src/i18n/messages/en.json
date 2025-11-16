@@ -119,7 +119,14 @@
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
-    "createAccount": "Create Account"
+    "createAccount": "Create Account",
+    "welcomeBack": "Welcome Back",
+    "signInTo": "Sign in to your {storeName} account",
+    "emailOrPhone": "Email or Phone",
+    "emailOrPhonePlaceholder": "john@example.com or +995555123456",
+    "rememberMe": "Remember me",
+    "signingIn": "Signing In...",
+    "signIn": "Sign In"
   },
   "footer": {
     "aboutUs": "About Us",

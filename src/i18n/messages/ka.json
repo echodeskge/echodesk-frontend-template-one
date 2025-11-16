@@ -119,7 +119,14 @@
     "forgotPassword": "დაგავიწყდათ პაროლი?",
     "noAccount": "არ გაქვთ ანგარიში?",
     "hasAccount": "უკვე გაქვთ ანგარიში?",
-    "createAccount": "ანგარიშის შექმნა"
+    "createAccount": "ანგარიშის შექმნა",
+    "welcomeBack": "კეთილი იყოს თქვენი დაბრუნება",
+    "signInTo": "შედით თქვენს {storeName} ანგარიშში",
+    "emailOrPhone": "ელ-ფოსტა ან ტელეფონი",
+    "emailOrPhonePlaceholder": "john@example.com ან +995555123456",
+    "rememberMe": "დამიმახსოვრე",
+    "signingIn": "შესვლა...",
+    "signIn": "შესვლა"
   },
   "footer": {
     "aboutUs": "ჩვენს შესახებ",

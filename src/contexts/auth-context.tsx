@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession, signIn, signOut } from "next-auth/react";
 import {
-  loginClient,
   registerClient,
   verifyEmail,
   passwordResetRequest,
@@ -16,7 +16,6 @@ import type {
   ClientLoginRequest,
   ClientRegistrationRequest,
   EmailVerificationRequestRequest,
-  PasswordResetRequestRequest,
   PasswordResetConfirmRequest,
 } from "@/api/generated/interfaces";
 import { toast } from "sonner";
@@ -41,21 +40,35 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const queryClient = useQueryClient();
+  const { data: session, status } = useSession();
   const [isInitialized, setIsInitialized] = useState(false);
   const [hasCheckedToken, setHasCheckedToken] = useState(false);
 
-  // Check if user has tokens on mount
+  // Sync NextAuth session with localStorage tokens
   useEffect(() => {
-    const accessToken = localStorage.getItem("ecommerce_access_token");
-    setIsInitialized(!!accessToken);
+    if (status === "loading") return;
+
+    if (session?.accessToken) {
+      // Store tokens from NextAuth session
+      localStorage.setItem("ecommerce_access_token", session.accessToken);
+      if (session.refreshToken) {
+        localStorage.setItem("ecommerce_refresh_token", session.refreshToken);
+      }
+      setIsInitialized(true);
+    } else {
+      // Clear tokens if no session
+      localStorage.removeItem("ecommerce_access_token");
+      localStorage.removeItem("ecommerce_refresh_token");
+      localStorage.removeItem("ecommerce_user");
+      setIsInitialized(false);
+    }
     setHasCheckedToken(true);
-  }, []);
+  }, [session, status]);
 
   // Fetch current user profile
   const {
     data: user,
     isLoading: isUserLoading,
-    refetch: refetchUser,
     isError,
   } = useQuery({
     queryKey: ["currentUser"],
@@ -77,31 +90,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     enabled: !!user && isInitialized,
     staleTime: 0,
     retry: 1,
-  });
-
-  // Login mutation
-  const loginMutation = useMutation({
-    mutationFn: loginClient,
-    onSuccess: (response: any) => {
-      // Store tokens
-      if (response.access) {
-        localStorage.setItem("ecommerce_access_token", response.access);
-      }
-      if (response.refresh) {
-        localStorage.setItem("ecommerce_refresh_token", response.refresh);
-      }
-      // Store user data
-      localStorage.setItem("ecommerce_user", JSON.stringify(response.client || response));
-
-      setIsInitialized(true);
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-      toast.success("Login successful!");
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || "Login failed. Please check your credentials.";
-      toast.error(message);
-      throw error;
-    },
   });
 
   // Register mutation
@@ -168,7 +156,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
 
   const login = async (data: ClientLoginRequest) => {
-    await loginMutation.mutateAsync(data);
+    const result = await signIn("credentials", {
+      email: data.identifier,
+      password: data.password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      toast.error("Login failed. Please check your credentials.");
+      throw new Error(result.error);
+    }
+
+    toast.success("Login successful!");
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
   };
 
   const register = async (data: ClientRegistrationRequest) => {
@@ -180,13 +180,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await verifyEmailMutation.mutateAsync(data);
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem("ecommerce_access_token");
     localStorage.removeItem("ecommerce_refresh_token");
     localStorage.removeItem("ecommerce_user");
     setIsInitialized(false);
-    setHasCheckedToken(true); // Keep as checked to avoid loading state
+    setHasCheckedToken(true);
     queryClient.clear();
+    await signOut({ redirect: false });
     toast.success("Logged out successfully");
     // Redirect to home page after logout
     if (typeof window !== "undefined") {
@@ -215,8 +216,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextType = {
     user: user || null,
-    isLoading: !hasCheckedToken || (isInitialized && isUserLoading),
-    isAuthenticated: !!user && isInitialized && !isError,
+    isLoading: status === "loading" || !hasCheckedToken || (isInitialized && isUserLoading),
+    isAuthenticated: !!session && !!user && isInitialized && !isError,
     login,
     register,
     verifyEmailCode,
