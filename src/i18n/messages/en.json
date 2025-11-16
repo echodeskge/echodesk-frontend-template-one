@@ -184,5 +184,43 @@
     "setAsDefault": "Set as default address",
     "deleteTitle": "Delete Address?",
     "deleteDesc": "This action cannot be undone. This will permanently delete the address from your account."
+  },
+  "footer": {
+    "shop": "Shop",
+    "allProducts": "All Products",
+    "sale": "Sale",
+    "categories": "Categories",
+    "newArrivals": "New Arrivals",
+    "customerService": "Customer Service",
+    "myAccount": "My Account",
+    "orderTracking": "Order Tracking",
+    "faq": "FAQ",
+    "returnsRefunds": "Returns & Refunds",
+    "shippingInfo": "Shipping Info",
+    "contactUs": "Contact Us",
+    "allRightsReserved": "All rights reserved",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
+  "account": {
+    "title": "My Account",
+    "welcomeBack": "Welcome back",
+    "profile": "Profile",
+    "profileDesc": "Manage your personal info",
+    "editProfile": "Edit Profile",
+    "ordersTitle": "Orders",
+    "ordersDesc": "Track your orders",
+    "totalOrders": "Total orders",
+    "viewAllOrders": "View All Orders",
+    "addressesTitle": "Addresses",
+    "addressesDesc": "Manage shipping addresses",
+    "savedAddresses": "Saved addresses",
+    "manageAddresses": "Manage Addresses",
+    "wishlistTitle": "Wishlist",
+    "wishlistDesc": "Your saved items",
+    "viewWishlist": "View Wishlist",
+    "recentOrders": "Recent Orders",
+    "viewAll": "View All",
+    "noOrdersYet": "No orders yet"
   }
 }

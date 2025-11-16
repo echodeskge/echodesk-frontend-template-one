@@ -87,16 +87,18 @@ export function ProductCard({
   };
 
   return (
-    <Card className="group overflow-hidden">
-      <div className="relative aspect-square overflow-hidden">
-        <Link href={`/products/${slug}`}>
-          <Image
-            src={image || "/placeholder.svg"}
-            alt={name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+    <Card className="group overflow-hidden py-0">
+      <div className="relative aspect-square overflow-hidden bg-muted/30 p-2">
+        <Link href={`/products/${slug}`} className="block h-full w-full">
+          <div className="relative h-full w-full overflow-hidden rounded-lg">
+            <Image
+              src={image || "/placeholder.svg"}
+              alt={name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
         </Link>
 
         {/* Badges */}
@@ -109,12 +111,12 @@ export function ProductCard({
         </div>
 
         {/* Quick Actions */}
-        <div className="absolute right-2 top-2 flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="absolute right-4 top-4 flex flex-col gap-2 translate-x-12 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
           {config.features.wishlist && (
             <Button
               size="icon"
               variant="secondary"
-              className={`h-8 w-8 ${inWishlist ? "text-red-500" : ""}`}
+              className={`h-9 w-9 rounded-full shadow-md backdrop-blur-sm bg-white/90 hover:bg-white hover:scale-110 transition-all ${inWishlist ? "text-red-500" : "text-gray-700"}`}
               onClick={handleToggleWishlist}
               disabled={isWishlistPending}
             >
@@ -130,7 +132,7 @@ export function ProductCard({
           <Button
             size="icon"
             variant="secondary"
-            className="h-8 w-8"
+            className="h-9 w-9 rounded-full shadow-md backdrop-blur-sm bg-white/90 hover:bg-white hover:scale-110 transition-all text-gray-700"
             onClick={handleAddToCart}
             disabled={addToCart.isPending}
           >
@@ -143,7 +145,7 @@ export function ProductCard({
         </div>
       </div>
 
-      <CardContent className="p-4">
+      <CardContent className="px-4 pb-4 pt-4">
         <Link href={`/products/${slug}`}>
           <h3 className="line-clamp-2 text-sm font-medium hover:text-primary">
             {name}

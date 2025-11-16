@@ -7,7 +7,6 @@ import { ProductCard } from "@/components/product/product-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -150,14 +149,6 @@ function ProductsContent() {
       {/* Price Range */}
       <div className="space-y-4">
         <Label className="font-semibold">{t("productsPage.priceRange")}</Label>
-        <Slider
-          value={priceRange}
-          min={0}
-          max={1000}
-          step={10}
-          onValueChange={setPriceRange}
-          className="py-4"
-        />
         <div className="flex items-center gap-2">
           <Input
             type="number"
@@ -165,16 +156,16 @@ function ProductsContent() {
             onChange={(e) =>
               setPriceRange([Number(e.target.value), priceRange[1]])
             }
-            className="w-24"
+            placeholder="Min"
           />
-          <span>-</span>
+          <span className="text-muted-foreground">-</span>
           <Input
             type="number"
             value={priceRange[1]}
             onChange={(e) =>
               setPriceRange([priceRange[0], Number(e.target.value)])
             }
-            className="w-24"
+            placeholder="Max"
           />
         </div>
         <Button onClick={applyPriceFilter} className="w-full">
@@ -259,7 +250,7 @@ function ProductsContent() {
               value={filters.ordering}
               onValueChange={(value) => updateFilters({ ordering: value })}
             >
-              <SelectTrigger className="w-[120px] md:w-[180px] text-xs md:text-sm">
+              <SelectTrigger className="h-10 w-[120px] md:w-[180px] text-xs md:text-sm">
                 <SelectValue placeholder={t("productsPage.sortBy")} />
               </SelectTrigger>
               <SelectContent>
@@ -272,19 +263,25 @@ function ProductsContent() {
             </Select>
 
             {/* View Mode */}
-            <div className="hidden items-center gap-1 rounded-md border p-1 md:flex">
+            <div className="relative hidden items-center gap-0.5 rounded-lg bg-muted p-1 md:flex">
+              {/* Sliding background indicator */}
+              <div
+                className={`absolute h-8 w-8 rounded-md bg-background shadow-sm transition-all duration-300 ease-in-out ${
+                  viewMode === "grid" ? "left-1" : "left-[calc(50%+0.125rem)]"
+                }`}
+              />
               <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="relative z-10 h-8 w-8 rounded-md hover:bg-transparent"
                 onClick={() => setViewMode("grid")}
               >
                 <Grid3X3 className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
+                variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="relative z-10 h-8 w-8 rounded-md hover:bg-transparent"
                 onClick={() => setViewMode("list")}
               >
                 <LayoutList className="h-4 w-4" />

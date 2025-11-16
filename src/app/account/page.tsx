@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useOrders } from "@/hooks/use-orders";
 import { formatPrice } from "@/lib/store-config";
 import {
@@ -25,6 +26,7 @@ import {
 export default function AccountPage() {
   const config = useStoreConfig();
   const router = useRouter();
+  const { t } = useLanguage();
   const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
   const { data: ordersData, isLoading: isOrdersLoading } = useOrders(1, "-created_at");
 
@@ -77,25 +79,25 @@ export default function AccountPage() {
       <div className="container py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">My Account</h1>
+            <h1 className="text-3xl font-bold">{t("account.title")}</h1>
             <p className="mt-1 text-muted-foreground">
-              Welcome back, {user?.first_name || "User"}
+              {t("account.welcomeBack")}, {user?.first_name || "User"}
             </p>
           </div>
           <Button variant="outline" onClick={logout}>
             <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
+            {t("common.signOut")}
           </Button>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Profile */}
           <Card>
-            <CardHeader className="flex flex-row items-center gap-4">
+            <CardHeader className="flex flex-row items-center gap-4 pb-4">
               <User className="h-8 w-8 text-primary" />
               <div>
-                <CardTitle>Profile</CardTitle>
-                <CardDescription>Manage your personal info</CardDescription>
+                <CardTitle>{t("account.profile")}</CardTitle>
+                <CardDescription>{t("account.profileDesc")}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
@@ -106,7 +108,7 @@ export default function AccountPage() {
               </div>
               <Button variant="ghost" className="w-full justify-between" asChild>
                 <Link href="/account/profile">
-                  Edit Profile
+                  {t("account.editProfile")}
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -115,21 +117,21 @@ export default function AccountPage() {
 
           {/* Orders */}
           <Card>
-            <CardHeader className="flex flex-row items-center gap-4">
+            <CardHeader className="flex flex-row items-center gap-4 pb-4">
               <Package className="h-8 w-8 text-primary" />
               <div>
-                <CardTitle>Orders</CardTitle>
-                <CardDescription>Track your orders</CardDescription>
+                <CardTitle>{t("account.ordersTitle")}</CardTitle>
+                <CardDescription>{t("account.ordersDesc")}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
                 <p className="text-2xl font-bold">{ordersData?.count || 0}</p>
-                <p className="text-sm text-muted-foreground">Total orders</p>
+                <p className="text-sm text-muted-foreground">{t("account.totalOrders")}</p>
               </div>
               <Button variant="ghost" className="w-full justify-between" asChild>
                 <Link href="/account/orders">
-                  View All Orders
+                  {t("account.viewAllOrders")}
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -138,21 +140,21 @@ export default function AccountPage() {
 
           {/* Addresses */}
           <Card>
-            <CardHeader className="flex flex-row items-center gap-4">
+            <CardHeader className="flex flex-row items-center gap-4 pb-4">
               <MapPin className="h-8 w-8 text-primary" />
               <div>
-                <CardTitle>Addresses</CardTitle>
-                <CardDescription>Manage shipping addresses</CardDescription>
+                <CardTitle>{t("account.addressesTitle")}</CardTitle>
+                <CardDescription>{t("account.addressesDesc")}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
                 <p className="text-2xl font-bold">{user?.addresses?.length || 0}</p>
-                <p className="text-sm text-muted-foreground">Saved addresses</p>
+                <p className="text-sm text-muted-foreground">{t("account.savedAddresses")}</p>
               </div>
               <Button variant="ghost" className="w-full justify-between" asChild>
                 <Link href="/account/addresses">
-                  Manage Addresses
+                  {t("account.manageAddresses")}
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -162,11 +164,11 @@ export default function AccountPage() {
           {/* Wishlist */}
           {config.features.wishlist && (
             <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
+              <CardHeader className="flex flex-row items-center gap-4 pb-4">
                 <Heart className="h-8 w-8 text-primary" />
                 <div>
-                  <CardTitle>Wishlist</CardTitle>
-                  <CardDescription>Your saved items</CardDescription>
+                  <CardTitle>{t("account.wishlistTitle")}</CardTitle>
+                  <CardDescription>{t("account.wishlistDesc")}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
@@ -176,7 +178,7 @@ export default function AccountPage() {
                   asChild
                 >
                   <Link href="/wishlist">
-                    View Wishlist
+                    {t("account.viewWishlist")}
                     <ChevronRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -189,9 +191,9 @@ export default function AccountPage() {
         <Card className="mt-8">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Recent Orders</CardTitle>
+              <CardTitle>{t("account.recentOrders")}</CardTitle>
               <Button variant="ghost" asChild>
-                <Link href="/account/orders">View All</Link>
+                <Link href="/account/orders">{t("account.viewAll")}</Link>
               </Button>
             </div>
           </CardHeader>
@@ -204,7 +206,7 @@ export default function AccountPage() {
               </div>
             ) : !ordersData?.results?.length ? (
               <p className="text-center text-muted-foreground">
-                No orders yet
+                {t("account.noOrdersYet")}
               </p>
             ) : (
               <div className="space-y-4">

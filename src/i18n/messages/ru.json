@@ -184,5 +184,43 @@
     "setAsDefault": "Сделать основным адресом",
     "deleteTitle": "Удалить адрес?",
     "deleteDesc": "Это действие нельзя отменить. Адрес будет удален из вашего аккаунта."
+  },
+  "footer": {
+    "shop": "Магазин",
+    "allProducts": "Все товары",
+    "sale": "Распродажа",
+    "categories": "Категории",
+    "newArrivals": "Новинки",
+    "customerService": "Обслуживание клиентов",
+    "myAccount": "Мой аккаунт",
+    "orderTracking": "Отслеживание заказа",
+    "faq": "Часто задаваемые вопросы",
+    "returnsRefunds": "Возврат и возмещение",
+    "shippingInfo": "Информация о доставке",
+    "contactUs": "Свяжитесь с нами",
+    "allRightsReserved": "Все права защищены",
+    "privacyPolicy": "Политика конфиденциальности",
+    "termsOfService": "Условия использования"
+  },
+  "account": {
+    "title": "Мой аккаунт",
+    "welcomeBack": "С возвращением",
+    "profile": "Профиль",
+    "profileDesc": "Управление личными данными",
+    "editProfile": "Редактировать профиль",
+    "ordersTitle": "Заказы",
+    "ordersDesc": "Отслеживание заказов",
+    "totalOrders": "Всего заказов",
+    "viewAllOrders": "Просмотреть все заказы",
+    "addressesTitle": "Адреса",
+    "addressesDesc": "Управление адресами доставки",
+    "savedAddresses": "Сохраненные адреса",
+    "manageAddresses": "Управление адресами",
+    "wishlistTitle": "Избранное",
+    "wishlistDesc": "Ваши сохраненные товары",
+    "viewWishlist": "Просмотреть избранное",
+    "recentOrders": "Недавние заказы",
+    "viewAll": "Показать все",
+    "noOrdersYet": "Заказов пока нет"
   }
 }

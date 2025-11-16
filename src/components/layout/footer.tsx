@@ -4,9 +4,11 @@ import Link from "next/link";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useStoreConfig } from "@/components/providers/theme-provider";
+import { useLanguage } from "@/contexts/language-context";
 
 export function Footer() {
   const config = useStoreConfig();
+  const { t } = useLanguage();
 
   return (
     <footer className="bg-muted/50">
@@ -55,14 +57,14 @@ export function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Shop</h3>
+            <h3 className="text-lg font-semibold">{t("footer.shop")}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/products"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  All Products
+                  {t("footer.allProducts")}
                 </Link>
               </li>
               <li>
@@ -70,7 +72,7 @@ export function Footer() {
                   href="/sale"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  Sale
+                  {t("footer.sale")}
                 </Link>
               </li>
               <li>
@@ -78,7 +80,7 @@ export function Footer() {
                   href="/categories"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  Categories
+                  {t("footer.categories")}
                 </Link>
               </li>
               <li>
@@ -86,7 +88,7 @@ export function Footer() {
                   href="/new-arrivals"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  New Arrivals
+                  {t("footer.newArrivals")}
                 </Link>
               </li>
             </ul>
@@ -94,14 +96,14 @@ export function Footer() {
 
           {/* Customer Service */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Customer Service</h3>
+            <h3 className="text-lg font-semibold">{t("footer.customerService")}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/account"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  My Account
+                  {t("footer.myAccount")}
                 </Link>
               </li>
               <li>
@@ -109,7 +111,7 @@ export function Footer() {
                   href="/account/orders"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  Order Tracking
+                  {t("footer.orderTracking")}
                 </Link>
               </li>
               <li>
@@ -117,7 +119,7 @@ export function Footer() {
                   href="/faq"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  FAQ
+                  {t("footer.faq")}
                 </Link>
               </li>
               <li>
@@ -125,7 +127,7 @@ export function Footer() {
                   href="/returns"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  Returns & Refunds
+                  {t("footer.returnsRefunds")}
                 </Link>
               </li>
               <li>
@@ -133,7 +135,7 @@ export function Footer() {
                   href="/shipping"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  Shipping Info
+                  {t("footer.shippingInfo")}
                 </Link>
               </li>
             </ul>
@@ -141,7 +143,7 @@ export function Footer() {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Contact Us</h3>
+            <h3 className="text-lg font-semibold">{t("footer.contactUs")}</h3>
             <ul className="space-y-3 text-sm">
               {config.contact.email && (
                 <li className="flex items-center gap-2">
@@ -182,21 +184,20 @@ export function Footer() {
         {/* Copyright */}
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} {config.store.name}. All rights
-            reserved.
+            © {new Date().getFullYear()} {config.store.name}. {t("footer.allRightsReserved")}.
           </p>
           <div className="flex gap-4 text-sm">
             <Link
               href="/privacy"
               className="text-muted-foreground hover:text-primary"
             >
-              Privacy Policy
+              {t("footer.privacyPolicy")}
             </Link>
             <Link
               href="/terms"
               className="text-muted-foreground hover:text-primary"
             >
-              Terms of Service
+              {t("footer.termsOfService")}
             </Link>
           </div>
         </div>
