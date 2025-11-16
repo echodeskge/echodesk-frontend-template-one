@@ -156,17 +156,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
 
   const login = async (data: ClientLoginRequest) => {
+    console.log("[AuthContext] login() called with identifier:", data.identifier);
+
     const result = await signIn("credentials", {
       email: data.identifier,
       password: data.password,
       redirect: false,
     });
 
+    console.log("[AuthContext] signIn result:", result);
+
     if (result?.error) {
+      console.error("[AuthContext] Login error:", result.error);
       toast.error("Login failed. Please check your credentials.");
       throw new Error(result.error);
     }
 
+    if (!result?.ok) {
+      console.error("[AuthContext] Login not OK:", result);
+      toast.error("Login failed. Please try again.");
+      throw new Error("Login failed");
+    }
+
+    console.log("[AuthContext] Login successful!");
     toast.success("Login successful!");
     queryClient.invalidateQueries({ queryKey: ["currentUser"] });
   };

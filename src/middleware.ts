@@ -17,7 +17,9 @@ export default auth((req) => {
   );
 
   if (isProtectedRoute && !isAuthenticated) {
-    const loginUrl = new URL("/login", req.url);
+    // Use nextUrl to preserve the current origin
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = "/login";
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -26,7 +28,10 @@ export default auth((req) => {
   const isAuthRoute = authRoutes.some((route) => pathname === route);
 
   if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL("/", req.url));
+    const homeUrl = req.nextUrl.clone();
+    homeUrl.pathname = "/";
+    homeUrl.search = "";
+    return NextResponse.redirect(homeUrl);
   }
 
   return NextResponse.next();

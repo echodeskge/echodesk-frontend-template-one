@@ -1,7 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import type { NextAuthConfig } from "next-auth";
-import axios from "@/api/axios";
+
+// Get API URL - needs to work on server-side
+const getApiUrl = (): string => {
+  // Use environment variable (works on both client and server)
+  return process.env.NEXT_PUBLIC_API_URL || "https://demo.api.echodesk.ge";
+};
 
 // Extend the built-in session types
 declare module "next-auth" {
@@ -50,22 +55,49 @@ const config: NextAuthConfig = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("[NextAuth] authorize() called with:", {
+          hasEmail: !!credentials?.email,
+          hasPassword: !!credentials?.password,
+        });
+
         if (!credentials?.email || !credentials?.password) {
+          console.error("[NextAuth] Missing credentials");
           return null;
         }
 
         try {
-          // Call the backend login API
-          const response = await axios.post("/api/ecommerce/client/login/", {
-            identifier: credentials.email,
-            password: credentials.password,
+          // Call the backend login API using fetch (works on server-side)
+          const apiUrl = getApiUrl();
+          console.log("[NextAuth] Calling API:", `${apiUrl}/api/ecommerce/clients/login/`);
+
+          const response = await fetch(`${apiUrl}/api/ecommerce/clients/login/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              identifier: credentials.email,
+              password: credentials.password,
+            }),
           });
 
-          const data = response.data;
+          console.log("[NextAuth] API response status:", response.status);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("[NextAuth] Login failed:", response.status, response.statusText, errorText);
+            return null;
+          }
+
+          const data = await response.json();
+          console.log("[NextAuth] API response data:", {
+            hasAccess: !!data.access,
+            hasClient: !!data.client,
+          });
 
           if (data.access && data.client) {
             // Return user object that will be saved in JWT
-            return {
+            const user = {
               id: String(data.client.id),
               email: data.client.email,
               first_name: data.client.first_name,
@@ -74,11 +106,14 @@ const config: NextAuthConfig = {
               accessToken: data.access,
               refreshToken: data.refresh,
             };
+            console.log("[NextAuth] Returning user:", { ...user, accessToken: "[REDACTED]", refreshToken: "[REDACTED]" });
+            return user;
           }
 
+          console.error("[NextAuth] No access token or client in response");
           return null;
         } catch (error) {
-          console.error("Login error:", error);
+          console.error("[NextAuth] Login error:", error);
           return null;
         }
       },
@@ -135,11 +170,22 @@ const config: NextAuthConfig = {
 
 async function refreshAccessToken(token: any) {
   try {
-    const response = await axios.post("/api/ecommerce/client/token/refresh/", {
-      refresh: token.refreshToken,
+    const apiUrl = getApiUrl();
+    const response = await fetch(`${apiUrl}/api/ecommerce/clients/refresh-token/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refresh: token.refreshToken,
+      }),
     });
 
-    const refreshedTokens = response.data;
+    if (!response.ok) {
+      throw new Error("Failed to refresh token");
+    }
+
+    const refreshedTokens = await response.json();
 
     return {
       ...token,
