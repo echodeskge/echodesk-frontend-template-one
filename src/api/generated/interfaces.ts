@@ -39,7 +39,7 @@ export interface AttributeTypeEnum {
 export interface Cart {
   id: number;
   client: number;
-  delivery_address: ClientAddress | null;
+  delivery_address: ClientAddress;
   status?: CartStatusEnum;
   notes?: string;
   items: CartItem[];
@@ -52,8 +52,8 @@ export interface Cart {
 export interface CartItem {
   id: number;
   cart: number;
-  product: ProductList | number;
-  variant: ProductVariant | number | null;
+  product: ProductList;
+  variant: ProductVariant;
   quantity?: number;
   price_at_add: string;
   subtotal: string;
@@ -90,11 +90,6 @@ export interface CartRequest {
 
 export interface CartStatusEnum {
   [key: string]: any;
-}
-
-export interface CartGetOrCreateResponse {
-  cart: Cart;
-  created: boolean;
 }
 
 export interface ClientAddress {
@@ -142,6 +137,10 @@ export interface ClientRegistrationResponse {
   message: string;
 }
 
+export interface DisplayModeEnum {
+  [key: string]: any;
+}
+
 export interface EcommerceClient {
   id: number;
   first_name: string;
@@ -186,12 +185,28 @@ export interface FavoriteProductCreate {
 }
 
 export interface FavoriteProductCreateRequest {
-  client?: number;
+  client: number;
   product: number;
 }
 
 export interface FavoriteProductRequest {
   client: number;
+}
+
+export interface HomepageSectionPublic {
+  id: number;
+  title: any;
+  subtitle?: any;
+  section_type: SectionTypeEnum;
+  position?: number;
+  display_mode?: DisplayModeEnum;
+  settings?: any;
+  background_color?: string;
+  background_image_url?: string;
+  text_color?: string;
+  attribute_key?: string;
+  attribute_value?: string;
+  data: string;
 }
 
 export interface ItemListDetail {
@@ -216,6 +231,27 @@ export interface ItemListMinimal {
   items_count: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface Language {
+  id: number;
+  code: string;
+  name: any;
+  is_default?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ListItem {
+  id: number;
+  label: string;
+  custom_id?: string;
+  position?: number;
+  is_active?: boolean;
+  custom_data?: any;
+  children: string;
 }
 
 export interface Order {
@@ -335,6 +371,13 @@ export interface PaginatedItemListMinimalList {
   next?: string;
   previous?: string;
   results: ItemListMinimal[];
+}
+
+export interface PaginatedLanguageList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Language[];
 }
 
 export interface PaginatedOrderList {
@@ -555,6 +598,10 @@ export interface ResendVerificationCodeRequestRequest {
 export interface ResendVerificationCodeResponse {
   verification_token: string;
   message: string;
+}
+
+export interface SectionTypeEnum {
+  [key: string]: any;
 }
 
 export interface StatusF43enum {

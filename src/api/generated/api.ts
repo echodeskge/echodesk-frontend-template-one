@@ -14,7 +14,6 @@ import type {
   PaginatedCartList,
   CartRequest,
   Cart,
-  CartGetOrCreateResponse,
   PaginatedCartItemList,
   CartItemCreateRequest,
   CartItemCreate,
@@ -27,8 +26,12 @@ import type {
   FavoriteProduct,
   FavoriteProductRequest,
   PatchedFavoriteProductRequest,
+  HomepageSectionPublic,
   PaginatedItemListMinimalList,
   ItemListDetail,
+  ListItem,
+  PaginatedLanguageList,
+  Language,
   PaginatedOrderList,
   OrderCreateRequest,
   OrderCreate,
@@ -294,7 +297,7 @@ export async function ecommerceClientCartDestroy(id: string): Promise<any> {
   return response.data;
 }
 
-export async function ecommerceClientCartGetOrCreateRetrieve(): Promise<CartGetOrCreateResponse> {
+export async function ecommerceClientCartGetOrCreateRetrieve(): Promise<Cart> {
   const response = await axios.get(`/api/ecommerce/client/cart/get_or_create/`);
   return response.data;
 }
@@ -358,6 +361,13 @@ export async function ecommerceClientFavoritesDestroy(
   return response.data;
 }
 
+export async function ecommerceClientHomepageList(): Promise<
+  HomepageSectionPublic[]
+> {
+  const response = await axios.get(`/api/ecommerce/client/homepage/`);
+  return response.data;
+}
+
 export async function ecommerceClientItemListsList(
   ordering?: string,
   page?: number,
@@ -380,6 +390,39 @@ export async function ecommerceClientItemListsRetrieve(
   id: number,
 ): Promise<ItemListDetail> {
   const response = await axios.get(`/api/ecommerce/client/item-lists/${id}/`);
+  return response.data;
+}
+
+export async function ecommerceClientItemListsItemsRetrieve(
+  id: number,
+  itemId: string,
+): Promise<ListItem> {
+  const response = await axios.get(
+    `/api/ecommerce/client/item-lists/${id}/items/${itemId}/`,
+  );
+  return response.data;
+}
+
+export async function ecommerceClientLanguagesList(
+  ordering?: string,
+  page?: number,
+): Promise<PaginatedLanguageList> {
+  const response = await axios.get(
+    `/api/ecommerce/client/languages/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function ecommerceClientLanguagesRetrieve(
+  id: number,
+): Promise<Language> {
+  const response = await axios.get(`/api/ecommerce/client/languages/${id}/`);
   return response.data;
 }
 

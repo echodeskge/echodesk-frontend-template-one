@@ -71,7 +71,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     queryKey: ["cart"],
     queryFn: async () => {
       const response = await ecommerceClientCartGetOrCreateRetrieve();
-      return response.cart;
+      // API returns { cart: {...} } but generated type expects Cart directly
+      return (response as any).cart || response;
     },
     enabled: !!user && isInitialized,
     staleTime: 0,

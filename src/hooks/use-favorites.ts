@@ -114,7 +114,8 @@ export function useBackendWishlist() {
         removeFromFavorites.mutate(String(favoriteId));
       }
     } else {
-      addToFavorites.mutate({ product: id });
+      // Generated type requires client field but backend auto-populates it from JWT
+      addToFavorites.mutate({ product: id } as any);
     }
   };
 
