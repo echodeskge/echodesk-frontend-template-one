@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { LanguageProvider } from "@/contexts/language-context";
 import { Toaster } from "@/components/ui/sonner";
 import { getStoreConfig } from "@/lib/store-config";
+import { ThemeSwitcher } from "@/components/demo/theme-switcher";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({
                 <StoreConfigProvider>
                   {children}
                   <Toaster position="top-right" />
+                  <ThemeSwitcher />
                 </StoreConfigProvider>
               </LanguageProvider>
             </AuthProvider>
