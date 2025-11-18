@@ -126,7 +126,10 @@
     "emailOrPhonePlaceholder": "john@example.com ან +995555123456",
     "rememberMe": "დამიმახსოვრე",
     "signingIn": "შესვლა...",
-    "signIn": "შესვლა"
+    "signIn": "შესვლა",
+    "orContinueWith": "ან გააგრძელეთ",
+    "dontHaveAccount": "არ გაქვთ ანგარიში?",
+    "signUp": "რეგისტრაცია"
   },
   "footer": {
     "aboutUs": "ჩვენს შესახებ",

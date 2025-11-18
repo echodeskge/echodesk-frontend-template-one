@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -7,6 +8,7 @@ import { Heart, ShoppingCart, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LoginDialog } from "@/components/auth/login-dialog";
 import { formatPrice } from "@/lib/store-config";
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
@@ -46,6 +48,9 @@ export function ProductCard({
   const addToCart = useAddToCart();
   const { toggleWishlist, isInWishlist, isPending: isWishlistPending } = useBackendWishlist();
 
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+
   const discountPercentage =
     compareAtPrice && compareAtPrice > price
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
@@ -58,7 +63,17 @@ export function ProductCard({
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      router.push("/login");
+      // Store the action to execute after login
+      setPendingAction(() => () => {
+        if (cart) {
+          addToCart.mutate({
+            cart: cart.id,
+            product: parseInt(id),
+            quantity: 1,
+          });
+        }
+      });
+      setShowLoginDialog(true);
       return;
     }
 
@@ -79,11 +94,23 @@ export function ProductCard({
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      router.push("/login");
+      // Store the action to execute after login
+      setPendingAction(() => () => toggleWishlist(id));
+      setShowLoginDialog(true);
       return;
     }
 
     toggleWishlist(id);
+  };
+
+  const handleLoginSuccess = () => {
+    // Execute pending action after successful login
+    if (pendingAction) {
+      setTimeout(() => {
+        pendingAction();
+        setPendingAction(null);
+      }, 500); // Small delay to allow data to load
+    }
   };
 
   return (
@@ -181,6 +208,14 @@ export function ProductCard({
           {t("common.addToCart")}
         </Button>
       </CardContent>
+
+      {/* Login Dialog */}
+      <LoginDialog
+        open={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        onSuccess={handleLoginSuccess}
+        message="Please sign in to add items to your cart"
+      />
     </Card>
   );
 }

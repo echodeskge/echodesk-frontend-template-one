@@ -126,7 +126,10 @@
     "emailOrPhonePlaceholder": "john@example.com или +995555123456",
     "rememberMe": "Запомнить меня",
     "signingIn": "Вход...",
-    "signIn": "Войти"
+    "signIn": "Войти",
+    "orContinueWith": "Или продолжить с",
+    "dontHaveAccount": "Нет аккаунта?",
+    "signUp": "Регистрация"
   },
   "footer": {
     "aboutUs": "О нас",

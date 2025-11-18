@@ -126,7 +126,10 @@
     "emailOrPhonePlaceholder": "john@example.com or +995555123456",
     "rememberMe": "Remember me",
     "signingIn": "Signing In...",
-    "signIn": "Sign In"
+    "signIn": "Sign In",
+    "orContinueWith": "Or continue with",
+    "dontHaveAccount": "Don't have an account?",
+    "signUp": "Sign up"
   },
   "footer": {
     "aboutUs": "About Us",
