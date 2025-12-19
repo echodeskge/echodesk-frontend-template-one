@@ -1,15 +1,32 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
-// Get API URL from environment variable
-const getApiUrl = (): string => {
-  // Always prioritize environment variable
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+// Store tenant API URL set by TenantProvider
+let _tenantApiUrl: string | null = null;
 
+/**
+ * Set the tenant API URL (called by TenantProvider on client-side)
+ * This allows axios to use the correct API URL for the current tenant
+ */
+export function setTenantApiUrl(url: string): void {
+  _tenantApiUrl = url;
+}
+
+/**
+ * Get API URL - prioritizes tenant context, then env var, then hostname detection
+ */
+const getApiUrl = (): string => {
+  // 1. Use tenant API URL if set by TenantProvider
+  if (_tenantApiUrl) {
+    return _tenantApiUrl;
+  }
+
+  // 2. Use environment variable
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (apiUrl) {
     return apiUrl;
   }
 
-  // Fallback for development - use demo as default tenant
+  // 3. Fallback: derive from hostname (client-side only)
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
 
@@ -19,11 +36,15 @@ const getApiUrl = (): string => {
     }
 
     // For production ecommerce sites, derive from hostname
-    // e.g., store.ecommerce.echodesk.ge -> tenant.api.echodesk.ge
+    // e.g., store.ecommerce.echodesk.ge -> store.api.echodesk.ge
     if (hostname.includes('.ecommerce.echodesk.ge')) {
       const subdomain = hostname.split('.')[0];
       return `https://${subdomain}.api.echodesk.ge`;
     }
+
+    // For custom domains, we can't derive API URL from hostname
+    // The tenant context should have been set by TenantProvider
+    console.warn('[Axios] No tenant API URL set for custom domain:', hostname);
   }
 
   // Default fallback to demo

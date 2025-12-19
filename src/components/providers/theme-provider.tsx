@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { getStoreConfig, StoreConfig } from "@/lib/store-config";
+import { useTenant } from "@/contexts/tenant-context";
 
 interface ThemeColors {
   primary: string;
@@ -155,13 +156,13 @@ const applyTheme = (theme: ThemeConfig) => {
 };
 
 // Fetch theme from API
-const fetchTheme = async (): Promise<ThemeConfig | null> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://demo.api.echodesk.ge";
-
+const fetchTheme = async (apiUrl: string): Promise<ThemeConfig | null> => {
   try {
-    // Check localStorage cache first
-    const cached = localStorage.getItem('echodesk_theme');
-    const cacheTime = localStorage.getItem('echodesk_theme_time');
+    // Check localStorage cache first (keyed by API URL for multi-tenant)
+    const cacheKey = `echodesk_theme_${apiUrl}`;
+    const timeKey = `echodesk_theme_time_${apiUrl}`;
+    const cached = localStorage.getItem(cacheKey);
+    const cacheTime = localStorage.getItem(timeKey);
 
     // Use cache if less than 5 minutes old
     if (cached && cacheTime) {
@@ -185,9 +186,9 @@ const fetchTheme = async (): Promise<ThemeConfig | null> => {
 
     const theme = await response.json();
 
-    // Cache the theme
-    localStorage.setItem('echodesk_theme', JSON.stringify(theme));
-    localStorage.setItem('echodesk_theme_time', Date.now().toString());
+    // Cache the theme (keyed by API URL)
+    localStorage.setItem(cacheKey, JSON.stringify(theme));
+    localStorage.setItem(timeKey, Date.now().toString());
 
     return theme;
   } catch (error) {
@@ -198,12 +199,16 @@ const fetchTheme = async (): Promise<ThemeConfig | null> => {
 
 export function StoreConfigProvider({ children }: StoreConfigProviderProps) {
   const config = getStoreConfig();
+  const tenant = useTenant();
   const [themeLoaded, setThemeLoaded] = useState(false);
+
+  // Get API URL from tenant context (multi-tenant) or fall back to env var
+  const apiUrl = tenant.apiUrl || process.env.NEXT_PUBLIC_API_URL || "https://demo.api.echodesk.ge";
 
   useEffect(() => {
     // Fetch and apply theme from API
     const loadTheme = async () => {
-      const theme = await fetchTheme();
+      const theme = await fetchTheme(apiUrl);
 
       if (theme) {
         applyTheme(theme);
@@ -249,7 +254,7 @@ export function StoreConfigProvider({ children }: StoreConfigProviderProps) {
     };
 
     loadTheme();
-  }, [config.theme]);
+  }, [config.theme, apiUrl]);
 
   return (
     <StoreConfigContext.Provider value={config}>

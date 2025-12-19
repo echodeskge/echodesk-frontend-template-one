@@ -6,8 +6,10 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import { LanguageProvider } from "@/contexts/language-context";
+import { TenantProvider } from "@/contexts/tenant-context";
 import { Toaster } from "@/components/ui/sonner";
 import { getStoreConfig } from "@/lib/store-config";
+import { getTenantConfigFromHeaders } from "@/lib/tenant-utils";
 import { ThemeSwitcher } from "@/components/demo/theme-switcher";
 
 const inter = Inter({
@@ -84,30 +86,36 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get tenant configuration from middleware headers (multi-tenant mode)
+  // Falls back to environment variables for development/preview
+  const tenantConfig = await getTenantConfigFromHeaders();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={tenantConfig.locale || "en"} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <SessionProvider>
-          <QueryProvider>
-            <AuthProvider>
-              <LanguageProvider>
-                <StoreConfigProvider>
-                  {children}
-                  <Toaster position="top-right" />
-                  <ThemeSwitcher />
-                </StoreConfigProvider>
-              </LanguageProvider>
-            </AuthProvider>
-          </QueryProvider>
-        </SessionProvider>
+        <TenantProvider config={tenantConfig}>
+          <SessionProvider>
+            <QueryProvider>
+              <AuthProvider>
+                <LanguageProvider>
+                  <StoreConfigProvider>
+                    {children}
+                    <Toaster position="top-right" />
+                    <ThemeSwitcher />
+                  </StoreConfigProvider>
+                </LanguageProvider>
+              </AuthProvider>
+            </QueryProvider>
+          </SessionProvider>
+        </TenantProvider>
       </body>
     </html>
   );
