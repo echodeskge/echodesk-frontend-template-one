@@ -202,10 +202,11 @@ export async function fetchHomepageSections(
   revalidate?: number
 ): Promise<HomepageSection[]> {
   try {
-    const endpoint = "/api/ecommerce/client/homepage-sections/";
-    return serverFetch<HomepageSection[]>(endpoint, {
+    const endpoint = "/api/ecommerce/client/homepage/";
+    const response = await serverFetch<{ sections: HomepageSection[] }>(endpoint, {
       next: revalidate ? { revalidate } : undefined,
     });
+    return response.sections || [];
   } catch (error) {
     console.error("Error fetching homepage sections:", error);
     return [];
