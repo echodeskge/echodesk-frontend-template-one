@@ -4,6 +4,7 @@
  * Cannot use localStorage or window - server-side only
  */
 
+import { headers } from "next/headers";
 import type {
   PaginatedProductListList,
   ProductDetail,
@@ -12,11 +13,22 @@ import type {
 
 /**
  * Get API URL for server-side requests
+ * In multi-tenant mode, reads from x-tenant-api header set by middleware
  */
-function getServerApiUrl(): string {
-  // Use environment variable
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+async function getServerApiUrl(): Promise<string> {
+  // Try to get from middleware headers (multi-tenant mode)
+  try {
+    const headersList = await headers();
+    const tenantApiUrl = headersList.get("x-tenant-api");
+    if (tenantApiUrl) {
+      return tenantApiUrl;
+    }
+  } catch (e) {
+    // headers() might fail in some contexts
+  }
 
+  // Fallback to environment variable
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (apiUrl) {
     return apiUrl;
   }
@@ -32,7 +44,7 @@ async function serverFetch<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const baseURL = getServerApiUrl();
+  const baseURL = await getServerApiUrl();
   const url = `${baseURL}${endpoint}`;
 
   try {
