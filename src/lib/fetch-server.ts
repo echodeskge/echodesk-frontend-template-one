@@ -19,7 +19,7 @@ async function getServerApiUrl(): Promise<string> {
   // Try to get from middleware headers (multi-tenant mode)
   try {
     const headersList = await headers();
-    const tenantApiUrl = headersList.get("x-tenant-api");
+    const tenantApiUrl = headersList.get("x-tenant-api-url");
     if (tenantApiUrl) {
       return tenantApiUrl;
     }

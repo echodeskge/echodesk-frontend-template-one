@@ -39,6 +39,18 @@ interface StoreConfigProviderProps {
   children: React.ReactNode;
 }
 
+// Helper to get currency symbol from currency code
+function getCurrencySymbol(currency: string): string {
+  const symbols: Record<string, string> = {
+    GEL: "₾",
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    RUB: "₽",
+  };
+  return symbols[currency] || currency;
+}
+
 // Helper to format color - keep HSL values as-is since our CSS expects raw HSL values
 const formatColor = (colorString: string): string | null => {
   const trimmed = colorString.trim();
@@ -198,12 +210,49 @@ const fetchTheme = async (apiUrl: string): Promise<ThemeConfig | null> => {
 };
 
 export function StoreConfigProvider({ children }: StoreConfigProviderProps) {
-  const config = getStoreConfig();
+  const envConfig = getStoreConfig();
   const tenant = useTenant();
   const [themeLoaded, setThemeLoaded] = useState(false);
 
   // Get API URL from tenant context (multi-tenant) or fall back to env var
   const apiUrl = tenant.apiUrl || process.env.NEXT_PUBLIC_API_URL || "https://demo.api.echodesk.ge";
+
+  // Merge tenant config with env config - tenant takes precedence
+  const config: StoreConfig = {
+    tenant: {
+      id: tenant.tenantId || envConfig.tenant.id,
+      schema: tenant.schema || envConfig.tenant.schema,
+    },
+    api: {
+      url: tenant.apiUrl || envConfig.api.url,
+    },
+    store: {
+      name: tenant.storeName || envConfig.store.name,
+      description: envConfig.store.description, // TODO: Add to tenant config
+      logo: tenant.storeLogo || envConfig.store.logo,
+    },
+    theme: {
+      primaryColor: tenant.primaryColor || envConfig.theme.primaryColor,
+      secondaryColor: tenant.secondaryColor || envConfig.theme.secondaryColor,
+      accentColor: tenant.accentColor || envConfig.theme.accentColor,
+    },
+    locale: {
+      currency: tenant.currency || envConfig.locale.currency,
+      currencySymbol: getCurrencySymbol(tenant.currency || envConfig.locale.currency),
+      locale: tenant.locale || envConfig.locale.locale,
+    },
+    features: {
+      wishlist: tenant.features.wishlist ?? envConfig.features.wishlist,
+      reviews: tenant.features.reviews ?? envConfig.features.reviews,
+      compare: tenant.features.compare ?? envConfig.features.compare,
+    },
+    social: envConfig.social, // TODO: Add to tenant config
+    contact: {
+      email: tenant.contactEmail || envConfig.contact.email,
+      phone: tenant.contactPhone || envConfig.contact.phone,
+      address: envConfig.contact.address, // TODO: Add to tenant config
+    },
+  };
 
   useEffect(() => {
     // Fetch and apply theme from API
