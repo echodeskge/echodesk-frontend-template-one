@@ -13,8 +13,8 @@ import {
 } from "@/lib/fetch-server";
 import { HomePageClient } from "@/components/pages/home-page-client";
 
-// Revalidate every 60 seconds (ISR)
-export const revalidate = 60;
+// Revalidate every 10 seconds for near-instant updates after admin changes
+export const revalidate = 10;
 
 /**
  * Homepage metadata for SEO
@@ -42,9 +42,9 @@ export default async function HomePage() {
 
   // Fetch data server-side for SEO
   const [homepageSections, featuredProducts, itemLists] = await Promise.all([
-    fetchHomepageSections(60).catch(() => []),
-    fetchFeaturedProducts(8, 60).catch(() => []),
-    fetchItemLists(undefined, 60).catch(() => []),
+    fetchHomepageSections(10).catch(() => []),
+    fetchFeaturedProducts(8, 10).catch(() => []),
+    fetchItemLists(undefined, 10).catch(() => []),
   ]);
 
   // Generate structured data for SEO
