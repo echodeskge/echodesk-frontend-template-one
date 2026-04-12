@@ -52,7 +52,10 @@
     "discount": "{percent}% OFF",
     "featured": "Featured",
     "new": "New",
-    "sku": "SKU"
+    "sku": "SKU",
+    "recentlyViewed": "Recently Viewed",
+    "copyLink": "Copy Link",
+    "linkCopied": "Link copied!"
   },
   "productsPage": {
     "title": "Products",
@@ -117,7 +120,23 @@
     "invalidPromo": "Invalid promo code",
     "discountApplied": "Discount applied",
     "discount": "Discount",
-    "taxIncluded": "Tax included"
+    "taxIncluded": "Tax included",
+    "guestCheckout": "Guest Checkout",
+    "howToContinue": "How would you like to continue?",
+    "guestCheckoutNote": "You can create an account after placing your order.",
+    "guestFieldsRequired": "Please fill in all required fields",
+    "guestCheckoutFailed": "Guest checkout failed. Please try again."
+  },
+  "orderConfirmation": {
+    "thankYou": "Thank You!",
+    "orderPlaced": "Your order has been placed successfully.",
+    "estimatedDelivery": "Estimated delivery",
+    "trackingNumber": "Tracking"
+  },
+  "cookies": {
+    "message": "We use cookies to improve your experience. By continuing, you agree to our cookie policy.",
+    "accept": "Accept",
+    "decline": "Decline"
   },
   "auth": {
     "login": "Login",

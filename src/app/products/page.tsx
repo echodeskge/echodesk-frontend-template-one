@@ -4,6 +4,7 @@ import { getStoreConfig } from "@/lib/store-config";
 import {
   generatePageMetadata,
   generateProductCollectionSchema,
+  generateBreadcrumbSchema,
 } from "@/lib/seo";
 import { StructuredData } from "@/components/structured-data";
 import { fetchProducts, ProductFilters } from "@/lib/fetch-server";
@@ -100,10 +101,16 @@ export default async function ProductsPage({
     url: `${baseUrl}/products`,
   });
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: baseUrl },
+    { name: "Products", url: `${baseUrl}/products` },
+  ]);
+
   return (
     <>
       {/* Structured Data for SEO */}
       <StructuredData data={collectionSchema} />
+      <StructuredData data={breadcrumbSchema} />
 
       {/* Suspense wrapper for client component */}
       <Suspense

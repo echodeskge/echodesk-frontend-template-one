@@ -28,6 +28,7 @@ import {
 import axiosInstance from "@/api/axios";
 import type { ClientAddressRequest } from "@/api/generated/interfaces";
 import { useQuery } from "@tanstack/react-query";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import {
   CreditCard,
   Truck,
@@ -59,11 +60,29 @@ interface ShippingMethod {
   is_active: boolean;
 }
 
+// Guest checkout form state
+interface GuestInfo {
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+}
+
 export default function CheckoutPage() {
   const config = useStoreConfig();
   const router = useRouter();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { t, getLocalizedValue } = useLanguage();
+
+  // Guest checkout mode: null = not decided, "guest" = guest, "authenticated" = signed in
+  const [checkoutMode, setCheckoutMode] = useState<"guest" | "authenticated" | null>(null);
+  const [guestInfo, setGuestInfo] = useState<GuestInfo>({
+    email: "",
+    first_name: "",
+    last_name: "",
+    phone: "",
+  });
+  const [guestSubmitting, setGuestSubmitting] = useState(false);
 
   const [step, setStep] = useState(1);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -181,12 +200,12 @@ export default function CheckoutPage() {
     }
   }, [shippingMethods, selectedShippingMethodId]);
 
-  // Redirect if not authenticated
+  // Set checkout mode automatically if authenticated
   useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      router.push("/login?callbackUrl=/checkout");
+    if (!isAuthLoading && isAuthenticated) {
+      setCheckoutMode("authenticated");
     }
-  }, [isAuthLoading, isAuthenticated, router]);
+  }, [isAuthLoading, isAuthenticated]);
 
   // Redirect if cart is empty
   useEffect(() => {
@@ -297,8 +316,8 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Cash on delivery or already processed - go to orders
-      router.push("/account/orders");
+      // Cash on delivery or already processed - go to order confirmation
+      router.push(`/order-confirmation?order_id=${(result as any).id}`);
     } catch {
       // Error is handled by the hook
     }
@@ -318,8 +337,9 @@ export default function CheckoutPage() {
     return (
       <StoreLayout>
         <div className="container py-8">
-          <Skeleton className="h-10 w-48" />
-          <div className="mt-8 flex items-center justify-center gap-4">
+          <Skeleton className="h-4 w-40 mb-6" />
+          <Skeleton className="h-8 w-48 mb-6" />
+          <div className="flex items-center justify-center gap-4">
             <Skeleton className="h-8 w-8 rounded-full" />
             <Skeleton className="h-px w-12" />
             <Skeleton className="h-8 w-8 rounded-full" />
@@ -327,8 +347,9 @@ export default function CheckoutPage() {
             <Skeleton className="h-8 w-8 rounded-full" />
           </div>
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <Skeleton className="h-96" />
+            <div className="lg:col-span-2 space-y-4">
+              <Skeleton className="h-48" />
+              <Skeleton className="h-48" />
             </div>
             <Skeleton className="h-64" />
           </div>
@@ -337,19 +358,217 @@ export default function CheckoutPage() {
     );
   }
 
-  // Not authenticated guard
-  if (!isAuthenticated) {
+  // Guest checkout handler
+  const handleGuestCheckout = async () => {
+    if (!guestInfo.email || !guestInfo.first_name || !guestInfo.last_name) {
+      toast.error(t("checkout.guestFieldsRequired") || "Please fill in all required fields");
+      return;
+    }
+
+    setGuestSubmitting(true);
+    try {
+      const localCart = typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("guest_cart") || "[]")
+        : [];
+
+      const result = await axiosInstance.post("/api/ecommerce/client/guest-checkout/", {
+        email: guestInfo.email,
+        first_name: guestInfo.first_name,
+        last_name: guestInfo.last_name,
+        phone: guestInfo.phone || undefined,
+        items: localCart.length > 0 ? localCart : undefined,
+        notes: orderNotes || undefined,
+      });
+
+      if (result.data.payment_url) {
+        window.location.href = result.data.payment_url;
+        return;
+      }
+
+      router.push(`/order-confirmation?order_id=${result.data.id}`);
+    } catch (error: any) {
+      const message = error.response?.data?.detail || t("checkout.guestCheckoutFailed") || "Guest checkout failed. Please try again.";
+      toast.error(message);
+    } finally {
+      setGuestSubmitting(false);
+    }
+  };
+
+  // Show guest/sign-in choice when not authenticated
+  if (!isAuthLoading && !isAuthenticated && checkoutMode === null) {
+    return (
+      <StoreLayout>
+        <div className="container py-12">
+          <div className="mx-auto max-w-md">
+            <h1 className="text-3xl font-bold text-center mb-8">
+              {t("checkout.title")}
+            </h1>
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-4">
+                    <ShoppingBag className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h2 className="text-xl font-semibold">
+                      {t("checkout.howToContinue") || "How would you like to continue?"}
+                    </h2>
+                    <div className="space-y-3">
+                      <Button
+                        className="w-full"
+                        size="lg"
+                        onClick={() => setCheckoutMode("guest")}
+                      >
+                        {t("checkout.guestCheckout") || "Guest Checkout"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        size="lg"
+                        onClick={() => router.push("/login?callbackUrl=/checkout")}
+                      >
+                        {t("common.signIn") || "Sign In"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t("checkout.guestCheckoutNote") || "You can create an account after placing your order."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </StoreLayout>
+    );
+  }
+
+  // Show guest checkout form
+  if (!isAuthLoading && !isAuthenticated && checkoutMode === "guest") {
+    return (
+      <StoreLayout>
+        <div className="container py-12">
+          <div className="mx-auto max-w-lg">
+            <Button
+              variant="ghost"
+              className="mb-4"
+              onClick={() => setCheckoutMode(null)}
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              {t("common.back") || "Back"}
+            </Button>
+            <h1 className="text-3xl font-bold mb-8">
+              {t("checkout.guestCheckout") || "Guest Checkout"}
+            </h1>
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="guest-first-name">
+                      {t("checkout.firstName") || "First Name"} *
+                    </Label>
+                    <Input
+                      id="guest-first-name"
+                      placeholder={t("checkout.firstName") || "First Name"}
+                      value={guestInfo.first_name}
+                      onChange={(e) =>
+                        setGuestInfo((prev) => ({
+                          ...prev,
+                          first_name: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="guest-last-name">
+                      {t("checkout.lastName") || "Last Name"} *
+                    </Label>
+                    <Input
+                      id="guest-last-name"
+                      placeholder={t("checkout.lastName") || "Last Name"}
+                      value={guestInfo.last_name}
+                      onChange={(e) =>
+                        setGuestInfo((prev) => ({
+                          ...prev,
+                          last_name: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guest-email">
+                    {t("checkout.email") || "Email"} *
+                  </Label>
+                  <Input
+                    id="guest-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={guestInfo.email}
+                    onChange={(e) =>
+                      setGuestInfo((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guest-phone">
+                    {t("checkout.phone") || "Phone"}
+                  </Label>
+                  <Input
+                    id="guest-phone"
+                    type="tel"
+                    placeholder="+995 555 123 456"
+                    value={guestInfo.phone}
+                    onChange={(e) =>
+                      setGuestInfo((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <Separator />
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={handleGuestCheckout}
+                  disabled={guestSubmitting}
+                >
+                  {guestSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t("common.loading") || "Processing..."}
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="mr-2 h-4 w-4" />
+                      {t("checkout.placeOrder") || "Place Order"}
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </StoreLayout>
+    );
+  }
+
+  // Authenticated: not loaded yet
+  if (!isAuthenticated && checkoutMode !== "guest") {
     return null;
   }
 
-  // Empty cart guard
-  if (cartItems.length === 0) {
+  // Empty cart guard (only for authenticated users)
+  if (isAuthenticated && cartItems.length === 0 && !isCartLoading && !isItemsLoading) {
     return null;
   }
 
   return (
     <StoreLayout>
       <div className="container py-8">
+        <Breadcrumbs items={[{ label: "Cart", href: "/cart" }, { label: "Checkout" }]} />
         {/* Header */}
         <div className="mb-2">
           <Button variant="ghost" asChild className="mb-4">

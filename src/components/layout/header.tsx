@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, User, Menu, Heart, LogOut } from "lucide-react";
+import { ShoppingCart, User, Menu, Heart, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,22 +19,13 @@ import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useCartCount } from "@/hooks/use-cart";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { useState } from "react";
+import { SearchAutocomplete } from "@/components/search-autocomplete";
 
 export function Header() {
   const config = useStoreConfig();
   const { user, isAuthenticated, logout } = useAuth();
   const { t } = useLanguage();
   const cartCount = useCartCount();
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -176,18 +165,7 @@ export function Header() {
 
         {/* Search */}
         <div className="flex flex-1 items-center justify-end space-x-2">
-          <form onSubmit={handleSearch} className="w-full flex-1 md:w-auto md:flex-none">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder={t("common.search")}
-                className="w-full pl-8 md:w-[200px] lg:w-[300px]"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </form>
+          <SearchAutocomplete />
 
           {/* Language Switcher */}
           <LanguageSwitcher />

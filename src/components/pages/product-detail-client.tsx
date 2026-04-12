@@ -13,6 +13,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LoginDialog } from "@/components/auth/login-dialog";
+import { RecentlyViewed } from "@/components/recently-viewed";
+import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -85,6 +93,22 @@ export function ProductDetailClient({
   const addToCart = useAddToCart();
   const { toggleWishlist, isInWishlist, isPending: isWishlistPending } =
     useBackendWishlist();
+  const { addToRecentlyViewed } = useRecentlyViewed();
+
+  // Track recently viewed product
+  useEffect(() => {
+    const displayName = typeof product.name === "string"
+      ? product.name
+      : (product.name?.en || Object.values(product.name || {})[0] || "");
+    addToRecentlyViewed({
+      id: product.id,
+      slug: product.slug,
+      name: displayName,
+      image: product.image || "",
+      price: product.price,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   // --- Variant Logic ---
   const variantAttributes = useMemo(() => {
@@ -321,7 +345,7 @@ export function ProductDetailClient({
                   >
                     <Image
                       src={image}
-                      alt={`${productName} ${index + 1}`}
+                      alt={`${productName} - Image ${index + 1}`}
                       fill
                       className="object-cover"
                     />
@@ -479,9 +503,55 @@ export function ProductDetailClient({
                   )}
                 </Button>
               )}
-              <Button size="lg" variant="outline">
-                <Share2 className="h-5 w-5" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="lg" variant="outline">
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== "undefined" ? window.location.href : "";
+                      if (typeof navigator !== "undefined" && navigator.share) {
+                        navigator.share({
+                          title: productName,
+                          url,
+                        }).catch(() => {
+                          // User cancelled or share failed, fall back silently
+                        });
+                      } else {
+                        window.open(
+                          `https://wa.me/?text=${encodeURIComponent(productName + " " + url)}`,
+                          "_blank"
+                        );
+                      }
+                    }}
+                  >
+                    WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== "undefined" ? window.location.href : "";
+                      window.open(
+                        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+                        "_blank"
+                      );
+                    }}
+                  >
+                    Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== "undefined" ? window.location.href : "";
+                      navigator.clipboard.writeText(url);
+                      toast.success(t("product.linkCopied") || "Link copied!");
+                    }}
+                  >
+                    {t("product.copyLink") || "Copy Link"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <Separator />
@@ -716,6 +786,9 @@ export function ProductDetailClient({
             </div>
           </section>
         )}
+
+        {/* Recently Viewed Products */}
+        <RecentlyViewed />
       </div>
 
       {/* Login Dialog */}

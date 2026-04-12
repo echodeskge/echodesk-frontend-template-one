@@ -37,6 +37,7 @@ import { formatPrice } from "@/lib/store-config";
 import { cn } from "@/lib/utils";
 import axiosInstance from "@/api/axios";
 import { toast } from "sonner";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import {
   Package,
   ChevronLeft,
@@ -217,6 +218,7 @@ export default function OrdersPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
+        <Breadcrumbs items={[{ label: "My Account", href: "/account" }, { label: "Orders" }]} />
         {/* Header */}
         <div className="mb-8">
           <Button variant="ghost" asChild className="mb-4">

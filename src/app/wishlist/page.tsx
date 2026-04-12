@@ -13,6 +13,7 @@ import { useAddToCart, useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/store-config";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import {
   Heart,
   ShoppingCart,
@@ -172,6 +173,7 @@ export default function WishlistPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
+        <Breadcrumbs items={[{ label: "Wishlist" }]} />
         {/* Header */}
         <div className="mb-8">
           <Button variant="ghost" asChild className="mb-4">

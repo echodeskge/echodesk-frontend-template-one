@@ -25,6 +25,7 @@ import {
   useRemoveFromCart,
 } from "@/hooks/use-cart";
 import { formatPrice } from "@/lib/store-config";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import {
   Minus,
   Plus,
@@ -138,6 +139,7 @@ export default function CartPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
+        <Breadcrumbs items={[{ label: "Cart" }]} />
         <h1 className="text-3xl font-bold">{t("cart.title")}</h1>
         <p className="mt-2 text-muted-foreground">
           {cartItems.length}{" "}

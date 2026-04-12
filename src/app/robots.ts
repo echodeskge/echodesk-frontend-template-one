@@ -11,12 +11,18 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: ["/", "/products", "/products/*"],
         disallow: [
           "/api/",
           "/cart",
           "/checkout",
+          "/account",
           "/account/*",
+          "/login",
+          "/register",
+          "/forgot-password",
+          "/wishlist",
+          "/order-confirmation",
           "/_next/",
           "/admin/",
         ],

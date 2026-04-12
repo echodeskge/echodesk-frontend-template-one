@@ -327,11 +327,75 @@ export function generateProductCollectionSchema({
 }
 
 /**
+ * Generate LocalBusiness/Store schema for homepage
+ */
+export interface LocalBusinessSchema {
+  name: string;
+  url: string;
+  email?: string;
+  telephone?: string;
+  address?: string;
+}
+
+export function generateLocalBusinessSchema({
+  name,
+  url,
+  email,
+  telephone,
+  address,
+}: LocalBusinessSchema) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name,
+    url,
+    ...(email && { email }),
+    ...(telephone && { telephone }),
+    ...(address && {
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: address,
+      },
+    }),
+  };
+}
+
+/**
+ * Generate FAQPage schema
+ */
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export function generateFAQSchema(items: FAQItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}
+
+/**
  * Helper to get canonical URL
  */
 export function getCanonicalUrl(path: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
   return `${baseUrl}${path}`;
+}
+
+/**
+ * Helper to get base URL
+ */
+export function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
 }
 
 /**

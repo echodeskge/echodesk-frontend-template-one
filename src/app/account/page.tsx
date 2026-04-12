@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useOrders } from "@/hooks/use-orders";
 import { formatPrice } from "@/lib/store-config";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import {
   User,
   Package,
@@ -77,6 +78,7 @@ export default function AccountPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
+        <Breadcrumbs items={[{ label: "My Account" }]} />
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">{t("account.title")}</h1>

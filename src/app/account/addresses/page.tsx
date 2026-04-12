@@ -51,6 +51,7 @@ import type {
   ClientAddressRequest,
 } from "@/api/generated/interfaces";
 import { toast } from "sonner";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import {
   MapPin,
   ChevronLeft,
@@ -244,6 +245,7 @@ export default function AddressesPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
+        <Breadcrumbs items={[{ label: "My Account", href: "/account" }, { label: "Addresses" }]} />
         {/* Header */}
         <div className="mb-8">
           <Button variant="ghost" asChild className="mb-4">

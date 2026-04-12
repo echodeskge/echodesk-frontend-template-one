@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { getStoreConfig } from "@/lib/store-config";
 import { getTenantConfigFromHeaders } from "@/lib/tenant-utils";
 import { ThemeSwitcher } from "@/components/demo/theme-switcher";
+import { CookieConsent } from "@/components/cookie-consent";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -67,6 +68,13 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [`${baseUrl}/og-image.png`],
       creator: "@yourstore",
     },
+    alternates: {
+      canonical: baseUrl,
+      languages: {
+        en: baseUrl,
+        ka: baseUrl,
+      },
+    },
     robots: {
       index: true,
       follow: true,
@@ -98,7 +106,8 @@ export default async function RootLayout({
   return (
     <html lang={tenantConfig.locale || "en"} suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#3b82f6" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <TenantProvider config={tenantConfig}>
@@ -109,6 +118,7 @@ export default async function RootLayout({
                   <StoreConfigProvider>
                     {children}
                     <Toaster position="top-right" />
+                    <CookieConsent />
                     <ThemeSwitcher />
                   </StoreConfigProvider>
                 </LanguageProvider>

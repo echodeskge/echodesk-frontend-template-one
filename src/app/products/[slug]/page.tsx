@@ -54,7 +54,7 @@ export async function generateMetadata({
       product.short_description || product.name
     );
 
-    return generateProductMetadata({
+    const baseMetadata = generateProductMetadata({
       name,
       description,
       slug,
@@ -64,6 +64,14 @@ export async function generateMetadata({
       availability: (product.quantity || 0) > 0,
       brand: config.store.name,
     });
+
+    return {
+      ...baseMetadata,
+      other: {
+        "product:price:amount": String(product.price),
+        "product:price:currency": config.locale.currency,
+      },
+    };
   } catch (error) {
     console.error("Error generating product metadata:", error);
     return {

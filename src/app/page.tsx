@@ -4,6 +4,8 @@ import {
   generatePageMetadata,
   generateOrganizationSchema,
   generateWebSiteSchema,
+  generateBreadcrumbSchema,
+  generateLocalBusinessSchema,
 } from "@/lib/seo";
 import { StructuredData } from "@/components/structured-data";
 import {
@@ -62,11 +64,25 @@ export default async function HomePage() {
     searchUrl: `${baseUrl}/products?search={search_term_string}`,
   });
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: baseUrl },
+  ]);
+
+  const localBusinessSchema = generateLocalBusinessSchema({
+    name: config.store.name,
+    url: baseUrl,
+    email: config.contact.email || undefined,
+    telephone: config.contact.phone || undefined,
+    address: config.contact.address || undefined,
+  });
+
   return (
     <>
       {/* Structured Data for SEO */}
       <StructuredData data={organizationSchema} />
       <StructuredData data={websiteSchema} />
+      <StructuredData data={breadcrumbSchema} />
+      <StructuredData data={localBusinessSchema} />
 
       {/* Client Component with server-fetched data */}
       <HomePageClient
