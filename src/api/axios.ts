@@ -118,7 +118,7 @@ const createAxiosInstance = (baseURL?: string): AxiosInstance => {
 
           if (refreshToken) {
             const response = await axios.post(
-              `${getApiUrl()}/api/ecommerce/client/token/refresh/`,
+              `${getApiUrl()}/api/ecommerce/clients/refresh-token/`,
               { refresh: refreshToken }
             );
 
