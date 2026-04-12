@@ -44,6 +44,7 @@ export default function RegisterPage() {
   });
 
   const [verificationCode, setVerificationCode] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,13 +60,26 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
+    setFieldErrors({});
 
     try {
       const result = await register(formData);
       setVerificationToken(result.verificationToken);
       setStep("verify");
-    } catch (error) {
-      // Error handled in auth context
+    } catch (error: any) {
+      // Extract field-level errors from backend response
+      const data = error?.response?.data;
+      if (data && typeof data === 'object') {
+        const errors: Record<string, string> = {};
+        for (const [key, value] of Object.entries(data)) {
+          if (Array.isArray(value)) {
+            errors[key] = value[0];
+          } else if (typeof value === 'string') {
+            errors[key] = value;
+          }
+        }
+        setFieldErrors(errors);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -183,15 +197,12 @@ export default function RegisterPage() {
                       type="text"
                       placeholder="John"
                       value={formData.first_name}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          first_name: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => { setFormData((prev) => ({ ...prev, first_name: e.target.value })); setFieldErrors((prev) => ({ ...prev, first_name: "" })); }}
                       required
                       disabled={isSubmitting}
+                      className={fieldErrors.first_name ? "border-destructive" : ""}
                     />
+                    {fieldErrors.first_name && <p className="text-xs text-destructive">{fieldErrors.first_name}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="last_name">{t("checkout.lastName")}</Label>
@@ -200,15 +211,12 @@ export default function RegisterPage() {
                       type="text"
                       placeholder="Doe"
                       value={formData.last_name}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          last_name: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => { setFormData((prev) => ({ ...prev, last_name: e.target.value })); setFieldErrors((prev) => ({ ...prev, last_name: "" })); }}
                       required
                       disabled={isSubmitting}
+                      className={fieldErrors.last_name ? "border-destructive" : ""}
                     />
+                    {fieldErrors.last_name && <p className="text-xs text-destructive">{fieldErrors.last_name}</p>}
                   </div>
                 </div>
 
@@ -219,12 +227,12 @@ export default function RegisterPage() {
                     type="email"
                     placeholder="john@example.com"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, email: e.target.value }))
-                    }
+                    onChange={(e) => { setFormData((prev) => ({ ...prev, email: e.target.value })); setFieldErrors((prev) => ({ ...prev, email: "" })); }}
                     required
                     disabled={isSubmitting}
+                    className={fieldErrors.email ? "border-destructive" : ""}
                   />
+                  {fieldErrors.email && <p className="text-xs text-destructive">{fieldErrors.email}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -234,15 +242,12 @@ export default function RegisterPage() {
                     type="tel"
                     placeholder="+995555123456"
                     value={formData.phone_number}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        phone_number: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => { setFormData((prev) => ({ ...prev, phone_number: e.target.value })); setFieldErrors((prev) => ({ ...prev, phone_number: "" })); }}
                     required
                     disabled={isSubmitting}
+                    className={fieldErrors.phone_number ? "border-destructive" : ""}
                   />
+                  {fieldErrors.phone_number && <p className="text-xs text-destructive">{fieldErrors.phone_number}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -252,16 +257,13 @@ export default function RegisterPage() {
                     type="password"
                     placeholder="Min. 8 characters"
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        password: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => { setFormData((prev) => ({ ...prev, password: e.target.value })); setFieldErrors((prev) => ({ ...prev, password: "" })); }}
                     required
                     disabled={isSubmitting}
                     minLength={8}
+                    className={fieldErrors.password ? "border-destructive" : ""}
                   />
+                  {fieldErrors.password && <p className="text-xs text-destructive">{fieldErrors.password}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -273,17 +275,22 @@ export default function RegisterPage() {
                     type="password"
                     placeholder="Confirm your password"
                     value={formData.password_confirm}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        password_confirm: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => { setFormData((prev) => ({ ...prev, password_confirm: e.target.value })); setFieldErrors((prev) => ({ ...prev, password_confirm: "" })); }}
                     required
                     disabled={isSubmitting}
                     minLength={8}
+                    className={fieldErrors.password_confirm ? "border-destructive" : ""}
                   />
+                  {fieldErrors.password_confirm && <p className="text-xs text-destructive">{fieldErrors.password_confirm}</p>}
                 </div>
+
+                {/* General/non_field_errors */}
+                {fieldErrors.non_field_errors && (
+                  <p className="text-sm text-destructive text-center">{fieldErrors.non_field_errors}</p>
+                )}
+                {fieldErrors.detail && (
+                  <p className="text-sm text-destructive text-center">{fieldErrors.detail}</p>
+                )}
 
                 <Button className="w-full" type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
