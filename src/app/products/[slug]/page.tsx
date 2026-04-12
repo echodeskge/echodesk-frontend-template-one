@@ -11,6 +11,7 @@ import {
   fetchProductBySlug,
   fetchFeaturedProducts,
 } from "@/lib/fetch-server";
+import type { ProductDetail } from "@/api/generated/interfaces";
 import { ProductDetailClient } from "@/components/pages/product-detail-client";
 
 // Force dynamic rendering — product pages need tenant context from middleware

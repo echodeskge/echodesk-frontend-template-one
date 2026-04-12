@@ -161,12 +161,14 @@ export async function fetchProductsOnSale(
 
 /**
  * Fetch single product by slug (server-side)
+ * First finds the product in the list to get its ID, then fetches full detail
+ * which includes variants, images, and description.
  */
 export async function fetchProductBySlug(
   slug: string,
   language?: string,
   revalidate?: number
-): Promise<ProductList | null> {
+): Promise<ProductDetail | null> {
   try {
     const data = await fetchProducts(
       { search: slug, language },
@@ -175,7 +177,14 @@ export async function fetchProductBySlug(
 
     // Find exact slug match
     const product = data.results.find((p) => p.slug === slug);
-    return product || null;
+    if (!product) return null;
+
+    // Fetch full product detail (includes variants, images, description)
+    const detail = await serverFetch<ProductDetail>(
+      `/api/ecommerce/client/products/${product.id}/`,
+      { next: revalidate ? { revalidate } : undefined }
+    );
+    return detail;
   } catch (error) {
     console.error(`Error fetching product by slug ${slug}:`, error);
     return null;

@@ -34,6 +34,9 @@ import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useOrders, useOrder } from "@/hooks/use-orders";
 import { formatPrice } from "@/lib/store-config";
+import { cn } from "@/lib/utils";
+import axiosInstance from "@/api/axios";
+import { toast } from "sonner";
 import {
   Package,
   ChevronLeft,
@@ -45,8 +48,52 @@ import {
   Clock,
   XCircle,
   MapPin,
+  Loader2,
 } from "lucide-react";
 import type { Order } from "@/api/generated/interfaces";
+
+function TimelineItem({
+  label,
+  date,
+  active,
+  isLast,
+  formatDateFn,
+}: {
+  label: string;
+  date: string;
+  active: boolean;
+  isLast?: boolean;
+  formatDateFn: (d: string) => string;
+}) {
+  return (
+    <div className="flex gap-3">
+      <div className="flex flex-col items-center">
+        <div
+          className={cn(
+            "h-3 w-3 rounded-full border-2",
+            active
+              ? "border-primary bg-primary"
+              : "border-muted-foreground/30 bg-background"
+          )}
+        />
+        {!isLast && (
+          <div
+            className={cn(
+              "w-0.5 flex-1 min-h-[24px]",
+              active ? "bg-primary" : "bg-muted-foreground/20"
+            )}
+          />
+        )}
+      </div>
+      <div className="pb-4">
+        <p className={cn("text-sm font-medium", active ? "" : "text-muted-foreground")}>
+          {label}
+        </p>
+        <p className="text-xs text-muted-foreground">{formatDateFn(date)}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function OrdersPage() {
   const config = useStoreConfig();
@@ -57,13 +104,28 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [ordering, setOrdering] = useState("-created_at");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const { data: ordersData, isLoading: isOrdersLoading } = useOrders(
+  const { data: ordersData, isLoading: isOrdersLoading, refetch: refetchOrders } = useOrders(
     currentPage,
     ordering
   );
-  const { data: selectedOrder, isLoading: isOrderLoading } =
+  const { data: selectedOrder, isLoading: isOrderLoading, refetch: refetchOrder } =
     useOrder(selectedOrderId);
+
+  const cancelOrder = async (orderId: number) => {
+    setIsCancelling(true);
+    try {
+      await axiosInstance.post(`/api/ecommerce/client/orders/${orderId}/cancel/`);
+      toast.success("Order cancelled");
+      refetchOrders();
+      refetchOrder();
+    } catch {
+      toast.error("Failed to cancel order");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -383,6 +445,69 @@ export default function OrdersPage() {
 
                 <Separator />
 
+                {/* Order Timeline */}
+                <div>
+                  <h4 className="mb-3 font-semibold">
+                    {t("orders.timeline") || "Order Timeline"}
+                  </h4>
+                  <div>
+                    {selectedOrder.created_at && (
+                      <TimelineItem
+                        label={t("orders.orderPlaced") || "Order Placed"}
+                        date={selectedOrder.created_at}
+                        active
+                        formatDateFn={formatDate}
+                      />
+                    )}
+                    {selectedOrder.confirmed_at && (
+                      <TimelineItem
+                        label={t("orders.confirmed") || "Confirmed"}
+                        date={selectedOrder.confirmed_at}
+                        active
+                        formatDateFn={formatDate}
+                      />
+                    )}
+                    {selectedOrder.shipped_at && (
+                      <TimelineItem
+                        label={t("orders.shipped") || "Shipped"}
+                        date={selectedOrder.shipped_at}
+                        active
+                        formatDateFn={formatDate}
+                      />
+                    )}
+                    {selectedOrder.delivered_at && (
+                      <TimelineItem
+                        label={t("orders.delivered") || "Delivered"}
+                        date={selectedOrder.delivered_at}
+                        active
+                        isLast
+                        formatDateFn={formatDate}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Tracking Number */}
+                {(selectedOrder as any).tracking_number && (
+                  <>
+                    <Separator />
+                    <div className="flex items-center gap-2 text-sm">
+                      <Package className="h-4 w-4" />
+                      <span>
+                        {t("orders.tracking") || "Tracking"}:{" "}
+                        {(selectedOrder as any).tracking_number}
+                      </span>
+                      {(selectedOrder as any).courier_provider && (
+                        <span className="text-muted-foreground">
+                          ({(selectedOrder as any).courier_provider})
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                <Separator />
+
                 {/* Delivery Address */}
                 {selectedOrder.delivery_address && (
                   <div>
@@ -475,21 +600,48 @@ export default function OrdersPage() {
                   </>
                 )}
 
-                {/* Payment URL for pending orders */}
-                {selectedOrder.payment_url &&
-                  selectedOrder.payment_status?.toString().toLowerCase() ===
-                    "pending" && (
-                    <Button asChild className="w-full">
-                      <a
-                        href={selectedOrder.payment_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        {t("orders.completePayment") || "Complete Payment"}
-                      </a>
+                {/* Action buttons */}
+                <div className="flex gap-3">
+                  {/* Payment URL for pending orders */}
+                  {selectedOrder.payment_url &&
+                    selectedOrder.payment_status?.toString().toLowerCase() ===
+                      "pending" && (
+                      <Button asChild className="flex-1">
+                        <a
+                          href={selectedOrder.payment_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          {t("orders.completePayment") || "Complete Payment"}
+                        </a>
+                      </Button>
+                    )}
+
+                  {/* Cancel button for pending/confirmed orders */}
+                  {["pending", "confirmed"].includes(
+                    String(selectedOrder.status || "").toLowerCase()
+                  ) && (
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => cancelOrder(selectedOrder.id)}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {t("orders.cancelling") || "Cancelling..."}
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="mr-2 h-4 w-4" />
+                          {t("orders.cancelOrder") || "Cancel Order"}
+                        </>
+                      )}
                     </Button>
                   )}
+                </div>
               </div>
             </>
           ) : null}
