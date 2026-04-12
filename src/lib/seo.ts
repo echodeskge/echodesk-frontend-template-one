@@ -1,9 +1,25 @@
 import { Metadata } from "next";
+import { getStoreConfig } from "@/lib/store-config";
 
 /**
  * SEO Utility Functions
  * Helper functions for generating metadata and structured data
  */
+
+/**
+ * Get the Twitter handle from store config or environment variable.
+ * Falls back to empty string if neither is configured.
+ */
+function getTwitterHandle(): string {
+  const config = getStoreConfig();
+  // Extract @handle from full URL if needed (e.g., "https://twitter.com/mystore" -> "@mystore")
+  const twitterUrl = config.social.twitter;
+  if (twitterUrl) {
+    const handle = twitterUrl.split("/").pop();
+    if (handle) return handle.startsWith("@") ? handle : `@${handle}`;
+  }
+  return process.env.NEXT_PUBLIC_TWITTER_HANDLE || "";
+}
 
 interface GenerateMetadataParams {
   title: string;
@@ -71,7 +87,12 @@ export function generatePageMetadata({
       title,
       description,
       images: [image || defaultImage],
-      creator: "@yourstore",
+      site: getTwitterHandle() || undefined,
+      creator: getTwitterHandle() || undefined,
+    },
+    other: {
+      "og:locale": "en_US",
+      "og:locale:alternate": "ka_GE",
     },
   };
 }
@@ -119,7 +140,10 @@ export function generateProductMetadata({
       description,
       url,
       siteName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
-      type: "website", // Use "website" instead of "product" for Next.js compatibility
+      // Note: Next.js Metadata API only supports standard OG types ("website", "article", etc.).
+      // The "product" OG type is not in the union. We use "website" here and set
+      // "og:type": "product" via the `other` field on the product page instead.
+      type: "website",
       images: image
         ? [
             {
@@ -136,6 +160,12 @@ export function generateProductMetadata({
       title: name,
       description,
       images: image ? [image] : undefined,
+      site: getTwitterHandle() || undefined,
+      creator: getTwitterHandle() || undefined,
+    },
+    other: {
+      "og:locale": "en_US",
+      "og:locale:alternate": "ka_GE",
     },
   };
 }

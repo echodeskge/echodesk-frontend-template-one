@@ -1,8 +1,49 @@
+import { Metadata } from "next";
 import { StoreLayout } from "@/components/layout/store-layout";
 import { fetchItemLists } from "@/lib/fetch-server";
+import { getStoreConfig } from "@/lib/store-config";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const config = getStoreConfig();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+  const title = `Categories | ${config.store.name}`;
+  const description = `Browse all product categories at ${config.store.name}. Find exactly what you're looking for.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${baseUrl}/categories`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${baseUrl}/categories`,
+      siteName: config.store.name,
+      type: "website",
+      locale: "en_US",
+      images: [
+        {
+          url: `${baseUrl}/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    other: {
+      "og:locale:alternate": "ka_GE",
+    },
+  };
+}
 
 export default async function CategoriesPage() {
   const itemLists = await fetchItemLists(undefined, 60).catch(() => []);

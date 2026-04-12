@@ -40,9 +40,15 @@ export async function generateMetadata(): Promise<Metadata> {
       telephone: false,
     },
     icons: {
-      icon: config.store.logo,
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: config.store.logo, type: "image/png" },
+      ],
       shortcut: config.store.logo,
-      apple: config.store.logo,
+      apple: [
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
     },
     manifest: "/manifest.json",
     openGraph: {
@@ -66,7 +72,12 @@ export async function generateMetadata(): Promise<Metadata> {
       title: config.store.name,
       description: config.store.description,
       images: [`${baseUrl}/og-image.png`],
-      creator: "@yourstore",
+      site: config.social.twitter
+        ? `@${config.social.twitter.split("/").pop()}`
+        : process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined,
+      creator: config.social.twitter
+        ? `@${config.social.twitter.split("/").pop()}`
+        : process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined,
     },
     alternates: {
       canonical: baseUrl,
@@ -107,7 +118,15 @@ export default async function RootLayout({
     <html lang={tenantConfig.locale || "en"} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#3b82f6" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/icon-192.png" sizes="192x192" />
+        <link rel="apple-touch-icon" href="/icon-512.png" sizes="512x512" />
+        <link
+          rel="search"
+          type="application/opensearchdescription+xml"
+          title="Store Search"
+          href="/opensearch.xml"
+        />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <TenantProvider config={tenantConfig}>

@@ -4,6 +4,22 @@ import { fetchAllProductSlugs } from "@/lib/fetch-server";
 /**
  * Dynamic sitemap generation
  * Automatically includes all products and static pages
+ *
+ * LIMITATION: Next.js's built-in `MetadataRoute.Sitemap` type only supports
+ * standard sitemap fields (url, lastModified, changeFrequency, priority).
+ * It does NOT support Google's image sitemap extension (<image:image> tags),
+ * which would allow us to include product image URLs directly in the sitemap.
+ *
+ * Possible workarounds:
+ * 1. Create a custom route handler (`app/image-sitemap.xml/route.ts`) that
+ *    returns raw XML with <image:image> extensions, and reference it in robots.txt.
+ * 2. Ensure product pages have proper og:image meta tags and structured data
+ *    (JSON-LD) with image URLs so search engines discover images through those.
+ * 3. Use Google Search Console's image indexing which also picks up images from
+ *    page content and structured data.
+ *
+ * Currently, product images are discoverable via JSON-LD Product schema and
+ * OpenGraph meta tags on each product page.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";

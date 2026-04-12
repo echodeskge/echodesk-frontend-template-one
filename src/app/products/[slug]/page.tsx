@@ -14,7 +14,14 @@ import {
 import type { ProductDetail } from "@/api/generated/interfaces";
 import { ProductDetailClient } from "@/components/pages/product-detail-client";
 
-// Force dynamic rendering — product pages need tenant context from middleware
+// Force dynamic rendering is required because `fetchProductBySlug` calls
+// `getServerApiUrl()` in `fetch-server.ts`, which invokes `headers()` to read
+// the `x-tenant-api-url` header set by multi-tenant middleware. In Next.js 15,
+// calling `headers()` opts the route into dynamic rendering automatically.
+// We cannot use ISR (`export const revalidate = 60`) because the tenant API URL
+// is resolved per-request from middleware headers, not from a static env var.
+// If the storefront ever moves to single-tenant mode (env-only API URL),
+// this can be replaced with `export const revalidate = 60` for ISR.
 export const dynamic = "force-dynamic";
 
 /**
@@ -78,11 +85,13 @@ export async function generateMetadata({
     return {
       ...baseMetadata,
       other: {
+        ...((baseMetadata as any).other || {}),
         "product:price:amount": String(product.price),
         "product:price:currency": config.locale.currency,
         "og:type": "product",
         "product:availability": (product.quantity || 0) > 0 ? "in stock" : "out of stock",
         "product:brand": config.store.name,
+        ...(imageUrl ? { "pinterest:media": imageUrl } : {}),
       },
     };
   } catch (error) {
@@ -146,6 +155,16 @@ export default async function ProductDetailPage({
     priceValidDate.setDate(priceValidDate.getDate() + 30);
 
     // Generate Product Schema (JSON-LD)
+    // TODO: The `generateProductSchema` function supports `aggregateRating` and `review`
+    // parameters, but the `ProductDetail` interface from the backend does not currently
+    // include `average_rating` or `review_count` fields. When the backend adds these
+    // fields to the product serializer, pass them here:
+    //   aggregateRating: product.average_rating ? {
+    //     ratingValue: product.average_rating,
+    //     reviewCount: product.review_count,
+    //     bestRating: 5,
+    //     worstRating: 1,
+    //   } : undefined,
     const productSchema = generateProductSchema({
       name: productName,
       description: productDescription,

@@ -1,0 +1,23 @@
+# Echodesk Ecommerce Store
+# This file provides information for AI assistants and crawlers
+
+> This is an online ecommerce store powered by Echodesk.
+> Products, categories, and pricing are available on the public pages.
+
+## Allowed Pages
+- / (Homepage with featured products and collections)
+- /products (Product catalog with filtering and search)
+- /products/{slug} (Individual product details with pricing, images, reviews)
+- /faq (Frequently asked questions)
+- /terms (Terms of service)
+- /privacy (Privacy policy)
+- /shipping (Shipping information)
+- /returns (Returns and refunds policy)
+- /categories (Product categories)
+
+## Not Indexed
+- /account (Private user account)
+- /cart (Shopping cart)
+- /checkout (Checkout flow)
+- /login (Authentication)
+- /register (Registration)
