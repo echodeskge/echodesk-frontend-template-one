@@ -365,25 +365,28 @@ export default function OrdersPage() {
             ))}
 
             {/* Pagination */}
-            {ordersData.count > 10 && (
-              <div className="mt-8 flex justify-center gap-2">
+            {ordersData.count > 0 && (
+              <div className="mt-8 flex items-center justify-center gap-2">
                 <Button
                   variant="outline"
                   disabled={!ordersData.previous}
                   onClick={() => setCurrentPage((p) => p - 1)}
                 >
-                  {t("productsPage.previous")}
+                  {t("pagination.previous") || t("productsPage.previous")}
                 </Button>
-                <span className="flex items-center px-4">
-                  {t("productsPage.page")} {currentPage} {t("productsPage.of")}{" "}
-                  {Math.ceil(ordersData.count / 10)}
+                <span className="flex items-center px-4 text-sm text-muted-foreground">
+                  {t("pagination.pageXofY", {
+                    current: String(currentPage),
+                    total: String(Math.ceil(ordersData.count / 10)),
+                  }) ||
+                    `${t("productsPage.page")} ${currentPage} ${t("productsPage.of")} ${Math.ceil(ordersData.count / 10)}`}
                 </span>
                 <Button
                   variant="outline"
                   disabled={!ordersData.next}
                   onClick={() => setCurrentPage((p) => p + 1)}
                 >
-                  {t("productsPage.next")}
+                  {t("pagination.next") || t("productsPage.next")}
                 </Button>
               </div>
             )}

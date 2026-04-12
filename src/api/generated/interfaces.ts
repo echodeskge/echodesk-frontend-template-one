@@ -96,6 +96,8 @@ export interface ClientAddress {
   label: string;
   address: string;
   city: string;
+  postal_code?: string;
+  country?: string;
   extra_instructions?: string;
   latitude?: string;
   longitude?: string;
@@ -108,6 +110,8 @@ export interface ClientAddressRequest {
   label: string;
   address: string;
   city: string;
+  postal_code?: string;
+  country?: string;
   extra_instructions?: string;
   latitude?: string;
   longitude?: string;
@@ -482,6 +486,8 @@ export interface PatchedClientAddressRequest {
   label?: string;
   address?: string;
   city?: string;
+  postal_code?: string;
+  country?: string;
   extra_instructions?: string;
   latitude?: string;
   longitude?: string;

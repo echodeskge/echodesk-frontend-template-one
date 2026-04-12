@@ -77,6 +77,8 @@ export default function AddressesPage() {
     label: "",
     address: "",
     city: "",
+    postal_code: "",
+    country: "",
     extra_instructions: "",
     is_default: false,
   });
@@ -178,6 +180,8 @@ export default function AddressesPage() {
       label: "",
       address: "",
       city: "",
+      postal_code: "",
+      country: "",
       extra_instructions: "",
       is_default: false,
     });
@@ -190,6 +194,8 @@ export default function AddressesPage() {
       label: address.label,
       address: address.address,
       city: address.city,
+      postal_code: address.postal_code || "",
+      country: address.country || "",
       extra_instructions: address.extra_instructions || "",
       is_default: address.is_default || false,
     });
@@ -203,6 +209,8 @@ export default function AddressesPage() {
       label: "",
       address: "",
       city: "",
+      postal_code: "",
+      country: "",
       extra_instructions: "",
       is_default: false,
     });
@@ -319,7 +327,13 @@ export default function AddressesPage() {
                 <CardContent>
                   <div className="space-y-2 text-sm">
                     <p>{address.address}</p>
-                    <p className="font-medium">{address.city}</p>
+                    <p className="font-medium">
+                      {address.city}
+                      {address.postal_code && `, ${address.postal_code}`}
+                    </p>
+                    {address.country && (
+                      <p className="text-muted-foreground">{address.country}</p>
+                    )}
                     {address.extra_instructions && (
                       <p className="text-muted-foreground">
                         {address.extra_instructions}
@@ -434,6 +448,43 @@ export default function AddressesPage() {
                   required
                   disabled={isSubmitting}
                 />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="postal_code">
+                    {t("addresses.postalCode") || "Postal Code"}
+                  </Label>
+                  <Input
+                    id="postal_code"
+                    placeholder={t("addresses.postalCodePlaceholder") || "e.g., 0100"}
+                    value={formData.postal_code || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        postal_code: e.target.value,
+                      }))
+                    }
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">
+                    {t("addresses.country") || "Country"}
+                  </Label>
+                  <Input
+                    id="country"
+                    placeholder={t("addresses.countryPlaceholder") || "e.g., Georgia"}
+                    value={formData.country || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        country: e.target.value,
+                      }))
+                    }
+                    disabled={isSubmitting}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">

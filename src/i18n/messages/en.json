@@ -233,6 +233,10 @@
     "cityPlaceholder": "City name",
     "extraInstructions": "Extra Instructions",
     "extraInstructionsPlaceholder": "Delivery instructions, landmarks, etc.",
+    "postalCode": "Postal Code",
+    "postalCodePlaceholder": "e.g., 0100",
+    "country": "Country",
+    "countryPlaceholder": "e.g., Georgia",
     "setAsDefault": "Set as default address",
     "deleteTitle": "Delete Address?",
     "deleteDesc": "This action cannot be undone. This will permanently delete the address from your account."
@@ -278,6 +282,37 @@
     "recentOrders": "Recent Orders",
     "viewAll": "View All",
     "noOrdersYet": "No orders yet"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your personal information",
+    "personalInfo": "Personal Information",
+    "personalInfoDesc": "Update your name, phone, and date of birth",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "emailReadOnly": "Email cannot be changed",
+    "phone": "Phone",
+    "dateOfBirth": "Date of Birth",
+    "saveProfile": "Save Changes",
+    "updateSuccess": "Profile updated successfully",
+    "updateFailed": "Failed to update profile",
+    "changePassword": "Change Password",
+    "changePasswordDesc": "Update your password to keep your account secure",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "changePasswordBtn": "Change Password",
+    "changingPassword": "Changing...",
+    "passwordChanged": "Password changed successfully",
+    "passwordChangeFailed": "Failed to change password",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "pageXofY": "Page {current} of {total}"
   },
   "cards": {
     "title": "Payment Methods",

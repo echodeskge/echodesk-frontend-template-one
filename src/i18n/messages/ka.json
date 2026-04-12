@@ -233,6 +233,10 @@
     "cityPlaceholder": "ქალაქის სახელი",
     "extraInstructions": "დამატებითი ინსტრუქციები",
     "extraInstructionsPlaceholder": "მიტანის ინსტრუქციები, ორიენტირები და ა.შ.",
+    "postalCode": "საფოსტო კოდი",
+    "postalCodePlaceholder": "მაგ., 0100",
+    "country": "ქვეყანა",
+    "countryPlaceholder": "მაგ., საქართველო",
     "setAsDefault": "ძირითად მისამართად დაყენება",
     "deleteTitle": "მისამართის წაშლა?",
     "deleteDesc": "ეს მოქმედება ვერ გაუქმდება. მისამართი სამუდამოდ წაიშლება თქვენი ანგარიშიდან."
@@ -278,6 +282,37 @@
     "recentOrders": "ბოლო შეკვეთები",
     "viewAll": "ყველას ნახვა",
     "noOrdersYet": "შეკვეთები ჯერ არ გაქვთ"
+  },
+  "profile": {
+    "title": "პროფილი",
+    "subtitle": "მართეთ თქვენი პირადი ინფორმაცია",
+    "personalInfo": "პირადი ინფორმაცია",
+    "personalInfoDesc": "განაახლეთ თქვენი სახელი, ტელეფონი და დაბადების თარიღი",
+    "firstName": "სახელი",
+    "lastName": "გვარი",
+    "email": "ელ-ფოსტა",
+    "emailReadOnly": "ელ-ფოსტის შეცვლა შეუძლებელია",
+    "phone": "ტელეფონი",
+    "dateOfBirth": "დაბადების თარიღი",
+    "saveProfile": "შენახვა",
+    "updateSuccess": "პროფილი წარმატებით განახლდა",
+    "updateFailed": "პროფილის განახლება ვერ მოხერხდა",
+    "changePassword": "პაროლის შეცვლა",
+    "changePasswordDesc": "შეცვალეთ პაროლი ანგარიშის უსაფრთხოებისთვის",
+    "currentPassword": "მიმდინარე პაროლი",
+    "newPassword": "ახალი პაროლი",
+    "confirmNewPassword": "დაადასტურეთ ახალი პაროლი",
+    "changePasswordBtn": "პაროლის შეცვლა",
+    "changingPassword": "იცვლება...",
+    "passwordChanged": "პაროლი წარმატებით შეიცვალა",
+    "passwordChangeFailed": "პაროლის შეცვლა ვერ მოხერხდა",
+    "passwordMinLength": "პაროლი უნდა შეიცავდეს მინიმუმ 8 სიმბოლოს",
+    "passwordMismatch": "პაროლები არ ემთხვევა"
+  },
+  "pagination": {
+    "previous": "წინა",
+    "next": "შემდეგი",
+    "pageXofY": "გვერდი {current} / {total}"
   },
   "cards": {
     "title": "გადახდის მეთოდები",

@@ -102,6 +102,8 @@ export default function CheckoutPage() {
     label: "",
     address: "",
     city: "",
+    postal_code: "",
+    country: "",
     extra_instructions: "",
     is_default: false,
   });
@@ -230,6 +232,8 @@ export default function CheckoutPage() {
         label: "",
         address: "",
         city: "",
+        postal_code: "",
+        country: "",
         extra_instructions: "",
         is_default: false,
       });
@@ -827,6 +831,40 @@ export default function CheckoutPage() {
                             }))
                           }
                         />
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="postal_code">
+                            {t("addresses.postalCode") || "Postal Code"}
+                          </Label>
+                          <Input
+                            id="postal_code"
+                            placeholder={t("addresses.postalCodePlaceholder") || "e.g., 0100"}
+                            value={newAddress.postal_code || ""}
+                            onChange={(e) =>
+                              setNewAddress((prev) => ({
+                                ...prev,
+                                postal_code: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="country">
+                            {t("addresses.country") || "Country"}
+                          </Label>
+                          <Input
+                            id="country"
+                            placeholder={t("addresses.countryPlaceholder") || "e.g., Georgia"}
+                            value={newAddress.country || ""}
+                            onChange={(e) =>
+                              setNewAddress((prev) => ({
+                                ...prev,
+                                country: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="extra">
