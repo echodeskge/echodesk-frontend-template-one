@@ -74,7 +74,8 @@ export function useFeaturedProducts(limit?: number) {
     queryKey: ["products", "featured", limit],
     queryFn: () =>
       ecommerceClientProductsList(
-        undefined, // attrCategory
+        undefined, // attr_Furniture
+        undefined, // attrColor
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
@@ -85,6 +86,7 @@ export function useFeaturedProducts(limit?: number) {
         undefined, // onSale
         undefined, // ordering
         undefined, // page
+        undefined, // pageSize
         undefined // search
       ),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -101,7 +103,8 @@ export function useProductsOnSale(limit?: number) {
     queryKey: ["products", "onSale", limit],
     queryFn: () =>
       ecommerceClientProductsList(
-        undefined, // attrCategory
+        undefined, // attr_Furniture
+        undefined, // attrColor
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
@@ -112,6 +115,7 @@ export function useProductsOnSale(limit?: number) {
         true, // onSale
         undefined, // ordering
         undefined, // page
+        undefined, // pageSize
         undefined // search
       ),
     staleTime: 5 * 60 * 1000,
@@ -142,7 +146,8 @@ export function useProductBySlug(slug: string | null, language?: string) {
       }
       // Search for product by slug
       const result = await ecommerceClientProductsList(
-        undefined, // attrCategory
+        undefined, // attr_Furniture
+        undefined, // attrColor
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
@@ -153,6 +158,7 @@ export function useProductBySlug(slug: string | null, language?: string) {
         undefined, // onSale
         undefined, // ordering
         undefined, // page
+        undefined, // pageSize
         slug // search - will match against slug
       );
       // Find exact slug match
@@ -180,7 +186,7 @@ export function useProductAttributes() {
 export function useItemLists(search?: string) {
   return useQuery({
     queryKey: ["itemLists", search],
-    queryFn: () => ecommerceClientItemListsList(undefined, undefined, search),
+    queryFn: () => ecommerceClientItemListsList(undefined, undefined, undefined, search),
     staleTime: 10 * 60 * 1000,
   });
 }

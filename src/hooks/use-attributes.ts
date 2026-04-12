@@ -14,7 +14,6 @@ export function useAttributes(filters?: {
     queryFn: () =>
       ecommerceClientAttributesList(
         undefined, // attributeType
-        filters?.isVariantAttribute,
         filters?.ordering,
         filters?.page
       ),
