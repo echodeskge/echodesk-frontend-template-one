@@ -178,6 +178,7 @@ export default function CheckoutPage() {
       const orderData: any = {
         cart_id: cart.id,
         delivery_address_id: selectedAddressId,
+        payment_method: paymentMethod === "cash_on_delivery" ? "cash_on_delivery" : "card",
         notes: orderNotes || undefined,
       };
 
