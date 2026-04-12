@@ -12,6 +12,7 @@ import {
   ecommerceClientCartGetOrCreateRetrieve,
 } from "@/api/generated/api";
 import type {
+  Cart,
   EcommerceClient,
   ClientLoginRequest,
   ClientRegistrationRequest,
@@ -84,8 +85,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     queryKey: ["cart"],
     queryFn: async () => {
       const response = await ecommerceClientCartGetOrCreateRetrieve();
-      // API returns { cart: {...} } but generated type expects Cart directly
-      return (response as any).cart || response;
+      // API wraps Cart in { cart: {...} } but generated type expects Cart directly
+      const data = response as unknown as { cart?: Cart } | Cart;
+      return "cart" in data && data.cart ? data.cart : (data as Cart);
     },
     enabled: !!user && isInitialized,
     staleTime: 0,

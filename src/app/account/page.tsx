@@ -247,7 +247,7 @@ export default function AccountPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <Badge className={getStatusColor(order.status as any)}>
+                      <Badge className={getStatusColor(String(order.status || ""))}>
                         {String(order.status || "pending")
                           .charAt(0)
                           .toUpperCase() +

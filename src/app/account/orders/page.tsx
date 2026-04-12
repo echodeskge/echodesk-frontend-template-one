@@ -118,7 +118,8 @@ export default function OrdersPage() {
   const cancelOrder = async (orderId: number) => {
     setIsCancelling(true);
     try {
-      await ecommerceClientOrdersCancelCreate(String(orderId), {} as any);
+      // Cancel endpoint ignores request body; generated type requires OrderRequest fields
+      await ecommerceClientOrdersCancelCreate(String(orderId), {} as unknown as import("@/api/generated/interfaces").OrderRequest);
       toast.success("Order cancelled");
       refetchOrders();
       refetchOrder();
@@ -295,8 +296,8 @@ export default function OrdersPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(order.status as any)}>
-                        {getStatusIcon(order.status as any)}
+                      <Badge className={getStatusColor(String(order.status || ""))}>
+                        {getStatusIcon(String(order.status || ""))}
                         <span className="ml-1">
                           {String(order.status || "pending")
                             .charAt(0)
@@ -307,7 +308,7 @@ export default function OrdersPage() {
                       <Badge
                         variant="outline"
                         className={getPaymentStatusColor(
-                          order.payment_status as any
+                          String(order.payment_status || "")
                         )}
                       >
                         <CreditCard className="mr-1 h-3 w-3" />
@@ -423,9 +424,9 @@ export default function OrdersPage() {
                 {/* Status */}
                 <div className="flex items-center gap-4">
                   <Badge
-                    className={getStatusColor(selectedOrder.status as any)}
+                    className={getStatusColor(String(selectedOrder.status || ""))}
                   >
-                    {getStatusIcon(selectedOrder.status as any)}
+                    {getStatusIcon(String(selectedOrder.status || ""))}
                     <span className="ml-1">
                       {String(selectedOrder.status || "pending")
                         .charAt(0)
@@ -436,7 +437,7 @@ export default function OrdersPage() {
                   <Badge
                     variant="outline"
                     className={getPaymentStatusColor(
-                      selectedOrder.payment_status as any
+                      String(selectedOrder.payment_status || "")
                     )}
                   >
                     <CreditCard className="mr-1 h-3 w-3" />
@@ -494,18 +495,18 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Tracking Number */}
-                {(selectedOrder as any).tracking_number && (
+                {selectedOrder.tracking_number && (
                   <>
                     <Separator />
                     <div className="flex items-center gap-2 text-sm">
                       <Package className="h-4 w-4" />
                       <span>
                         {t("orders.tracking") || "Tracking"}:{" "}
-                        {(selectedOrder as any).tracking_number}
+                        {selectedOrder.tracking_number}
                       </span>
-                      {(selectedOrder as any).courier_provider && (
+                      {selectedOrder.courier_provider && (
                         <span className="text-muted-foreground">
-                          ({(selectedOrder as any).courier_provider})
+                          ({selectedOrder.courier_provider})
                         </span>
                       )}
                     </div>

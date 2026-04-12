@@ -286,7 +286,7 @@ function OrderConfirmationContent() {
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">
-                  {getLocalizedValue(order.shipping_method_details.name as any)}
+                  {getLocalizedValue(order.shipping_method_details.name)}
                 </p>
                 {order.estimated_delivery_date && (
                   <p>

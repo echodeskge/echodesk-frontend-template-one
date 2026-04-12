@@ -28,7 +28,7 @@ import {
   ecommerceClientPromoValidateCreate,
   ecommerceClientGuestCheckoutCreate,
 } from "@/api/generated/api";
-import type { ClientAddressRequest } from "@/api/generated/interfaces";
+import type { ClientAddressRequest, Order } from "@/api/generated/interfaces";
 import { useQuery } from "@tanstack/react-query";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import {
@@ -127,7 +127,7 @@ export default function CheckoutPage() {
     queryKey: ["shipping-methods"],
     queryFn: async () => {
       const data = await ecommerceClientShippingMethodsList();
-      return (data as any).results || data || [];
+      return data.results || [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -165,9 +165,9 @@ export default function CheckoutPage() {
   const shippingCost =
     selectedShippingMethod
       ? selectedShippingMethod.free_shipping_threshold &&
-        subtotal >= selectedShippingMethod.free_shipping_threshold
+        subtotal >= parseFloat(selectedShippingMethod.free_shipping_threshold)
         ? 0
-        : parseFloat(selectedShippingMethod.price)
+        : parseFloat(selectedShippingMethod.price ?? "0")
       : 0;
   const taxAmount = taxInclusive ? 0 : subtotal * (taxRate / 100);
   const total = subtotal + shippingCost + taxAmount - promoDiscount;
@@ -226,7 +226,7 @@ export default function CheckoutPage() {
 
     try {
       const result = await createAddress.mutateAsync(newAddress);
-      setSelectedAddressId((result as any).id);
+      setSelectedAddressId(result.id);
       setShowAddressForm(false);
       setNewAddress({
         label: "",
@@ -311,16 +311,17 @@ export default function CheckoutPage() {
         orderData.card_id = selectedCardId;
       }
 
-      const result = await createOrder.mutateAsync(orderData);
+      // Generated return type is OrderCreate but the API actually returns a full Order
+      const result = await createOrder.mutateAsync(orderData) as unknown as Order;
 
       // If payment URL returned (BOG redirect), redirect there
-      if ((result as any).payment_url) {
-        window.location.href = (result as any).payment_url;
+      if (result.payment_url) {
+        window.location.href = result.payment_url;
         return;
       }
 
       // Cash on delivery or already processed - go to order confirmation
-      router.push(`/order-confirmation?order_id=${(result as any).id}`);
+      router.push(`/order-confirmation?order_id=${result.id}`);
     } catch {
       // Error is handled by the hook
     }

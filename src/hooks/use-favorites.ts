@@ -61,9 +61,15 @@ export function useIsInFavorites(productId: number) {
 
   if (!favorites) return false;
 
-  return favorites.results.some(
-    (fav) => (fav as any).product === productId || (fav as any).product?.id === productId
-  );
+  return favorites.results.some((fav) => {
+    if (typeof fav.product === "string") {
+      const match = fav.product.match(/\/(\d+)\/?$/);
+      return match ? parseInt(match[1]) === productId : false;
+    }
+    // Runtime: product may be a nested object despite the generated type being string
+    const productObj = fav.product as unknown as { id?: number };
+    return productObj?.id === productId;
+  });
 }
 
 // Combined hook for wishlist functionality with backend support
@@ -84,7 +90,9 @@ export function useBackendWishlist() {
         const match = fav.product.match(/\/(\d+)\/?$/);
         return match ? parseInt(match[1]) === id : false;
       }
-      return (fav.product as any)?.id === id;
+      // Runtime: product may be a nested object despite the generated type being string
+      const productObj = fav.product as unknown as { id?: number };
+      return productObj?.id === id;
     });
   };
 
@@ -95,7 +103,9 @@ export function useBackendWishlist() {
         const match = fav.product.match(/\/(\d+)\/?$/);
         return match ? parseInt(match[1]) === id : false;
       }
-      return (fav.product as any)?.id === id;
+      // Runtime: product may be a nested object despite the generated type being string
+      const productObj = fav.product as unknown as { id?: number };
+      return productObj?.id === id;
     });
     return favorite?.id;
   };
@@ -114,8 +124,8 @@ export function useBackendWishlist() {
         removeFromFavorites.mutate(String(favoriteId));
       }
     } else {
-      // Generated type requires client field but backend auto-populates it from JWT
-      addToFavorites.mutate({ product: id } as any);
+      // Generated type requires `client` field but backend auto-populates it from JWT
+      addToFavorites.mutate({ product: id } as unknown as FavoriteProductCreateRequest);
     }
   };
 

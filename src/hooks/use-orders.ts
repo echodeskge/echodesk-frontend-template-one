@@ -4,7 +4,7 @@ import {
   ecommerceClientOrdersRetrieve,
   ecommerceClientOrdersCreate,
 } from "@/api/generated/api";
-import type { OrderCreateRequest } from "@/api/generated/interfaces";
+import type { Order, OrderCreateRequest } from "@/api/generated/interfaces";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -44,9 +44,10 @@ export function useCreateOrder() {
       queryClient.invalidateQueries({ queryKey: ["cartItems"] });
       toast.success("Order placed successfully!");
 
-      // If payment URL is returned, redirect to it
-      if ((data as any).payment_url) {
-        window.location.href = (data as any).payment_url;
+      // Generated return type is OrderCreate but the API actually returns a full Order
+      const order = data as unknown as Order;
+      if (order.payment_url) {
+        window.location.href = order.payment_url;
       }
     },
     onError: (error: any) => {

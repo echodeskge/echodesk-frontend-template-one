@@ -117,7 +117,7 @@ export default async function RootLayout({
                 <LanguageProvider>
                   <StoreConfigProvider>
                     {children}
-                    <Toaster position="top-right" />
+                    <Toaster position="bottom-right" />
                     <CookieConsent />
                     <ThemeSwitcher />
                   </StoreConfigProvider>

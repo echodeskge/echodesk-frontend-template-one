@@ -158,13 +158,15 @@ const config: NextAuthConfig = {
     },
     async session({ session, token }) {
       // Send properties to the client
+      // Module augmentation merges with AdapterUser which requires extra fields;
+      // at runtime only our custom fields are needed on the client
       session.user = {
         id: token.id,
         email: token.email,
         first_name: token.first_name,
         last_name: token.last_name,
         phone: token.phone,
-      } as any;
+      } as typeof session.user;
       session.accessToken = token.accessToken;
       session.refreshToken = token.refreshToken;
 
