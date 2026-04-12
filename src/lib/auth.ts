@@ -2,10 +2,37 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import type { NextAuthConfig } from "next-auth";
 
-// Get API URL - needs to work on server-side
-const getApiUrl = (): string => {
-  // Use environment variable (works on both client and server)
-  return process.env.NEXT_PUBLIC_API_URL || "https://demo.api.echodesk.ge";
+// Get API URL from request hostname or env var
+const getApiUrl = (request?: Request): string => {
+  // 1. Derive from request hostname (multi-tenant: groot.ecommerce.echodesk.ge → groot.api.echodesk.ge)
+  if (request) {
+    try {
+      const url = new URL(request.url);
+      const hostname = url.hostname;
+      // Pattern: {schema}.ecommerce.echodesk.ge → {schema}.api.echodesk.ge
+      if (hostname.includes('.ecommerce.echodesk.ge')) {
+        const schema = hostname.split('.')[0];
+        return `https://${schema}.api.echodesk.ge`;
+      }
+      // Referer header as backup
+      const referer = request.headers.get('referer');
+      if (referer) {
+        const refererUrl = new URL(referer);
+        if (refererUrl.hostname.includes('.ecommerce.echodesk.ge')) {
+          const schema = refererUrl.hostname.split('.')[0];
+          return `https://${schema}.api.echodesk.ge`;
+        }
+      }
+    } catch {}
+  }
+
+  // 2. Use environment variable
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  // 3. Fallback
+  return "https://demo.api.echodesk.ge";
 };
 
 // Extend the built-in session types
@@ -30,6 +57,7 @@ declare module "next-auth" {
     phone?: string;
     accessToken: string;
     refreshToken: string;
+    apiUrl?: string;
   }
 }
 
@@ -43,6 +71,7 @@ declare module "@auth/core/jwt" {
     accessToken: string;
     refreshToken: string;
     accessTokenExpires?: number;
+    apiUrl?: string;
   }
 }
 
@@ -54,14 +83,14 @@ const config: NextAuthConfig = {
         email: { label: "Email or Phone", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
         try {
-          // Call the backend login API using fetch (works on server-side)
-          const apiUrl = getApiUrl();
+          // Call the backend login API — derive API URL from request hostname
+          const apiUrl = getApiUrl(request as Request | undefined);
 
           const response = await fetch(`${apiUrl}/api/ecommerce/clients/login/`, {
             method: "POST",
@@ -90,6 +119,7 @@ const config: NextAuthConfig = {
               phone: data.client.phone,
               accessToken: data.access,
               refreshToken: data.refresh,
+              apiUrl: apiUrl,
             };
             return user;
           }
@@ -113,6 +143,7 @@ const config: NextAuthConfig = {
         token.phone = user.phone;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
+        token.apiUrl = user.apiUrl;
         // Set token expiration (JWT tokens typically expire in 1 hour)
         token.accessTokenExpires = Date.now() + 60 * 60 * 1000;
       }
@@ -153,7 +184,7 @@ const config: NextAuthConfig = {
 
 async function refreshAccessToken(token: any) {
   try {
-    const apiUrl = getApiUrl();
+    const apiUrl = token.apiUrl || getApiUrl();
     const response = await fetch(`${apiUrl}/api/ecommerce/clients/refresh-token/`, {
       method: "POST",
       headers: {
