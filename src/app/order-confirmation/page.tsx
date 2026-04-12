@@ -70,10 +70,27 @@ function OrderConfirmationContent() {
     return null;
   }
 
-  const orderStatus = order.status ? String(order.status) : "";
+  const orderStatusRaw = order.status ? String(order.status) : "";
+  const statusKeys: Record<string, string> = {
+    pending: "orders.statusPending",
+    confirmed: "orders.confirmed",
+    shipped: "orders.shipped",
+    delivered: "orders.delivered",
+    cancelled: "orders.cancelled",
+    refunded: "orders.refunded",
+    processing: "orders.processing",
+  };
+  const orderStatus = (() => {
+    const key = statusKeys[orderStatusRaw.toLowerCase()];
+    if (key) {
+      const translated = t(key);
+      if (translated && translated !== key) return translated;
+    }
+    return orderStatusRaw.charAt(0).toUpperCase() + orderStatusRaw.slice(1);
+  })();
 
   const statusColor = (() => {
-    switch (orderStatus) {
+    switch (orderStatusRaw) {
       case "confirmed":
         return "bg-blue-100 text-blue-800";
       case "processing":
@@ -110,7 +127,7 @@ function OrderConfirmationContent() {
               <span className="font-mono font-bold text-lg">
                 #{order.order_number}
               </span>
-              {orderStatus && (
+              {orderStatusRaw && (
                 <Badge className={statusColor}>{orderStatus}</Badge>
               )}
             </div>

@@ -24,10 +24,29 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+const STATUS_KEYS: Record<string, string> = {
+  pending: "orders.statusPending",
+  confirmed: "orders.confirmed",
+  shipped: "orders.shipped",
+  delivered: "orders.delivered",
+  cancelled: "orders.cancelled",
+  refunded: "orders.refunded",
+  processing: "orders.processing",
+};
+
 export default function AccountPage() {
   const config = useStoreConfig();
   const router = useRouter();
   const { t } = useLanguage();
+
+  const translateStatus = (status: string) => {
+    const key = STATUS_KEYS[status.toLowerCase()];
+    if (key) {
+      const translated = t(key);
+      if (translated && translated !== key) return translated;
+    }
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
   const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
   const { data: ordersData, isLoading: isOrdersLoading } = useOrders(1, "-created_at");
 
@@ -248,10 +267,7 @@ export default function AccountPage() {
                     </div>
                     <div className="text-right">
                       <Badge className={getStatusColor(String(order.status || ""))}>
-                        {String(order.status || "pending")
-                          .charAt(0)
-                          .toUpperCase() +
-                          String(order.status || "pending").slice(1)}
+                        {translateStatus(String(order.status || "pending"))}
                       </Badge>
                       <p className="mt-1 font-medium">
                         {formatPrice(

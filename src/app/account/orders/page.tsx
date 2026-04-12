@@ -97,11 +97,37 @@ function TimelineItem({
   );
 }
 
+const ORDER_STATUS_MAP: Record<string, string> = {
+  pending: "orders.statusPending",
+  confirmed: "orders.confirmed",
+  shipped: "orders.shipped",
+  delivered: "orders.delivered",
+  cancelled: "orders.cancelled",
+  refunded: "orders.refunded",
+  processing: "orders.processing",
+};
+
+const PAYMENT_STATUS_MAP: Record<string, string> = {
+  pending: "orders.statusPending",
+  paid: "orders.statusPaid",
+  failed: "orders.statusFailed",
+  refunded: "orders.refunded",
+};
+
 export default function OrdersPage() {
   const config = useStoreConfig();
   const router = useRouter();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { t, getLocalizedValue } = useLanguage();
+
+  const translateStatus = (status: string, map: Record<string, string>) => {
+    const key = map[status.toLowerCase()];
+    if (key) {
+      const translated = t(key);
+      if (translated && translated !== key) return translated;
+    }
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
 
   const [currentPage, setCurrentPage] = useState(1);
   const [ordering, setOrdering] = useState("-created_at");
@@ -120,11 +146,11 @@ export default function OrdersPage() {
     try {
       // Cancel endpoint ignores request body; generated type requires OrderRequest fields
       await ecommerceClientOrdersCancelCreate(String(orderId), {} as unknown as import("@/api/generated/interfaces").OrderRequest);
-      toast.success("Order cancelled");
+      toast.success(t("orders.cancelled") || "Order cancelled");
       refetchOrders();
       refetchOrder();
     } catch {
-      toast.error("Failed to cancel order");
+      toast.error(t("common.noResults") || "Failed to cancel order");
     } finally {
       setIsCancelling(false);
     }
@@ -299,10 +325,7 @@ export default function OrdersPage() {
                       <Badge className={getStatusColor(String(order.status || ""))}>
                         {getStatusIcon(String(order.status || ""))}
                         <span className="ml-1">
-                          {String(order.status || "pending")
-                            .charAt(0)
-                            .toUpperCase() +
-                            String(order.status || "pending").slice(1)}
+                          {translateStatus(String(order.status || "pending"), ORDER_STATUS_MAP)}
                         </span>
                       </Badge>
                       <Badge
@@ -312,10 +335,7 @@ export default function OrdersPage() {
                         )}
                       >
                         <CreditCard className="mr-1 h-3 w-3" />
-                        {String(order.payment_status || "pending")
-                          .charAt(0)
-                          .toUpperCase() +
-                          String(order.payment_status || "pending").slice(1)}
+                        {translateStatus(String(order.payment_status || "pending"), PAYMENT_STATUS_MAP)}
                       </Badge>
                     </div>
                   </div>

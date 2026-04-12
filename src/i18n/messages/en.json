@@ -23,7 +23,8 @@
     "save": "Save Changes",
     "saving": "Saving...",
     "delete": "Delete",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "back": "Back"
   },
   "home": {
     "welcomeTo": "Welcome to",
@@ -208,7 +209,21 @@
     "deliveryAddress": "Delivery Address",
     "orderItems": "Order Items",
     "notes": "Notes",
-    "completePayment": "Complete Payment"
+    "completePayment": "Complete Payment",
+    "timeline": "Order Timeline",
+    "orderPlaced": "Order Placed",
+    "confirmed": "Confirmed",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "refunded": "Refunded",
+    "processing": "Processing",
+    "tracking": "Tracking",
+    "cancelling": "Cancelling...",
+    "cancelOrder": "Cancel Order",
+    "statusPending": "Pending",
+    "statusPaid": "Paid",
+    "statusFailed": "Failed"
   },
   "addresses": {
     "title": "My Addresses",

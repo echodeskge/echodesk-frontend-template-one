@@ -23,7 +23,8 @@
     "save": "შენახვა",
     "saving": "ინახება...",
     "delete": "წაშლა",
-    "deleting": "იშლება..."
+    "deleting": "იშლება...",
+    "back": "უკან"
   },
   "home": {
     "welcomeTo": "კეთილი იყოს თქვენი მობრძანება",
@@ -208,7 +209,21 @@
     "deliveryAddress": "მიტანის მისამართი",
     "orderItems": "შეკვეთის ნივთები",
     "notes": "შენიშვნები",
-    "completePayment": "გადახდის დასრულება"
+    "completePayment": "გადახდის დასრულება",
+    "timeline": "შეკვეთის ქრონოლოგია",
+    "orderPlaced": "შეკვეთა გაფორმდა",
+    "confirmed": "დადასტურებული",
+    "shipped": "გაგზავნილი",
+    "delivered": "მიტანილი",
+    "cancelled": "გაუქმებული",
+    "refunded": "თანხა დაბრუნებული",
+    "processing": "მუშავდება",
+    "tracking": "თრექინგი",
+    "cancelling": "უქმდება...",
+    "cancelOrder": "შეკვეთის გაუქმება",
+    "statusPending": "მოლოდინში",
+    "statusPaid": "გადახდილი",
+    "statusFailed": "წარუმატებელი"
   },
   "addresses": {
     "title": "ჩემი მისამართები",
