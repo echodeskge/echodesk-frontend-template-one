@@ -27,10 +27,12 @@ export default function LoginPage() {
     rememberMe: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setLoginError("");
 
     try {
       await login({
@@ -38,8 +40,11 @@ export default function LoginPage() {
         password: formData.password,
       });
       router.push("/account");
-    } catch (error) {
-      // Error is handled in auth context
+    } catch (error: any) {
+      setLoginError(
+        t("auth.invalidCredentials") ||
+          "Invalid email/phone or password. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -65,11 +70,13 @@ export default function LoginPage() {
                     type="text"
                     placeholder={t("auth.emailOrPhonePlaceholder")}
                     value={formData.identifier}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, identifier: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      setFormData((prev) => ({ ...prev, identifier: e.target.value }));
+                      setLoginError("");
+                    }}
                     required
                     disabled={isSubmitting}
+                    className={loginError ? "border-destructive" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -86,11 +93,13 @@ export default function LoginPage() {
                     id="password"
                     type="password"
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, password: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      setFormData((prev) => ({ ...prev, password: e.target.value }));
+                      setLoginError("");
+                    }}
                     required
                     disabled={isSubmitting}
+                    className={loginError ? "border-destructive" : ""}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -109,6 +118,11 @@ export default function LoginPage() {
                     {t("auth.rememberMe")}
                   </label>
                 </div>
+                {loginError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p className="text-sm text-destructive">{loginError}</p>
+                  </div>
+                )}
                 <Button className="w-full" type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>

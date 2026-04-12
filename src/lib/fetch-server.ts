@@ -23,8 +23,9 @@ async function getServerApiUrl(): Promise<string> {
     if (tenantApiUrl) {
       return tenantApiUrl;
     }
-  } catch (e) {
-    // headers() might fail in some contexts
+  } catch {
+    // headers() fails during ISR/static generation when there is no request context.
+    // Fall through to environment variable fallback.
   }
 
   // Fallback to environment variable
@@ -44,7 +45,15 @@ async function serverFetch<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const baseURL = await getServerApiUrl();
+  let baseURL: string;
+  try {
+    baseURL = await getServerApiUrl();
+  } catch {
+    // If getServerApiUrl fails entirely, use env var or default
+    baseURL =
+      process.env.NEXT_PUBLIC_API_URL || "https://demo.api.echodesk.ge";
+  }
+
   const url = `${baseURL}${endpoint}`;
 
   try {
