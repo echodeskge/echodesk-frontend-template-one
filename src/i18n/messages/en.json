@@ -108,7 +108,16 @@
     "address": "Address",
     "city": "City",
     "postalCode": "Postal Code",
-    "country": "Country"
+    "country": "Country",
+    "shippingMethod": "Shipping Method",
+    "estimatedDays": "days",
+    "freeShipping": "Free",
+    "promoPlaceholder": "Enter promo code",
+    "promoRequired": "Please enter a promo code",
+    "invalidPromo": "Invalid promo code",
+    "discountApplied": "Discount applied",
+    "discount": "Discount",
+    "taxIncluded": "Tax included"
   },
   "auth": {
     "login": "Login",

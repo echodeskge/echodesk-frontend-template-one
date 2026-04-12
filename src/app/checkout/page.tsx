@@ -38,6 +38,7 @@ import {
   Check,
   ShoppingBag,
   ClipboardList,
+  Tag,
 } from "lucide-react";
 
 interface SavedCard {
@@ -46,6 +47,15 @@ interface SavedCard {
   expiry_date?: string;
   card_brand?: string;
   is_default?: boolean;
+}
+
+interface ShippingMethod {
+  id: number;
+  name: Record<string, string> | string;
+  price: string;
+  estimated_days: number;
+  free_shipping_threshold: number | null;
+  is_active: boolean;
 }
 
 export default function CheckoutPage() {
@@ -59,6 +69,12 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [orderNotes, setOrderNotes] = useState("");
+  const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<number | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoError, setPromoError] = useState("");
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [validatingPromo, setValidatingPromo] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState<ClientAddressRequest>({
     label: "",
@@ -82,6 +98,19 @@ export default function CheckoutPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch shipping methods
+  const { data: shippingMethodsData, isLoading: isShippingLoading } = useQuery<ShippingMethod[]>({
+    queryKey: ["shipping-methods"],
+    queryFn: () =>
+      axiosInstance.get("/api/ecommerce/client/shipping-methods/").then((r) => {
+        const data = r.data;
+        return Array.isArray(data) ? data : data.results || [];
+      }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const shippingMethods = shippingMethodsData || [];
+
   // Fetch saved cards
   const { data: cardsData, isLoading: isCardsLoading } = useQuery({
     queryKey: ["cards"],
@@ -98,9 +127,27 @@ export default function CheckoutPage() {
   const addresses = addressesData?.results || [];
   const savedCards: SavedCard[] = cardsData?.results || cardsData || [];
 
+  // Tax config from theme
+  const taxRate = themeData?.payment?.tax_rate || 0;
+  const taxLabel = themeData?.payment?.tax_label || "Tax";
+  const taxInclusive = themeData?.payment?.tax_inclusive || false;
+
+  // Selected shipping method
+  const selectedShippingMethod = shippingMethods.find(
+    (m) => m.id === selectedShippingMethodId
+  );
+
   // Calculate totals
   const subtotal = cart?.total_amount ? parseFloat(cart.total_amount) : 0;
-  const total = subtotal;
+  const shippingCost =
+    selectedShippingMethod
+      ? selectedShippingMethod.free_shipping_threshold &&
+        subtotal >= selectedShippingMethod.free_shipping_threshold
+        ? 0
+        : parseFloat(selectedShippingMethod.price)
+      : 0;
+  const taxAmount = taxInclusive ? 0 : subtotal * (taxRate / 100);
+  const total = subtotal + shippingCost + taxAmount - promoDiscount;
 
   // Set default address and payment method
   useEffect(() => {
@@ -126,6 +173,13 @@ export default function CheckoutPage() {
       setSelectedCardId(defaultCard?.id || savedCards[0]?.id || null);
     }
   }, [savedCards, paymentMethod, selectedCardId]);
+
+  // Set default shipping method
+  useEffect(() => {
+    if (shippingMethods.length > 0 && selectedShippingMethodId === null) {
+      setSelectedShippingMethodId(shippingMethods[0].id);
+    }
+  }, [shippingMethods, selectedShippingMethodId]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -163,6 +217,53 @@ export default function CheckoutPage() {
     }
   };
 
+  const validatePromo = async () => {
+    if (!promoCode.trim()) {
+      setPromoError(t("checkout.promoRequired") || "Please enter a promo code");
+      return;
+    }
+    setValidatingPromo(true);
+    setPromoError("");
+    try {
+      const result = await axiosInstance.post(
+        "/api/ecommerce/client/promo/validate/",
+        {
+          code: promoCode.trim(),
+          subtotal: subtotal,
+        }
+      );
+      if (result.data.valid) {
+        setPromoDiscount(parseFloat(result.data.discount_amount));
+        setPromoError("");
+        setPromoApplied(true);
+        toast.success(
+          `${t("checkout.discountApplied") || "Discount applied"}: ${formatPrice(
+            parseFloat(result.data.discount_amount),
+            config.locale.currency,
+            config.locale.locale
+          )}`
+        );
+      } else {
+        setPromoError(result.data.message || t("checkout.invalidPromo") || "Invalid promo code");
+        setPromoDiscount(0);
+        setPromoApplied(false);
+      }
+    } catch {
+      setPromoError(t("checkout.invalidPromo") || "Invalid promo code");
+      setPromoDiscount(0);
+      setPromoApplied(false);
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
+  const removePromo = () => {
+    setPromoCode("");
+    setPromoDiscount(0);
+    setPromoError("");
+    setPromoApplied(false);
+  };
+
   const handlePlaceOrder = async () => {
     if (!cart || !selectedAddressId) {
       toast.error("Please select a delivery address");
@@ -180,6 +281,8 @@ export default function CheckoutPage() {
         delivery_address_id: selectedAddressId,
         payment_method: paymentMethod === "cash_on_delivery" ? "cash_on_delivery" : "card",
         notes: orderNotes || undefined,
+        ...(selectedShippingMethodId ? { shipping_method_id: selectedShippingMethodId } : {}),
+        ...(promoApplied && promoCode ? { promo_code: promoCode } : {}),
       };
 
       if (paymentMethod === "card" && selectedCardId) {
@@ -543,6 +646,77 @@ export default function CheckoutPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Shipping Method Selector */}
+                  {shippingMethods.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="flex items-center gap-2 font-medium">
+                        <Truck className="h-4 w-4" />
+                        {t("checkout.shippingMethod") || "Shipping Method"}
+                      </h3>
+                      {isShippingLoading ? (
+                        <div className="space-y-2">
+                          <Skeleton className="h-16" />
+                          <Skeleton className="h-16" />
+                        </div>
+                      ) : (
+                        <RadioGroup
+                          value={selectedShippingMethodId?.toString() || ""}
+                          onValueChange={(val) =>
+                            setSelectedShippingMethodId(parseInt(val))
+                          }
+                        >
+                          {shippingMethods.map((method) => {
+                            const isFree =
+                              method.free_shipping_threshold !== null &&
+                              subtotal >= method.free_shipping_threshold;
+                            return (
+                              <div
+                                key={method.id}
+                                className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
+                                  selectedShippingMethodId === method.id
+                                    ? "border-primary bg-primary/5"
+                                    : "hover:border-muted-foreground/30"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <RadioGroupItem
+                                    value={String(method.id)}
+                                    id={`shipping-${method.id}`}
+                                  />
+                                  <Label
+                                    htmlFor={`shipping-${method.id}`}
+                                    className="cursor-pointer"
+                                  >
+                                    <p className="font-medium">
+                                      {getLocalizedValue(
+                                        method.name as Record<string, string>
+                                      )}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {method.estimated_days}{" "}
+                                      {t("checkout.estimatedDays") || "days"}
+                                    </p>
+                                  </Label>
+                                </div>
+                                <p className="font-medium">
+                                  {isFree
+                                    ? t("checkout.freeShipping") || "Free"
+                                    : formatPrice(
+                                        parseFloat(method.price),
+                                        config.locale.currency,
+                                        config.locale.locale
+                                      )}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </RadioGroup>
+                      )}
+                      <Separator />
+                    </div>
+                  )}
+
+                  {/* Payment Method */}
                   <RadioGroup
                     value={paymentMethod}
                     onValueChange={(val) => {
@@ -804,6 +978,122 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
+                  {/* Shipping Method Summary */}
+                  {selectedShippingMethod && (
+                    <>
+                      <Separator />
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h3 className="flex items-center gap-2 font-medium">
+                            <Truck className="h-4 w-4" />
+                            {t("checkout.shippingMethod") || "Shipping Method"}
+                          </h3>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setStep(2)}
+                          >
+                            {t("common.edit") || "Edit"}
+                          </Button>
+                        </div>
+                        <div className="mt-2 rounded-md bg-muted/50 p-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">
+                              {getLocalizedValue(
+                                selectedShippingMethod.name as Record<string, string>
+                              )}
+                            </p>
+                            <p className="text-sm font-medium">
+                              {shippingCost === 0
+                                ? t("checkout.freeShipping") || "Free"
+                                : formatPrice(
+                                    shippingCost,
+                                    config.locale.currency,
+                                    config.locale.locale
+                                  )}
+                            </p>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {selectedShippingMethod.estimated_days}{" "}
+                            {t("checkout.estimatedDays") || "days"}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <Separator />
+
+                  {/* Promo Code */}
+                  <div className="space-y-3">
+                    <h3 className="flex items-center gap-2 font-medium">
+                      <Tag className="h-4 w-4" />
+                      {t("cart.promoCode") || "Promo Code"}
+                    </h3>
+                    {promoApplied ? (
+                      <div className="flex items-center justify-between rounded-md bg-green-50 border border-green-200 p-3">
+                        <div>
+                          <p className="text-sm font-medium text-green-800">
+                            {promoCode}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            {t("checkout.discountApplied") || "Discount applied"}:{" "}
+                            -{formatPrice(
+                              promoDiscount,
+                              config.locale.currency,
+                              config.locale.locale
+                            )}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={removePromo}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          {t("cart.remove") || "Remove"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder={
+                              t("checkout.promoPlaceholder") ||
+                              "Enter promo code"
+                            }
+                            value={promoCode}
+                            onChange={(e) => {
+                              setPromoCode(e.target.value);
+                              if (promoError) setPromoError("");
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                validatePromo();
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={validatePromo}
+                            disabled={validatingPromo || !promoCode.trim()}
+                          >
+                            {validatingPromo ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              t("cart.apply") || "Apply"
+                            )}
+                          </Button>
+                        </div>
+                        {promoError && (
+                          <p className="text-sm text-destructive">{promoError}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <Separator />
 
                   {/* Order Items */}
@@ -963,13 +1253,73 @@ export default function CheckoutPage() {
                   </span>
                 </div>
 
+                {/* Shipping */}
+                {selectedShippingMethod && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {t("cart.shipping") || "Shipping"}
+                    </span>
+                    <span>
+                      {shippingCost === 0
+                        ? t("checkout.freeShipping") || "Free"
+                        : formatPrice(
+                            shippingCost,
+                            config.locale.currency,
+                            config.locale.locale
+                          )}
+                    </span>
+                  </div>
+                )}
+
+                {/* Tax */}
+                {taxRate > 0 && !taxInclusive && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {taxLabel}{" "}
+                      <span className="text-xs">({taxRate}%)</span>
+                    </span>
+                    <span>
+                      {formatPrice(
+                        taxAmount,
+                        config.locale.currency,
+                        config.locale.locale
+                      )}
+                    </span>
+                  </div>
+                )}
+
+                {/* Tax included note */}
+                {taxRate > 0 && taxInclusive && (
+                  <div className="flex justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {t("checkout.taxIncluded") || "Tax included"} ({taxLabel} {taxRate}%)
+                    </span>
+                  </div>
+                )}
+
+                {/* Promo Discount */}
+                {promoDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>
+                      {t("checkout.discount") || "Discount"}
+                    </span>
+                    <span>
+                      -{formatPrice(
+                        promoDiscount,
+                        config.locale.currency,
+                        config.locale.locale
+                      )}
+                    </span>
+                  </div>
+                )}
+
                 <Separator />
 
                 <div className="flex justify-between text-lg font-bold">
                   <span>{t("cart.total")}</span>
                   <span>
                     {formatPrice(
-                      total,
+                      Math.max(0, total),
                       config.locale.currency,
                       config.locale.locale
                     )}

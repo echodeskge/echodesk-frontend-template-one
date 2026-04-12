@@ -108,7 +108,16 @@
     "address": "მისამართი",
     "city": "ქალაქი",
     "postalCode": "საფოსტო კოდი",
-    "country": "ქვეყანა"
+    "country": "ქვეყანა",
+    "shippingMethod": "მიტანის მეთოდი",
+    "estimatedDays": "დღე",
+    "freeShipping": "უფასო",
+    "promoPlaceholder": "შეიყვანეთ პრომო კოდი",
+    "promoRequired": "გთხოვთ შეიყვანოთ პრომო კოდი",
+    "invalidPromo": "არასწორი პრომო კოდი",
+    "discountApplied": "ფასდაკლება გამოყენებულია",
+    "discount": "ფასდაკლება",
+    "taxIncluded": "გადასახადი ჩართულია"
   },
   "auth": {
     "login": "შესვლა",
