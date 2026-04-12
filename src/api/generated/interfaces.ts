@@ -90,17 +90,26 @@ export interface CartStatusEnum {
   [key: string]: any;
 }
 
+export interface ChangePasswordRequestRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface ChangePasswordResponse {
+  message: string;
+}
+
 export interface ClientAddress {
   id: number;
   client: number;
   label: string;
   address: string;
   city: string;
-  postal_code?: string;
-  country?: string;
   extra_instructions?: string;
   latitude?: string;
   longitude?: string;
+  postal_code?: string;
+  country?: string;
   is_default?: boolean;
   created_at: string;
   updated_at: string;
@@ -110,11 +119,11 @@ export interface ClientAddressRequest {
   label: string;
   address: string;
   city: string;
-  postal_code?: string;
-  country?: string;
   extra_instructions?: string;
   latitude?: string;
   longitude?: string;
+  postal_code?: string;
+  country?: string;
   is_default?: boolean;
 }
 
@@ -486,11 +495,11 @@ export interface PatchedClientAddressRequest {
   label?: string;
   address?: string;
   city?: string;
-  postal_code?: string;
-  country?: string;
   extra_instructions?: string;
   latitude?: string;
   longitude?: string;
+  postal_code?: string;
+  country?: string;
   is_default?: boolean;
 }
 

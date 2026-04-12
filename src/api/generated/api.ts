@@ -51,6 +51,8 @@ import type {
   PaginatedShippingMethodList,
   ShippingMethod,
   StoreThemeResponse,
+  ChangePasswordRequestRequest,
+  ChangePasswordResponse,
   ClientLoginRequest,
   PasswordResetConfirmRequest,
   PasswordResetRequestRequest,
@@ -659,6 +661,16 @@ export async function ecommerceClientShippingMethodsRetrieve(
 
 export async function getStoreTheme(): Promise<StoreThemeResponse> {
   const response = await axios.get(`/api/ecommerce/client/theme/`);
+  return response.data;
+}
+
+export async function ecommerceClientsChangePasswordCreate(
+  data: ChangePasswordRequestRequest,
+): Promise<ChangePasswordResponse> {
+  const response = await axios.post(
+    `/api/ecommerce/clients/change-password/`,
+    data,
+  );
   return response.data;
 }
 

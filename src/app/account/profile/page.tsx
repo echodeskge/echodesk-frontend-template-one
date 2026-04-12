@@ -19,9 +19,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ecommerceClientProfileUpdateProfilePartialUpdate } from "@/api/generated/api";
+import {
+  ecommerceClientProfileUpdateProfilePartialUpdate,
+  ecommerceClientsChangePasswordCreate,
+} from "@/api/generated/api";
 import type { PatchedEcommerceClientRequest } from "@/api/generated/interfaces";
-import axiosInstance from "@/api/axios";
 import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ChevronLeft, Loader2, User, Lock } from "lucide-react";
@@ -84,7 +86,7 @@ export default function ProfilePage() {
   // Password change mutation
   const passwordMutation = useMutation({
     mutationFn: (data: { current_password: string; new_password: string }) =>
-      axiosInstance.post("/api/ecommerce/clients/change-password/", data),
+      ecommerceClientsChangePasswordCreate(data),
     onSuccess: () => {
       toast.success(t("profile.passwordChanged") || "Password changed successfully");
       setPasswordForm({
