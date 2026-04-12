@@ -35,22 +35,75 @@ export function sanitizeHtml(html: string): string {
 
   let sanitized = html;
 
-  // Remove script tags and their content
+  // Remove script tags and their content (including nested / malformed variants)
   sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  // Catch unclosed script tags
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*$/gi, '');
 
-  // Remove style tags and their content (can contain expressions)
+  // Remove style tags and their content (can contain CSS expressions)
   sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+  sanitized = sanitized.replace(/<style\b[^>]*>[\s\S]*$/gi, '');
 
-  // Remove iframe, object, embed, form tags
-  sanitized = sanitized.replace(/<\/?(?:iframe|object|embed|form|input|textarea|button|select|option)\b[^>]*>/gi, '');
+  // Remove dangerous tags (iframe, object, embed, form elements, base, meta, link, template, etc.)
+  sanitized = sanitized.replace(
+    /<\/?(?:iframe|object|embed|form|input|textarea|button|select|option|base|meta|link|template|applet|noscript|noembed|noframes|plaintext|xmp|math|annotation-xml)\b[^>]*>/gi,
+    ''
+  );
 
   // Remove event handler attributes (onclick, onerror, onload, etc.)
-  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  // Handle both quoted and unquoted values, including backtick-quoted
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|`[^`]*`|[^\s>]+)/gi, '');
 
-  // Remove javascript: URLs from href/src attributes
-  sanitized = sanitized.replace(/(href|src)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, '$1=""');
-  sanitized = sanitized.replace(/(href|src)\s*=\s*(?:"data:[^"]*"|'data:[^']*')/gi, '$1=""');
-  sanitized = sanitized.replace(/(href|src)\s*=\s*(?:"vbscript:[^"]*"|'vbscript:[^']*')/gi, '$1=""');
+  // Remove javascript:, data:, vbscript: URLs from href/src/action/formaction attributes
+  // Also handle URL-encoded variants (&#106;avascript: etc.) and whitespace tricks
+  sanitized = sanitized.replace(
+    /(href|src|action|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*')/gi,
+    (match, attr) => {
+      // Extract URL value from the quoted attribute
+      const quoteChar = match.charAt(match.indexOf('=') + 1 + (match.indexOf('=') + 1 < match.length && match.charAt(match.indexOf('=') + 1) === ' ' ? 1 : 0));
+      const urlMatch = match.match(/=\s*(['"])([\s\S]*?)\1/);
+      if (urlMatch) {
+        const url = urlMatch[2];
+        // Decode HTML entities for checking
+        const decoded = url.replace(/&#x?[0-9a-fA-F]+;?/g, ' ').replace(/\s+/g, '');
+        if (DANGEROUS_URL_PATTERN.test(decoded) || DANGEROUS_URL_PATTERN.test(url)) {
+          return `${attr}=""`;
+        }
+      }
+      return match;
+    }
+  );
+
+  // Remove CSS expressions and -moz-binding from style attributes
+  sanitized = sanitized.replace(
+    /style\s*=\s*(?:"[^"]*"|'[^']*')/gi,
+    (match) => {
+      if (/expression\s*\(|url\s*\(|\\|import|behavior\s*:|binding\s*:|moz-binding/i.test(match)) {
+        return 'style=""';
+      }
+      return match;
+    }
+  );
 
   return sanitized;
+}
+
+/**
+ * Strip ALL HTML tags and return plain text content.
+ * Useful when the content is simple (paragraphs/headings) and
+ * you want to render it as plain text rather than using dangerouslySetInnerHTML.
+ */
+export function stripHtml(html: string): string {
+  if (!html) return '';
+  // Remove tags, decode common entities, and collapse whitespace
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }

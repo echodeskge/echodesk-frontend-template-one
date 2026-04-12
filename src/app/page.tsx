@@ -44,9 +44,9 @@ export default async function HomePage() {
 
   // Fetch data server-side for SEO
   const [homepageSections, featuredProducts, itemLists] = await Promise.all([
-    fetchHomepageSections(10).catch(() => []),
-    fetchFeaturedProducts(8, 10).catch(() => []),
-    fetchItemLists(undefined, 10).catch(() => []),
+    fetchHomepageSections(10).catch((): Awaited<ReturnType<typeof fetchHomepageSections>> => []),
+    fetchFeaturedProducts(8, 10).catch((): Awaited<ReturnType<typeof fetchFeaturedProducts>> => []),
+    fetchItemLists(undefined, 10).catch((): Awaited<ReturnType<typeof fetchItemLists>> => []),
   ]);
 
   // Generate structured data for SEO

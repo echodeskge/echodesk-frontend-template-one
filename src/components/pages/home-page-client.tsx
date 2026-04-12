@@ -11,11 +11,13 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProductList } from "@/api/generated/interfaces";
+import type { HomepageSection as HomepageSectionType } from "@/types/homepage";
+import type { ItemList } from "@/lib/fetch-server";
 
 interface HomePageClientProps {
-  homepageSections: any[];
+  homepageSections: HomepageSectionType[];
   featuredProducts: ProductList[];
-  itemLists: any[];
+  itemLists: ItemList[];
 }
 
 export function HomePageClient({
@@ -86,7 +88,7 @@ export function HomePageClient({
         </div>
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {featuredProducts.length > 0 ? (
-            featuredProducts.map((product) => (
+            featuredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
                 id={String(product.id)}
@@ -102,6 +104,7 @@ export function HomePageClient({
                 isOnSale={product.discount_percentage > 0}
                 isFeatured={product.is_featured}
                 isNew={false}
+                isHero={index < 2}
               />
             ))
           ) : (
@@ -118,7 +121,7 @@ export function HomePageClient({
           <h2 className="text-3xl font-bold">{t("home.shopByCategory")}</h2>
           <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             {categoryOptions.length > 0 ? (
-              categoryOptions.map((option: any, index: number) => {
+              categoryOptions.map((option: string | Record<string, string>, index: number) => {
                 const categoryName = getLocalizedValue(option);
                 return (
                   <Link

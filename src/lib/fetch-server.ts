@@ -208,13 +208,8 @@ export async function fetchAllProductSlugs(): Promise<string[]> {
 /**
  * Fetch homepage sections (server-side)
  */
-export interface HomepageSection {
-  id: number;
-  title: string;
-  type: string;
-  order: number;
-  content: any;
-}
+export type { HomepageSection } from "@/types/homepage";
+import type { HomepageSection } from "@/types/homepage";
 
 export async function fetchHomepageSections(
   revalidate?: number
@@ -240,6 +235,7 @@ export interface ItemList {
   slug?: string;
   description?: string;
   image?: string;
+  items_count?: number;
 }
 
 export async function fetchItemLists(

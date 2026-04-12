@@ -46,14 +46,16 @@ export async function generateMetadata({
     const config = getStoreConfig();
 
     // Get localized values (fallback to English or first available)
-    const getName = (obj: any): string => {
+    const getName = (obj: string | Record<string, string> | undefined): string => {
+      if (!obj) return "";
       if (typeof obj === "string") return obj;
-      return obj?.en || obj?.ka || Object.values(obj || {})[0] || "";
+      return obj.en || obj.ka || Object.values(obj)[0] || "";
     };
 
-    const getDescription = (obj: any): string => {
+    const getDescription = (obj: string | Record<string, string> | undefined): string => {
+      if (!obj) return "";
       if (typeof obj === "string") return obj;
-      return obj?.en || obj?.ka || Object.values(obj || {})[0] || "";
+      return obj.en || obj.ka || Object.values(obj)[0] || "";
     };
 
     const name = getName(product.name);
@@ -128,14 +130,16 @@ export default async function ProductDetailPage({
     const relatedProducts = await fetchFeaturedProducts(4, 60).catch(() => []);
 
     // Helper to get localized values
-    const getName = (obj: any): string => {
+    const getName = (obj: string | Record<string, string> | undefined): string => {
+      if (!obj) return "";
       if (typeof obj === "string") return obj;
-      return obj?.en || obj?.ka || Object.values(obj || {})[0] || "";
+      return obj.en || obj.ka || Object.values(obj)[0] || "";
     };
 
-    const getDescription = (obj: any): string => {
+    const getDescription = (obj: string | Record<string, string> | undefined): string => {
+      if (!obj) return "";
       if (typeof obj === "string") return obj;
-      return obj?.en || obj?.ka || Object.values(obj || {})[0] || "";
+      return obj.en || obj.ka || Object.values(obj)[0] || "";
     };
 
     const productName = getName(product.name);

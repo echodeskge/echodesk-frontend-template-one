@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,6 +27,8 @@ export interface ProductCardProps {
   isOnSale?: boolean;
   isFeatured?: boolean;
   isNew?: boolean;
+  /** When true, the product image is loaded with priority (for LCP/hero images). */
+  isHero?: boolean;
 }
 
 export function ProductCard({
@@ -39,6 +41,7 @@ export function ProductCard({
   isOnSale,
   isFeatured,
   isNew,
+  isHero,
 }: ProductCardProps) {
   const config = useStoreConfig();
   const { isAuthenticated } = useAuth();
@@ -58,7 +61,7 @@ export function ProductCard({
 
   const inWishlist = isInWishlist(id);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -87,9 +90,9 @@ export function ProductCard({
       product: parseInt(id),
       quantity: 1,
     });
-  };
+  }, [isAuthenticated, cart, addToCart, id, t]);
 
-  const handleToggleWishlist = (e: React.MouseEvent) => {
+  const handleToggleWishlist = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -101,7 +104,7 @@ export function ProductCard({
     }
 
     toggleWishlist(id);
-  };
+  }, [isAuthenticated, toggleWishlist, id]);
 
   const handleLoginSuccess = () => {
     // Execute pending action after successful login
@@ -124,6 +127,7 @@ export function ProductCard({
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={isHero}
             />
           </div>
         </Link>

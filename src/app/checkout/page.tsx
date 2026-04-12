@@ -157,7 +157,7 @@ export default function CheckoutPage() {
 
   // Selected shipping method
   const selectedShippingMethod = shippingMethods.find(
-    (m: any) => m.id === selectedShippingMethodId
+    (m) => m.id === selectedShippingMethodId
   );
 
   // Calculate totals
@@ -298,18 +298,14 @@ export default function CheckoutPage() {
     }
 
     try {
-      const orderData: any = {
+      const orderData = {
         cart_id: cart.id,
         delivery_address_id: selectedAddressId,
-        payment_method: paymentMethod === "cash_on_delivery" ? "cash_on_delivery" : "card",
         notes: orderNotes || undefined,
         ...(selectedShippingMethodId ? { shipping_method_id: selectedShippingMethodId } : {}),
         ...(promoApplied && promoCode ? { promo_code: promoCode } : {}),
+        ...(paymentMethod === "card" && selectedCardId ? { card_id: selectedCardId } : {}),
       };
-
-      if (paymentMethod === "card" && selectedCardId) {
-        orderData.card_id = selectedCardId;
-      }
 
       // Generated return type is OrderCreate but the API actually returns a full Order
       const result = await createOrder.mutateAsync(orderData) as unknown as Order;
@@ -327,9 +323,9 @@ export default function CheckoutPage() {
     }
   };
 
-  const getProductData = (product: any) => {
+  const getProductData = (product: unknown): Record<string, unknown> | null => {
     if (typeof product === "object" && product !== null) {
-      return product;
+      return product as Record<string, unknown>;
     }
     return null;
   };
@@ -387,7 +383,7 @@ export default function CheckoutPage() {
 
     setGuestSubmitting(true);
     try {
-      let localCart: any[] = [];
+      let localCart: Array<{ product_id: number; quantity: number }> = [];
       try {
         const stored = typeof window !== "undefined" ? localStorage.getItem("guest_cart") : null;
         localCart = stored ? JSON.parse(stored) : [];
@@ -411,9 +407,10 @@ export default function CheckoutPage() {
       }
 
       router.push(`/order-confirmation?order_id=${result.id}`);
-    } catch (error: any) {
-      const detail = error.response?.data?.detail;
-      const fieldErrors = error.response?.data;
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const detail = axiosError.response?.data?.detail;
+      const fieldErrors = axiosError.response?.data;
       if (typeof fieldErrors === "object" && !detail) {
         // Show field-specific errors
         const messages = Object.entries(fieldErrors)
@@ -422,7 +419,7 @@ export default function CheckoutPage() {
           .join("; ");
         toast.error(messages || t("checkout.guestCheckoutFailed") || "Guest checkout failed.");
       } else {
-        toast.error(detail || t("checkout.guestCheckoutFailed") || "Guest checkout failed. Please try again.");
+        toast.error(String(detail) || t("checkout.guestCheckoutFailed") || "Guest checkout failed. Please try again.");
       }
     } finally {
       setGuestSubmitting(false);
@@ -953,10 +950,12 @@ export default function CheckoutPage() {
                             setSelectedShippingMethodId(parseInt(val))
                           }
                         >
-                          {shippingMethods.map((method: any) => {
+                          {shippingMethods.map((method) => {
+                            const threshold = method.free_shipping_threshold
+                              ? parseFloat(method.free_shipping_threshold)
+                              : null;
                             const isFree =
-                              method.free_shipping_threshold !== null &&
-                              subtotal >= method.free_shipping_threshold;
+                              threshold !== null && subtotal >= threshold;
                             return (
                               <div
                                 key={method.id}
@@ -990,7 +989,7 @@ export default function CheckoutPage() {
                                   {isFree
                                     ? t("checkout.freeShipping") || "Free"
                                     : formatPrice(
-                                        parseFloat(method.price),
+                                        parseFloat(method.price ?? "0"),
                                         config.locale.currency,
                                         config.locale.locale
                                       )}
@@ -1394,16 +1393,16 @@ export default function CheckoutPage() {
                     <div className="mt-3 space-y-3">
                       {cartItems.map((item) => {
                         const productData = getProductData(item.product);
+                        const productImage = String(productData?.image || "/placeholder.svg");
+                        const productName = productData
+                          ? getLocalizedValue(productData.name as string | Record<string, string>)
+                          : "Product";
                         return (
                           <div key={item.id} className="flex items-center gap-3">
                             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border">
                               <Image
-                                src={productData?.image || "/placeholder.svg"}
-                                alt={
-                                  productData
-                                    ? getLocalizedValue(productData.name)
-                                    : "Product"
-                                }
+                                src={productImage}
+                                alt={productName}
                                 fill
                                 className="object-cover"
                                 sizes="64px"
@@ -1411,9 +1410,7 @@ export default function CheckoutPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="truncate text-sm font-medium">
-                                {productData
-                                  ? getLocalizedValue(productData.name)
-                                  : "Product"}
+                                {productName}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {t("product.quantity") || "Qty"}: {item.quantity || 1}
@@ -1490,16 +1487,16 @@ export default function CheckoutPage() {
                 <div className="max-h-64 space-y-3 overflow-y-auto">
                   {cartItems.map((item) => {
                     const productData = getProductData(item.product);
+                    const productImage = String(productData?.image || "/placeholder.svg");
+                    const productName = productData
+                      ? getLocalizedValue(productData.name as string | Record<string, string>)
+                      : "Product";
                     return (
                       <div key={item.id} className="flex items-center gap-3">
                         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border">
                           <Image
-                            src={productData?.image || "/placeholder.svg"}
-                            alt={
-                              productData
-                                ? getLocalizedValue(productData.name)
-                                : "Product"
-                            }
+                            src={productImage}
+                            alt={productName}
                             fill
                             className="object-cover"
                             sizes="48px"
@@ -1507,9 +1504,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="truncate text-sm">
-                            {productData
-                              ? getLocalizedValue(productData.name)
-                              : "Product"}
+                            {productName}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             x{item.quantity || 1}

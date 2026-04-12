@@ -84,9 +84,9 @@ export default function CartPage() {
   const isLoading = isAuthLoading || isCartLoading || isItemsLoading;
   const cartItems = cartItemsData?.results || [];
 
-  const getProductData = (product: any) => {
+  const getProductData = (product: unknown): Record<string, unknown> | null => {
     if (typeof product === "object" && product !== null) {
-      return product;
+      return product as Record<string, unknown>;
     }
     return null;
   };
@@ -175,18 +175,19 @@ export default function CartPage() {
                 <div className="space-y-6">
                   {cartItems.map((item, index) => {
                     const productData = getProductData(item.product);
+                    const productImage = String(productData?.image || "/placeholder.svg");
+                    const productName = productData
+                      ? getLocalizedValue(productData.name as string | Record<string, string>)
+                      : "Product";
+                    const productSlug = productData?.slug || item.product;
                     return (
                     <div key={item.id}>
                       {index > 0 && <Separator className="mb-6" />}
                       <div className="flex gap-4">
                         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border">
                           <Image
-                            src={productData?.image || "/placeholder.svg"}
-                            alt={
-                              productData
-                                ? getLocalizedValue(productData.name)
-                                : "Product"
-                            }
+                            src={productImage}
+                            alt={productName}
                             fill
                             className="object-cover"
                           />
@@ -194,12 +195,10 @@ export default function CartPage() {
                         <div className="flex flex-1 flex-col justify-between">
                           <div>
                             <Link
-                              href={`/products/${productData?.slug || item.product}`}
+                              href={`/products/${productSlug}`}
                               className="font-medium hover:text-primary"
                             >
-                              {productData
-                                ? getLocalizedValue(productData.name)
-                                : "Product"}
+                              {productName}
                             </Link>
                           </div>
                           <div className="flex items-center gap-4">

@@ -52,14 +52,36 @@ export function useAddToCart() {
   return useMutation({
     mutationFn: (data: CartItemCreateRequest) =>
       ecommerceClientCartItemsCreate(data),
+    onMutate: async (newItem) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["cart"] });
+
+      // Snapshot the previous cart value
+      const previousCart = queryClient.getQueryData<Cart>(["cart"]);
+
+      // Optimistically update the cart item count
+      if (previousCart) {
+        queryClient.setQueryData<Cart>(["cart"], {
+          ...previousCart,
+          total_items: previousCart.total_items + (newItem.quantity ?? 1),
+        });
+      }
+
+      return { previousCart };
+    },
     onSuccess: () => {
-      // Invalidate cart queries to refetch
+      // Invalidate cart queries to refetch with real server data
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["cartItems"] });
       toast.success("Added to cart!");
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || "Failed to add item to cart";
+    onError: (error: unknown, _newItem, context) => {
+      // Revert the optimistic update on error
+      if (context?.previousCart) {
+        queryClient.setQueryData<Cart>(["cart"], context.previousCart);
+      }
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      const message = axiosError.response?.data?.detail || "Failed to add item to cart";
       toast.error(message);
     },
   });
@@ -76,8 +98,9 @@ export function useUpdateCartItem() {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["cartItems"] });
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || "Failed to update cart";
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      const message = axiosError.response?.data?.detail || "Failed to update cart";
       toast.error(message);
     },
   });
@@ -94,8 +117,9 @@ export function useRemoveFromCart() {
       queryClient.invalidateQueries({ queryKey: ["cartItems"] });
       toast.success("Item removed from cart");
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || "Failed to remove item";
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      const message = axiosError.response?.data?.detail || "Failed to remove item";
       toast.error(message);
     },
   });

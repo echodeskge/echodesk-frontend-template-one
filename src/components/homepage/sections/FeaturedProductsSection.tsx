@@ -79,7 +79,7 @@ export function FeaturedProductsSection({ section, language }: HomepageSectionPr
               </div>
             ))
           ) : featuredProducts?.results.length ? (
-            featuredProducts.results.map((product) => (
+            featuredProducts.results.map((product, index) => (
               <ProductCard
                 key={product.id}
                 id={String(product.id)}
@@ -95,6 +95,7 @@ export function FeaturedProductsSection({ section, language }: HomepageSectionPr
                 isOnSale={product.discount_percentage > 0}
                 isFeatured={product.is_featured}
                 isNew={false}
+                isHero={index < 4}
               />
             ))
           ) : (

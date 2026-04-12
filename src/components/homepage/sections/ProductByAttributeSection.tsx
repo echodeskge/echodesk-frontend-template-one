@@ -100,7 +100,7 @@ export function ProductByAttributeSection({ section, language }: HomepageSection
               </div>
             ))
           ) : products?.results.length ? (
-            products.results.slice(0, maxItems).map((product) => (
+            products.results.slice(0, maxItems).map((product, index) => (
               <ProductCard
                 key={product.id}
                 id={String(product.id)}
@@ -116,6 +116,7 @@ export function ProductByAttributeSection({ section, language }: HomepageSection
                 isOnSale={product.discount_percentage > 0}
                 isFeatured={product.is_featured}
                 isNew={false}
+                isHero={index < 4}
               />
             ))
           ) : (

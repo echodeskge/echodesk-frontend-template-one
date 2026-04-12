@@ -127,6 +127,12 @@ export default async function RootLayout({
           title="Store Search"
           href="/opensearch.xml"
         />
+        {tenantConfig.apiUrl && (
+          <>
+            <link rel="dns-prefetch" href={tenantConfig.apiUrl} />
+            <link rel="preconnect" href={tenantConfig.apiUrl} />
+          </>
+        )}
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <TenantProvider config={tenantConfig}>

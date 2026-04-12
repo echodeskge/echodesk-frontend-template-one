@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { StoreLayout } from "@/components/layout/store-layout";
 import { ProductCard } from "@/components/product/product-card";
@@ -71,10 +71,22 @@ export function ProductsPageClient({ initialData }: ProductsPageClientProps) {
   });
 
   // Use React Query for client-side updates (with initialData from server)
-  const { data: productsData, isLoading } = useProducts(filters);
+  const { data: productsData, isLoading, isFetched } = useProducts(filters);
 
-  // Use initialData from server on first render, then client data
-  const displayData = productsData || initialData;
+  // Track whether client data has been fetched at least once.
+  // Only switch from initialData to productsData after the first successful fetch
+  // to prevent a visual flash on initial mount.
+  const hasClientData = useRef(false);
+  if (isFetched && productsData) {
+    hasClientData.current = true;
+  }
+
+  const displayData = useMemo(() => {
+    if (hasClientData.current && productsData) {
+      return productsData;
+    }
+    return initialData;
+  }, [productsData, initialData]);
 
   const updateFilters = (newFilters: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
