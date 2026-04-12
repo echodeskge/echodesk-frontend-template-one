@@ -157,7 +157,7 @@ export default function CartPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
-        <Breadcrumbs items={[{ label: "Cart" }]} />
+        <Breadcrumbs items={[{ label: t("common.cart") }]} />
         <h1 className="text-3xl font-bold">{t("cart.title")}</h1>
         <p className="mt-2 text-muted-foreground">
           {cartItems.length}{" "}
@@ -218,6 +218,7 @@ export default function CartPage() {
                                   updateCartItem.isPending ||
                                   removeFromCart.isPending
                                 }
+                                aria-label={t("product.quantity") + " -"}
                               >
                                 {updateCartItem.isPending ||
                                 removeFromCart.isPending ? (
@@ -240,6 +241,7 @@ export default function CartPage() {
                                   )
                                 }
                                 disabled={updateCartItem.isPending}
+                                aria-label={t("product.quantity") + " +"}
                               >
                                 {updateCartItem.isPending ? (
                                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -254,6 +256,7 @@ export default function CartPage() {
                               className="text-destructive hover:text-destructive"
                               onClick={() => handleRemoveItem(item.id)}
                               disabled={removeFromCart.isPending}
+                              aria-label={t("cart.remove")}
                             >
                               {removeFromCart.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />

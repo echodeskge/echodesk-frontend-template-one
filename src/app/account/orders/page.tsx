@@ -150,7 +150,7 @@ export default function OrdersPage() {
       refetchOrders();
       refetchOrder();
     } catch {
-      toast.error(t("common.noResults") || "Failed to cancel order");
+      toast.error(t("cart.cancelFailed") || "Failed to cancel order");
     } finally {
       setIsCancelling(false);
     }
@@ -245,7 +245,7 @@ export default function OrdersPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
-        <Breadcrumbs items={[{ label: "My Account", href: "/account" }, { label: "Orders" }]} />
+        <Breadcrumbs items={[{ label: t("common.myAccount"), href: "/account" }, { label: t("common.myOrders") }]} />
         {/* Header */}
         <div className="mb-8">
           <Button variant="ghost" asChild className="mb-4">
@@ -448,10 +448,7 @@ export default function OrdersPage() {
                   >
                     {getStatusIcon(String(selectedOrder.status || ""))}
                     <span className="ml-1">
-                      {String(selectedOrder.status || "pending")
-                        .charAt(0)
-                        .toUpperCase() +
-                        String(selectedOrder.status || "pending").slice(1)}
+                      {translateStatus(String(selectedOrder.status || "pending"), ORDER_STATUS_MAP)}
                     </span>
                   </Badge>
                   <Badge
@@ -461,12 +458,7 @@ export default function OrdersPage() {
                     )}
                   >
                     <CreditCard className="mr-1 h-3 w-3" />
-                    {String(selectedOrder.payment_status || "pending")
-                      .charAt(0)
-                      .toUpperCase() +
-                      String(selectedOrder.payment_status || "pending").slice(
-                        1
-                      )}
+                    {translateStatus(String(selectedOrder.payment_status || "pending"), PAYMENT_STATUS_MAP)}
                   </Badge>
                 </div>
 

@@ -39,7 +39,7 @@ export default function WishlistPage() {
     }
 
     if (!cart) {
-      toast.error("Cart not available. Please try again.");
+      toast.error(t("cart.notAvailable"));
       return;
     }
 
@@ -61,7 +61,7 @@ export default function WishlistPage() {
     }
 
     if (!cart) {
-      toast.error("Cart not available. Please try again.");
+      toast.error(t("cart.notAvailable"));
       return;
     }
 
@@ -157,7 +157,7 @@ export default function WishlistPage() {
               {t("common.wishlist")}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Please login to view your wishlist
+              {t("wishlist.loginRequired")}
             </p>
             <Button asChild className="mt-6">
               <Link href="/login?callbackUrl=/wishlist">
@@ -173,7 +173,7 @@ export default function WishlistPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
-        <Breadcrumbs items={[{ label: "Wishlist" }]} />
+        <Breadcrumbs items={[{ label: t("common.wishlist") }]} />
         {/* Header */}
         <div className="mb-8">
           <Button variant="ghost" asChild className="mb-4">
@@ -273,6 +273,7 @@ export default function WishlistPage() {
                       className="absolute right-2 top-2 h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
                       onClick={() => handleRemoveFavorite(favorite)}
                       disabled={isPending}
+                      aria-label={t("cart.remove")}
                     >
                       {isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

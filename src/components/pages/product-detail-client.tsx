@@ -239,7 +239,7 @@ export function ProductDetailClient({
       Object.keys(variantAttributes).length > 0 &&
       !selectedVariant
     ) {
-      toast.error("Please select all variant options before adding to cart.");
+      toast.error(t("cart.selectVariant") || "Please select all variant options before adding to cart.");
       return;
     }
 
@@ -259,7 +259,7 @@ export function ProductDetailClient({
     }
 
     if (!cart) {
-      toast.error("Cart not available. Please try again.");
+      toast.error(t("cart.notAvailable") || "Cart not available. Please try again.");
       return;
     }
     if (product) {
@@ -448,6 +448,7 @@ export function ProductDetailClient({
                   variant="outline"
                   size="icon"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  aria-label={t("product.quantity") + " -"}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -458,6 +459,7 @@ export function ProductDetailClient({
                   onClick={() =>
                     setQuantity(Math.min(displayStock || 99, quantity + 1))
                   }
+                  aria-label={t("product.quantity") + " +"}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -487,6 +489,7 @@ export function ProductDetailClient({
                   className={isInWishlist(product.id) ? "text-red-500" : ""}
                   onClick={() => toggleWishlist(product.id)}
                   disabled={isWishlistPending}
+                  aria-label={t("common.wishlist")}
                 >
                   {isWishlistPending ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -501,7 +504,7 @@ export function ProductDetailClient({
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="lg" variant="outline">
+                  <Button size="lg" variant="outline" aria-label={t("product.copyLink")}>
                     <Share2 className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -792,7 +795,7 @@ export function ProductDetailClient({
         open={showLoginDialog}
         onOpenChange={setShowLoginDialog}
         onSuccess={handleLoginSuccess}
-        message="Please sign in to add items to your cart"
+        message={t("cart.signInRequired") || "Please sign in to add items to your cart"}
       />
     </StoreLayout>
   );

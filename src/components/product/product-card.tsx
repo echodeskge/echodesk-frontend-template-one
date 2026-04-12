@@ -78,7 +78,7 @@ export function ProductCard({
     }
 
     if (!cart) {
-      toast.error("Cart not available. Please try again.");
+      toast.error(t("cart.notAvailable") || "Cart not available. Please try again.");
       return;
     }
 
@@ -214,7 +214,7 @@ export function ProductCard({
         open={showLoginDialog}
         onOpenChange={setShowLoginDialog}
         onSuccess={handleLoginSuccess}
-        message="Please sign in to add items to your cart"
+        message={t("cart.signInRequired") || "Please sign in to add items to your cart"}
       />
     </Card>
   );

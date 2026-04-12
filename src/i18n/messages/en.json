@@ -109,7 +109,13 @@
     "emptyDesc": "Looks like you haven't added any items to your cart yet.",
     "promoCode": "Promo code",
     "apply": "Apply",
-    "secureCheckout": "Secure checkout powered by Echodesk"
+    "secureCheckout": "Secure checkout powered by Echodesk",
+    "notAvailable": "Cart not available. Please try again.",
+    "cancelFailed": "Failed to cancel order",
+    "addedToCart": "Added to cart!",
+    "removedFromCart": "Item removed from cart",
+    "selectVariant": "Please select all variant options before adding to cart.",
+    "signInRequired": "Please sign in to add items to your cart"
   },
   "checkout": {
     "title": "Checkout",
@@ -140,7 +146,10 @@
     "guestFieldsRequired": "Please fill in all required fields",
     "guestCheckoutFailed": "Guest checkout failed. Please try again.",
     "invalidEmail": "Please enter a valid email address",
-    "invalidPhone": "Please enter a valid phone number"
+    "invalidPhone": "Please enter a valid phone number",
+    "selectAddress": "Please select a delivery address",
+    "selectPayment": "Please select a payment method",
+    "fillRequired": "Please fill in all required fields"
   },
   "orderConfirmation": {
     "thankYou": "Thank You!",
@@ -172,7 +181,8 @@
     "signIn": "Sign In",
     "orContinueWith": "Or continue with",
     "dontHaveAccount": "Don't have an account?",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "invalidCredentials": "Invalid email or password"
   },
   "footer": {
     "aboutUs": "About Us",
@@ -190,7 +200,9 @@
     "startShopping": "Start Shopping",
     "addAllToCart": "Add All to Cart",
     "clearAll": "Clear All",
-    "addedOn": "Added"
+    "addedOn": "Added",
+    "loginRequired": "Please login to view your wishlist",
+    "loginToUse": "Please login to use wishlist"
   },
   "orders": {
     "totalOrders": "total orders",

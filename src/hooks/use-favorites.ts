@@ -7,6 +7,7 @@ import {
 import type { FavoriteProductCreateRequest } from "@/api/generated/interfaces";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 
 // Hook for fetching favorites (wishlist)
 export function useFavorites(page?: number) {
@@ -75,6 +76,7 @@ export function useIsInFavorites(productId: number) {
 // Combined hook for wishlist functionality with backend support
 export function useBackendWishlist() {
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const { data: favoritesData, isLoading } = useFavorites();
   const addToFavorites = useAddToFavorites();
   const removeFromFavorites = useRemoveFromFavorites();
@@ -112,7 +114,7 @@ export function useBackendWishlist() {
 
   const toggleWishlist = (productId: string | number) => {
     if (!isAuthenticated) {
-      toast.error("Please login to use wishlist");
+      toast.error(t("wishlist.loginToUse") || "Please login to use wishlist");
       return;
     }
 

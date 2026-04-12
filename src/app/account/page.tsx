@@ -97,7 +97,7 @@ export default function AccountPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
-        <Breadcrumbs items={[{ label: "My Account" }]} />
+        <Breadcrumbs items={[{ label: t("common.myAccount") }]} />
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">{t("account.title")}</h1>

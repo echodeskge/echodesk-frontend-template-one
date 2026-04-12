@@ -20,6 +20,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
+  const safeCallback = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/account";
   const { login, isLoading } = useAuth();
   const { t } = useLanguage();
 
@@ -41,7 +42,7 @@ function LoginForm() {
         identifier: formData.identifier,
         password: formData.password,
       });
-      router.push(callbackUrl || "/account");
+      router.push(safeCallback);
     } catch (error: any) {
       setLoginError(
         t("auth.invalidCredentials") ||

@@ -220,7 +220,7 @@ export default function CheckoutPage() {
 
   const handleCreateAddress = async () => {
     if (!newAddress.label || !newAddress.address || !newAddress.city) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("checkout.fillRequired") || "Please fill in all required fields");
       return;
     }
 
@@ -288,12 +288,12 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!cart || !selectedAddressId) {
-      toast.error("Please select a delivery address");
+      toast.error(t("checkout.selectAddress") || "Please select a delivery address");
       return;
     }
 
     if (!paymentMethod) {
-      toast.error("Please select a payment method");
+      toast.error(t("checkout.selectPayment") || "Please select a payment method");
       return;
     }
 
@@ -603,7 +603,7 @@ export default function CheckoutPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
-        <Breadcrumbs items={[{ label: "Cart", href: "/cart" }, { label: "Checkout" }]} />
+        <Breadcrumbs items={[{ label: t("common.cart"), href: "/cart" }, { label: t("checkout.title") }]} />
         {/* Header */}
         <div className="mb-2">
           <Button variant="ghost" asChild className="mb-4">

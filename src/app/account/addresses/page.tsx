@@ -253,7 +253,7 @@ export default function AddressesPage() {
   return (
     <StoreLayout>
       <div className="container py-8">
-        <Breadcrumbs items={[{ label: "My Account", href: "/account" }, { label: "Addresses" }]} />
+        <Breadcrumbs items={[{ label: t("common.myAccount"), href: "/account" }, { label: t("addresses.title") }]} />
         {/* Header */}
         <div className="mb-8">
           <Button variant="ghost" asChild className="mb-4">
