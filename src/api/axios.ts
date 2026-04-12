@@ -44,7 +44,7 @@ const getApiUrl = (): string => {
 
     // For custom domains, we can't derive API URL from hostname
     // The tenant context should have been set by TenantProvider
-    console.warn('[Axios] No tenant API URL set for custom domain:', hostname);
+    // No tenant API URL set for custom domain — TenantProvider should handle this
   }
 
   // Default fallback to demo
@@ -71,10 +71,7 @@ const createAxiosInstance = (baseURL?: string): AxiosInstance => {
         config.baseURL = baseURL;
       }
 
-      // Log API calls in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-      }
+      // API request logging removed for production safety
 
       // Get JWT token from localStorage (ecommerce client uses Bearer JWT)
       const accessToken = typeof window !== 'undefined'

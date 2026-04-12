@@ -39,7 +39,6 @@ export function HomepageSection({ section, language }: Props) {
 
     default:
       // Unknown section type - render nothing
-      console.warn(`Unknown section type: ${section.section_type}`);
       return null;
   }
 }

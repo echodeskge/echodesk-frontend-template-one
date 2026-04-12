@@ -192,7 +192,7 @@ const fetchTheme = async (apiUrl: string): Promise<ThemeConfig | null> => {
     });
 
     if (!response.ok) {
-      console.warn('Failed to fetch theme, using defaults');
+      // Theme fetch failed, using defaults
       return null;
     }
 
@@ -204,7 +204,7 @@ const fetchTheme = async (apiUrl: string): Promise<ThemeConfig | null> => {
 
     return theme;
   } catch (error) {
-    console.warn('Error fetching theme:', error);
+    // Error fetching theme — defaults will be used
     return null;
   }
 };

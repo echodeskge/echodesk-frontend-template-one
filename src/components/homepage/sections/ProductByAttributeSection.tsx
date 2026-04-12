@@ -29,7 +29,7 @@ export function ProductByAttributeSection({ section, language }: HomepageSection
   }
 
   // Fetch products filtered by attribute
-  const { data: products, isLoading } = useProducts(filters);
+  const { data: products, isLoading, isError } = useProducts(filters);
 
   const getLocalizedText = (text: LocalizedText | string | undefined): string => {
     if (!text) return "";
@@ -86,7 +86,11 @@ export function ProductByAttributeSection({ section, language }: HomepageSection
         <div
           className={`mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 ${gridCols}`}
         >
-          {isLoading ? (
+          {isError ? (
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              {language === "ka" ? "პროდუქტების ჩატვირთვა ვერ მოხერხდა" : "Failed to load products"}
+            </div>
+          ) : isLoading ? (
             // Loading skeleton
             Array.from({ length: columns }).map((_, i) => (
               <div key={i} className="space-y-3">

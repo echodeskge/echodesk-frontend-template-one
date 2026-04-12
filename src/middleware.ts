@@ -52,10 +52,14 @@ async function resolveTenant(hostname: string): Promise<TenantConfig | null> {
     return cached.config;
   }
 
+  const resolveApiUrl = process.env.NEXT_PUBLIC_RESOLVE_API || 'https://api.echodesk.ge';
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   try {
     // Call backend API to resolve domain
     const response = await fetch(
-      `https://api.echodesk.ge/api/public/resolve-domain/?domain=${encodeURIComponent(hostname)}`,
+      `${resolveApiUrl}/api/public/resolve-domain/?domain=${encodeURIComponent(hostname)}`,
       {
         method: "GET",
         headers: {
@@ -63,11 +67,11 @@ async function resolveTenant(hostname: string): Promise<TenantConfig | null> {
         },
         // Don't cache at fetch level - we handle caching ourselves
         cache: "no-store",
+        signal: controller.signal,
       }
     );
 
     if (!response.ok) {
-      console.log(`[Middleware] Tenant resolution failed for ${hostname}: ${response.status}`);
       return null;
     }
 
@@ -83,6 +87,8 @@ async function resolveTenant(hostname: string): Promise<TenantConfig | null> {
   } catch (error) {
     console.error(`[Middleware] Error resolving tenant for ${hostname}:`, error);
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

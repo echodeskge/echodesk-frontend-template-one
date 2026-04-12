@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import type { HomepageSectionProps, LocalizedText, ListItem } from "@/types/homepage";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export function CustomContentSection({ section, language }: HomepageSectionProps) {
   const items = section.data || [];
@@ -63,7 +64,7 @@ export function CustomContentSection({ section, language }: HomepageSectionProps
                 <div
                   className="text-muted-foreground prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{
-                    __html: getLocalizedText(customData.description),
+                    __html: sanitizeHtml(getLocalizedText(customData.description)),
                   }}
                 />
               )}

@@ -55,20 +55,13 @@ const config: NextAuthConfig = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.log("[NextAuth] authorize() called with:", {
-          hasEmail: !!credentials?.email,
-          hasPassword: !!credentials?.password,
-        });
-
         if (!credentials?.email || !credentials?.password) {
-          console.error("[NextAuth] Missing credentials");
           return null;
         }
 
         try {
           // Call the backend login API using fetch (works on server-side)
           const apiUrl = getApiUrl();
-          console.log("[NextAuth] Calling API:", `${apiUrl}/api/ecommerce/clients/login/`);
 
           const response = await fetch(`${apiUrl}/api/ecommerce/clients/login/`, {
             method: "POST",
@@ -81,19 +74,11 @@ const config: NextAuthConfig = {
             }),
           });
 
-          console.log("[NextAuth] API response status:", response.status);
-
           if (!response.ok) {
-            const errorText = await response.text();
-            console.error("[NextAuth] Login failed:", response.status, response.statusText, errorText);
             return null;
           }
 
           const data = await response.json();
-          console.log("[NextAuth] API response data:", {
-            hasAccess: !!data.access,
-            hasClient: !!data.client,
-          });
 
           if (data.access && data.client) {
             // Return user object that will be saved in JWT
@@ -106,11 +91,9 @@ const config: NextAuthConfig = {
               accessToken: data.access,
               refreshToken: data.refresh,
             };
-            console.log("[NextAuth] Returning user:", { ...user, accessToken: "[REDACTED]", refreshToken: "[REDACTED]" });
             return user;
           }
 
-          console.error("[NextAuth] No access token or client in response");
           return null;
         } catch (error) {
           console.error("[NextAuth] Login error:", error);

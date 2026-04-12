@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { HomepageSectionProps, LocalizedText } from "@/types/homepage";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export function StatisticsSection({ section, language }: HomepageSectionProps) {
   const items = section.data || [];
@@ -141,7 +142,7 @@ function StatCounter({
       {icon && (
         <div
           className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary"
-          dangerouslySetInnerHTML={{ __html: icon }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(icon) }}
         />
       )}
       <div className="text-4xl md:text-5xl font-bold">
