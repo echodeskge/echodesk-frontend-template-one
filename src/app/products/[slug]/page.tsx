@@ -154,23 +154,23 @@ export default async function ProductDetailPage({
     const priceValidDate = new Date();
     priceValidDate.setDate(priceValidDate.getDate() + 30);
 
-    // Generate Product Schema (JSON-LD)
-    // TODO: The `generateProductSchema` function supports `aggregateRating` and `review`
-    // parameters, but the `ProductDetail` interface from the backend does not currently
-    // include `average_rating` or `review_count` fields. When the backend adds these
-    // fields to the product serializer, pass them here:
-    //   aggregateRating: product.average_rating ? {
-    //     ratingValue: product.average_rating,
-    //     reviewCount: product.review_count,
-    //     bestRating: 5,
-    //     worstRating: 1,
-    //   } : undefined,
+    // Generate Product Schema (JSON-LD) with AggregateRating for Google rich snippets
     const productSchema = generateProductSchema({
       name: productName,
       description: productDescription,
       image: productImage,
       sku: product.sku || undefined,
       brand: config.store.name,
+      ...(product.average_rating && product.review_count
+        ? {
+            aggregateRating: {
+              ratingValue: product.average_rating,
+              reviewCount: product.review_count,
+              bestRating: 5,
+              worstRating: 1,
+            },
+          }
+        : {}),
       offers: {
         price: parseFloat(product.price),
         priceCurrency: config.locale.currency,

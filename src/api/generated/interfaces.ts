@@ -600,6 +600,8 @@ export interface ProductDetail {
   meta_description?: any;
   attribute_values: ProductAttributeValue[];
   variants: ProductVariant[];
+  average_rating?: number;
+  review_count?: number;
   created_at: string;
   updated_at: string;
   created_by: number;
@@ -632,6 +634,8 @@ export interface ProductList {
   is_low_stock: boolean;
   is_in_stock: boolean;
   attribute_values: ProductAttributeValue[];
+  average_rating?: number;
+  review_count?: number;
   created_at: string;
   updated_at: string;
 }
