@@ -264,6 +264,16 @@ export interface Order {
   admin_notes?: string;
   items: OrderItem[];
   total_items: number;
+  tracking_number?: string;
+  courier_provider?: string;
+  shipping_cost?: string;
+  estimated_delivery_date?: string;
+  shipping_method?: number;
+  shipping_method_details: ShippingMethod;
+  tax_amount?: string;
+  subtotal?: string;
+  discount_amount?: string;
+  promo_code?: number;
   payment_status?: PaymentStatusEnum;
   payment_method?: string;
   bog_order_id: string;
@@ -282,6 +292,8 @@ export interface OrderCreate {
   delivery_address_id: number;
   card_id?: number;
   notes?: string;
+  promo_code?: string;
+  shipping_method_id?: number;
 }
 
 export interface OrderCreateRequest {
@@ -289,6 +301,8 @@ export interface OrderCreateRequest {
   delivery_address_id: number;
   card_id?: number;
   notes?: string;
+  promo_code?: string;
+  shipping_method_id?: number;
 }
 
 export interface OrderItem {
@@ -318,6 +332,15 @@ export interface OrderRequest {
   total_amount: string;
   notes?: string;
   admin_notes?: string;
+  tracking_number?: string;
+  courier_provider?: string;
+  shipping_cost?: string;
+  estimated_delivery_date?: string;
+  shipping_method?: number;
+  tax_amount?: string;
+  subtotal?: string;
+  discount_amount?: string;
+  promo_code?: number;
   payment_status?: PaymentStatusEnum;
   payment_method?: string;
   confirmed_at?: string;
@@ -392,6 +415,13 @@ export interface PaginatedProductListList {
   results: ProductList[];
 }
 
+export interface PaginatedShippingMethodList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: ShippingMethod[];
+}
+
 export interface PasswordResetConfirmRequest {
   email: string;
   code: string;
@@ -445,6 +475,15 @@ export interface PatchedOrderRequest {
   total_amount?: string;
   notes?: string;
   admin_notes?: string;
+  tracking_number?: string;
+  courier_provider?: string;
+  shipping_cost?: string;
+  estimated_delivery_date?: string;
+  shipping_method?: number;
+  tax_amount?: string;
+  subtotal?: string;
+  discount_amount?: string;
+  promo_code?: number;
   payment_status?: PaymentStatusEnum;
   payment_method?: string;
   confirmed_at?: string;
@@ -600,6 +639,28 @@ export interface ResendVerificationCodeResponse {
 
 export interface SectionTypeEnum {
   [key: string]: any;
+}
+
+export interface ShippingMethod {
+  id: number;
+  name?: any;
+  description?: any;
+  price?: string;
+  free_shipping_threshold?: string;
+  is_active?: boolean;
+  estimated_days?: number;
+  position?: number;
+  created_at: string;
+}
+
+export interface ShippingMethodRequest {
+  name?: any;
+  description?: any;
+  price?: string;
+  free_shipping_threshold?: string;
+  is_active?: boolean;
+  estimated_days?: number;
+  position?: number;
 }
 
 export interface StatusF43enum {

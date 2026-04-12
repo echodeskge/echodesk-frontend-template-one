@@ -42,6 +42,8 @@ import type {
   ProductDetail,
   EcommerceClient,
   PatchedEcommerceClientRequest,
+  PaginatedShippingMethodList,
+  ShippingMethod,
   ClientLoginRequest,
   PasswordResetConfirmRequest,
   PasswordResetRequestRequest,
@@ -490,6 +492,17 @@ export async function ecommerceClientOrdersDestroy(id: string): Promise<any> {
   return response.data;
 }
 
+export async function ecommerceClientOrdersCancelCreate(
+  id: string,
+  data: OrderRequest,
+): Promise<Order> {
+  const response = await axios.post(
+    `/api/ecommerce/client/orders/${id}/cancel/`,
+    data,
+  );
+  return response.data;
+}
+
 export async function ecommerceClientProductsList(
   attr_Furniture?: string,
   attrColor?: string,
@@ -556,6 +569,33 @@ export async function ecommerceClientProfileUpdateProfilePartialUpdate(
   const response = await axios.patch(
     `/api/ecommerce/client/profile/update_profile/`,
     data,
+  );
+  return response.data;
+}
+
+export async function ecommerceClientShippingMethodsList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+): Promise<PaginatedShippingMethodList> {
+  const response = await axios.get(
+    `/api/ecommerce/client/shipping-methods/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function ecommerceClientShippingMethodsRetrieve(
+  id: number,
+): Promise<ShippingMethod> {
+  const response = await axios.get(
+    `/api/ecommerce/client/shipping-methods/${id}/`,
   );
   return response.data;
 }
