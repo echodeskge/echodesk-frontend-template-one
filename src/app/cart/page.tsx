@@ -70,6 +70,13 @@ export default function CartPage() {
   const isLoading = isAuthLoading || isCartLoading || isItemsLoading;
   const cartItems = cartItemsData?.results || [];
 
+  const getProductData = (product: any) => {
+    if (typeof product === "object" && product !== null) {
+      return product;
+    }
+    return null;
+  };
+
   if (isLoading) {
     return (
       <StoreLayout>
@@ -146,16 +153,18 @@ export default function CartPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="space-y-6">
-                  {cartItems.map((item, index) => (
+                  {cartItems.map((item, index) => {
+                    const productData = getProductData(item.product);
+                    return (
                     <div key={item.id}>
                       {index > 0 && <Separator className="mb-6" />}
                       <div className="flex gap-4">
                         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border">
                           <Image
-                            src={typeof item.product === 'object' ? (item.product as any).image || "/placeholder.svg" : "/placeholder.svg"}
+                            src={productData?.image || "/placeholder.svg"}
                             alt={
-                              typeof item.product === 'object'
-                                ? getLocalizedValue((item.product as any).name)
+                              productData
+                                ? getLocalizedValue(productData.name)
                                 : "Product"
                             }
                             fill
@@ -165,11 +174,11 @@ export default function CartPage() {
                         <div className="flex flex-1 flex-col justify-between">
                           <div>
                             <Link
-                              href={`/products/${typeof item.product === 'object' ? (item.product as any).slug : item.product}`}
+                              href={`/products/${productData?.slug || item.product}`}
                               className="font-medium hover:text-primary"
                             >
-                              {typeof item.product === 'object'
-                                ? getLocalizedValue((item.product as any).name)
+                              {productData
+                                ? getLocalizedValue(productData.name)
                                 : "Product"}
                             </Link>
                           </div>
@@ -253,7 +262,8 @@ export default function CartPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

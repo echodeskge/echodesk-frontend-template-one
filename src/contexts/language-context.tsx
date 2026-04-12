@@ -5,14 +5,12 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 // Import translation messages
 import en from "@/i18n/messages/en.json";
 import ka from "@/i18n/messages/ka.json";
-import ru from "@/i18n/messages/ru.json";
 
 type Messages = typeof en;
 
 const messages: Record<string, Messages> = {
   en,
   ka,
-  ru,
 };
 
 interface Language {
@@ -36,9 +34,8 @@ const STORAGE_KEY = "store-language";
 
 // Default languages if API is not available
 const defaultLanguages: Language[] = [
-  { code: "en", name: { en: "English", ka: "ინგლისური", ru: "Английский" }, is_default: true, is_active: true },
-  { code: "ka", name: { en: "Georgian", ka: "ქართული", ru: "Грузинский" }, is_default: false, is_active: true },
-  { code: "ru", name: { en: "Russian", ka: "რუსული", ru: "Русский" }, is_default: false, is_active: true },
+  { code: "en", name: { en: "English", ka: "ინგლისური" }, is_default: true, is_active: true },
+  { code: "ka", name: { en: "Georgian", ka: "ქართული" }, is_default: false, is_active: true },
 ];
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { StoreLayout } from "@/components/layout/store-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,9 +15,11 @@ import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const config = useStoreConfig();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const { login, isLoading } = useAuth();
   const { t } = useLanguage();
 
@@ -39,7 +41,7 @@ export default function LoginPage() {
         identifier: formData.identifier,
         password: formData.password,
       });
-      router.push("/account");
+      router.push(callbackUrl || "/account");
     } catch (error: any) {
       setLoginError(
         t("auth.invalidCredentials") ||
@@ -151,5 +153,13 @@ export default function LoginPage() {
         </div>
       </div>
     </StoreLayout>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
