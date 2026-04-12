@@ -23,6 +23,7 @@ import { formatPrice } from "@/lib/store-config";
 import { toast } from "sonner";
 import {
   ecommerceClientCardsRetrieve,
+  ecommerceClientShippingMethodsList,
 } from "@/api/generated/api";
 import axiosInstance from "@/api/axios";
 import type { ClientAddressRequest } from "@/api/generated/interfaces";
@@ -99,13 +100,12 @@ export default function CheckoutPage() {
   });
 
   // Fetch shipping methods
-  const { data: shippingMethodsData, isLoading: isShippingLoading } = useQuery<ShippingMethod[]>({
+  const { data: shippingMethodsData, isLoading: isShippingLoading } = useQuery({
     queryKey: ["shipping-methods"],
-    queryFn: () =>
-      axiosInstance.get("/api/ecommerce/client/shipping-methods/").then((r) => {
-        const data = r.data;
-        return Array.isArray(data) ? data : data.results || [];
-      }),
+    queryFn: async () => {
+      const data = await ecommerceClientShippingMethodsList();
+      return (data as any).results || data || [];
+    },
     staleTime: 5 * 60 * 1000,
   });
 
@@ -134,7 +134,7 @@ export default function CheckoutPage() {
 
   // Selected shipping method
   const selectedShippingMethod = shippingMethods.find(
-    (m) => m.id === selectedShippingMethodId
+    (m: any) => m.id === selectedShippingMethodId
   );
 
   // Calculate totals
@@ -665,7 +665,7 @@ export default function CheckoutPage() {
                             setSelectedShippingMethodId(parseInt(val))
                           }
                         >
-                          {shippingMethods.map((method) => {
+                          {shippingMethods.map((method: any) => {
                             const isFree =
                               method.free_shipping_threshold !== null &&
                               subtotal >= method.free_shipping_threshold;

@@ -51,6 +51,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { Order } from "@/api/generated/interfaces";
+import { ecommerceClientOrdersCancelCreate } from "@/api/generated/api";
 
 function TimelineItem({
   label,
@@ -116,7 +117,7 @@ export default function OrdersPage() {
   const cancelOrder = async (orderId: number) => {
     setIsCancelling(true);
     try {
-      await axiosInstance.post(`/api/ecommerce/client/orders/${orderId}/cancel/`);
+      await ecommerceClientOrdersCancelCreate(String(orderId), {} as any);
       toast.success("Order cancelled");
       refetchOrders();
       refetchOrder();
