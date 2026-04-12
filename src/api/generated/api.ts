@@ -26,6 +26,7 @@ import type {
   FavoriteProduct,
   FavoriteProductRequest,
   PatchedFavoriteProductRequest,
+  GuestCheckoutRequestRequest,
   HomepageSectionPublic,
   PaginatedItemListMinimalList,
   ItemListDetail,
@@ -40,10 +41,16 @@ import type {
   PatchedOrderRequest,
   PaginatedProductListList,
   ProductDetail,
+  PaginatedProductReviewList,
+  ProductReviewCreateRequest,
+  ProductReviewCreate,
   EcommerceClient,
   PatchedEcommerceClientRequest,
+  PromoValidateRequestRequest,
+  PromoValidateResponse,
   PaginatedShippingMethodList,
   ShippingMethod,
+  StoreThemeResponse,
   ClientLoginRequest,
   PasswordResetConfirmRequest,
   PasswordResetRequestRequest,
@@ -367,6 +374,16 @@ export async function ecommerceClientFavoritesDestroy(
   return response.data;
 }
 
+export async function ecommerceClientGuestCheckoutCreate(
+  data: GuestCheckoutRequestRequest,
+): Promise<any> {
+  const response = await axios.post(
+    `/api/ecommerce/client/guest-checkout/`,
+    data,
+  );
+  return response.data;
+}
+
 export async function ecommerceClientHomepageList(): Promise<
   HomepageSectionPublic[]
 > {
@@ -558,6 +575,36 @@ export async function ecommerceClientProductsRetrieve(
   return response.data;
 }
 
+export async function ecommerceClientProductsReviewsList(
+  productId: number,
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+): Promise<PaginatedProductReviewList> {
+  const response = await axios.get(
+    `/api/ecommerce/client/products/${productId}/reviews/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function ecommerceClientProductsReviewsCreate(
+  productId: number,
+  data: ProductReviewCreateRequest,
+): Promise<ProductReviewCreate> {
+  const response = await axios.post(
+    `/api/ecommerce/client/products/${productId}/reviews/`,
+    data,
+  );
+  return response.data;
+}
+
 export async function ecommerceClientProfileMeRetrieve(): Promise<EcommerceClient> {
   const response = await axios.get(`/api/ecommerce/client/profile/me/`);
   return response.data;
@@ -568,6 +615,16 @@ export async function ecommerceClientProfileUpdateProfilePartialUpdate(
 ): Promise<EcommerceClient> {
   const response = await axios.patch(
     `/api/ecommerce/client/profile/update_profile/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function ecommerceClientPromoValidateCreate(
+  data: PromoValidateRequestRequest,
+): Promise<PromoValidateResponse> {
+  const response = await axios.post(
+    `/api/ecommerce/client/promo/validate/`,
     data,
   );
   return response.data;
@@ -597,6 +654,11 @@ export async function ecommerceClientShippingMethodsRetrieve(
   const response = await axios.get(
     `/api/ecommerce/client/shipping-methods/${id}/`,
   );
+  return response.data;
+}
+
+export async function getStoreTheme(): Promise<StoreThemeResponse> {
+  const response = await axios.get(`/api/ecommerce/client/theme/`);
   return response.data;
 }
 

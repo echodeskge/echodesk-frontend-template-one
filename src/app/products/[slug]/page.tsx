@@ -54,11 +54,21 @@ export async function generateMetadata({
       product.short_description || product.name
     );
 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+
+    // Ensure image URL is absolute for social sharing
+    let imageUrl = product.image || undefined;
+    if (imageUrl && !imageUrl.startsWith("http")) {
+      // If relative URL, prepend API base or base URL
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || baseUrl;
+      imageUrl = `${apiBase}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
+    }
+
     const baseMetadata = generateProductMetadata({
       name,
-      description,
+      description: description || name,
       slug,
-      image: product.image || undefined,
+      image: imageUrl,
       price: parseFloat(product.price),
       currency: config.locale.currency,
       availability: (product.quantity || 0) > 0,
@@ -70,6 +80,9 @@ export async function generateMetadata({
       other: {
         "product:price:amount": String(product.price),
         "product:price:currency": config.locale.currency,
+        "og:type": "product",
+        "product:availability": (product.quantity || 0) > 0 ? "in stock" : "out of stock",
+        "product:brand": config.store.name,
       },
     };
   } catch (error) {
@@ -121,6 +134,13 @@ export default async function ProductDetailPage({
       product.short_description || product.name
     );
 
+    // Ensure image URL is absolute for structured data
+    let productImage = product.image || undefined;
+    if (productImage && !productImage.startsWith("http")) {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || baseUrl;
+      productImage = `${apiBase}${productImage.startsWith("/") ? "" : "/"}${productImage}`;
+    }
+
     // Calculate price valid until (30 days from now)
     const priceValidDate = new Date();
     priceValidDate.setDate(priceValidDate.getDate() + 30);
@@ -129,7 +149,7 @@ export default async function ProductDetailPage({
     const productSchema = generateProductSchema({
       name: productName,
       description: productDescription,
-      image: product.image || undefined,
+      image: productImage,
       sku: product.sku || undefined,
       brand: config.store.name,
       offers: {

@@ -24,8 +24,10 @@ import { toast } from "sonner";
 import {
   ecommerceClientCardsRetrieve,
   ecommerceClientShippingMethodsList,
+  getStoreTheme,
+  ecommerceClientPromoValidateCreate,
+  ecommerceClientGuestCheckoutCreate,
 } from "@/api/generated/api";
-import axiosInstance from "@/api/axios";
 import type { ClientAddressRequest } from "@/api/generated/interfaces";
 import { useQuery } from "@tanstack/react-query";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -114,7 +116,7 @@ export default function CheckoutPage() {
   // Fetch theme/payment config
   const { data: themeData } = useQuery({
     queryKey: ["theme"],
-    queryFn: () => axiosInstance.get("/api/ecommerce/client/theme/").then((r) => r.data),
+    queryFn: () => getStoreTheme(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -147,7 +149,7 @@ export default function CheckoutPage() {
   const savedCards: SavedCard[] = cardsData?.results || cardsData || [];
 
   // Tax config from theme
-  const taxRate = themeData?.payment?.tax_rate || 0;
+  const taxRate = parseFloat(String(themeData?.payment?.tax_rate || 0));
   const taxLabel = themeData?.payment?.tax_label || "Tax";
   const taxInclusive = themeData?.payment?.tax_inclusive || false;
 
@@ -244,26 +246,23 @@ export default function CheckoutPage() {
     setValidatingPromo(true);
     setPromoError("");
     try {
-      const result = await axiosInstance.post(
-        "/api/ecommerce/client/promo/validate/",
-        {
-          code: promoCode.trim(),
-          subtotal: subtotal,
-        }
-      );
-      if (result.data.valid) {
-        setPromoDiscount(parseFloat(result.data.discount_amount));
+      const result = await ecommerceClientPromoValidateCreate({
+        code: promoCode.trim(),
+        subtotal: String(subtotal),
+      });
+      if (result.valid) {
+        setPromoDiscount(parseFloat(result.discount_amount || "0"));
         setPromoError("");
         setPromoApplied(true);
         toast.success(
           `${t("checkout.discountApplied") || "Discount applied"}: ${formatPrice(
-            parseFloat(result.data.discount_amount),
+            parseFloat(result.discount_amount || "0"),
             config.locale.currency,
             config.locale.locale
           )}`
         );
       } else {
-        setPromoError(result.data.message || t("checkout.invalidPromo") || "Invalid promo code");
+        setPromoError(result.message || t("checkout.invalidPromo") || "Invalid promo code");
         setPromoDiscount(0);
         setPromoApplied(false);
       }
@@ -365,30 +364,61 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(guestInfo.email)) {
+      toast.error(t("checkout.invalidEmail") || "Please enter a valid email address");
+      return;
+    }
+
+    // Phone validation (if provided)
+    if (guestInfo.phone) {
+      const phoneDigits = guestInfo.phone.replace(/[\s\-\+\(\)]/g, "");
+      if (phoneDigits.length < 9 || phoneDigits.length > 15) {
+        toast.error(t("checkout.invalidPhone") || "Please enter a valid phone number");
+        return;
+      }
+    }
+
     setGuestSubmitting(true);
     try {
-      const localCart = typeof window !== "undefined"
-        ? JSON.parse(localStorage.getItem("guest_cart") || "[]")
-        : [];
+      let localCart: any[] = [];
+      try {
+        const stored = typeof window !== "undefined" ? localStorage.getItem("guest_cart") : null;
+        localCart = stored ? JSON.parse(stored) : [];
+      } catch {
+        localCart = [];
+      }
 
-      const result = await axiosInstance.post("/api/ecommerce/client/guest-checkout/", {
+      const result = await ecommerceClientGuestCheckoutCreate({
         email: guestInfo.email,
         first_name: guestInfo.first_name,
         last_name: guestInfo.last_name,
-        phone: guestInfo.phone || undefined,
-        items: localCart.length > 0 ? localCart : undefined,
+        phone: guestInfo.phone || "",
+        address: { address: "", city: "" },
+        items: localCart.length > 0 ? localCart : [],
         notes: orderNotes || undefined,
       });
 
-      if (result.data.payment_url) {
-        window.location.href = result.data.payment_url;
+      if (result.payment_url) {
+        window.location.href = result.payment_url;
         return;
       }
 
-      router.push(`/order-confirmation?order_id=${result.data.id}`);
+      router.push(`/order-confirmation?order_id=${result.id}`);
     } catch (error: any) {
-      const message = error.response?.data?.detail || t("checkout.guestCheckoutFailed") || "Guest checkout failed. Please try again.";
-      toast.error(message);
+      const detail = error.response?.data?.detail;
+      const fieldErrors = error.response?.data;
+      if (typeof fieldErrors === "object" && !detail) {
+        // Show field-specific errors
+        const messages = Object.entries(fieldErrors)
+          .filter(([key]) => key !== "detail")
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+          .join("; ");
+        toast.error(messages || t("checkout.guestCheckoutFailed") || "Guest checkout failed.");
+      } else {
+        toast.error(detail || t("checkout.guestCheckoutFailed") || "Guest checkout failed. Please try again.");
+      }
     } finally {
       setGuestSubmitting(false);
     }
@@ -1292,6 +1322,7 @@ export default function CheckoutPage() {
                                 validatePromo();
                               }
                             }}
+                            disabled={validatingPromo}
                             className="flex-1"
                           />
                           <Button

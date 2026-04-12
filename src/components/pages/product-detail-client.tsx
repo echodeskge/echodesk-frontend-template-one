@@ -28,7 +28,10 @@ import { useAddToCart, useCart } from "@/hooks/use-cart";
 import { useBackendWishlist } from "@/hooks/use-favorites";
 import { formatPrice } from "@/lib/store-config";
 import { cn } from "@/lib/utils";
-import axiosInstance from "@/api/axios";
+import {
+  ecommerceClientProductsReviewsList,
+  ecommerceClientProductsReviewsCreate,
+} from "@/api/generated/api";
 import { toast } from "sonner";
 import {
   ShoppingCart,
@@ -184,14 +187,11 @@ export function ProductDetailClient({
     refetch: refetchReviews,
   } = useQuery({
     queryKey: ["product-reviews", product.id],
-    queryFn: () =>
-      axiosInstance
-        .get(`/api/ecommerce/client/products/${product.id}/reviews/`)
-        .then((r) => r.data),
+    queryFn: () => ecommerceClientProductsReviewsList(product.id),
     retry: false,
   });
 
-  const reviews: any[] = reviewsData?.results || reviewsData || [];
+  const reviews = reviewsData?.results || [];
 
   const averageRating = useMemo(() => {
     if (!reviews.length) return 0;
@@ -207,13 +207,9 @@ export function ProductDetailClient({
       rating: number;
       title?: string;
       content?: string;
-    }) =>
-      axiosInstance.post(
-        `/api/ecommerce/client/products/${product.id}/reviews/`,
-        data
-      ),
+    }) => ecommerceClientProductsReviewsCreate(product.id, data),
     onSuccess: () => {
-      toast.success("Review submitted successfully!");
+      toast.success(t("product.reviewSubmitted") || "Review submitted successfully!");
       setReviewRating(0);
       setReviewTitle("");
       setReviewContent("");
@@ -221,7 +217,7 @@ export function ProductDetailClient({
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.detail || "Failed to submit review";
+        error.response?.data?.detail || t("product.reviewFailed") || "Failed to submit review";
       toast.error(message);
     },
   });
@@ -619,7 +615,7 @@ export function ProductDetailClient({
                   ))
                 ) : (
                   <p className="text-muted-foreground">
-                    No specifications available
+                    {t("product.noSpecifications") || "No specifications available"}
                   </p>
                 )}
               </div>
@@ -634,7 +630,7 @@ export function ProductDetailClient({
                   <div className="text-center text-muted-foreground py-8">
                     <Star className="mx-auto h-12 w-12 opacity-50" />
                     <p className="mt-4">
-                      No reviews yet. Be the first to review!
+                      {t("product.noReviews") || "No reviews yet. Be the first to review!"}
                     </p>
                   </div>
                 ) : (
@@ -648,7 +644,7 @@ export function ProductDetailClient({
                         <div className="flex">{renderStars(Math.round(averageRating))}</div>
                         <p className="text-sm text-muted-foreground">
                           {reviews.length}{" "}
-                          {reviews.length === 1 ? "review" : "reviews"}
+                          {reviews.length === 1 ? (t("product.review") || "review") : (t("product.reviewsCount") || "reviews")}
                         </p>
                       </div>
                     </div>
@@ -664,7 +660,7 @@ export function ProductDetailClient({
                               variant="secondary"
                               className="text-xs"
                             >
-                              Verified Purchase
+                              {t("product.verifiedPurchase") || "Verified Purchase"}
                             </Badge>
                           )}
                         </div>
@@ -692,12 +688,12 @@ export function ProductDetailClient({
                 {/* Review submission form */}
                 {isAuthenticated && (
                   <div className="mt-6 border-t pt-6">
-                    <h3 className="font-medium mb-3">Write a Review</h3>
+                    <h3 className="font-medium mb-3">{t("product.writeReview") || "Write a Review"}</h3>
                     <div className="space-y-3">
                       {/* Star rating input */}
                       <div>
                         <label className="text-sm font-medium mb-1 block">
-                          Rating
+                          {t("product.rating") || "Rating"}
                         </label>
                         <div className="flex gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
@@ -722,12 +718,12 @@ export function ProductDetailClient({
                         </div>
                       </div>
                       <Input
-                        placeholder="Review title (optional)"
+                        placeholder={t("product.reviewTitlePlaceholder") || "Review title (optional)"}
                         value={reviewTitle}
                         onChange={(e) => setReviewTitle(e.target.value)}
                       />
                       <Textarea
-                        placeholder="Share your experience..."
+                        placeholder={t("product.reviewContentPlaceholder") || "Share your experience..."}
                         value={reviewContent}
                         onChange={(e) => setReviewContent(e.target.value)}
                         rows={4}
@@ -741,10 +737,10 @@ export function ProductDetailClient({
                         {submitReviewMutation.isPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Submitting...
+                            {t("common.loading") || "Submitting..."}
                           </>
                         ) : (
-                          "Submit Review"
+                          t("product.submitReview") || "Submit Review"
                         )}
                       </Button>
                     </div>

@@ -191,6 +191,31 @@ export interface FavoriteProductRequest {
   client: number;
 }
 
+export interface GuestAddressRequest {
+  address: string;
+  city: string;
+  label?: string;
+}
+
+export interface GuestCheckoutItemRequest {
+  product_id: number;
+  quantity: number;
+  variant_id?: number;
+}
+
+export interface GuestCheckoutRequestRequest {
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  address: GuestAddressRequest;
+  items: GuestCheckoutItemRequest[];
+  payment_method?: string;
+  shipping_method_id?: number;
+  promo_code?: string;
+  notes?: string;
+}
+
 export interface HomepageSectionPublic {
   id: number;
   title: any;
@@ -415,6 +440,13 @@ export interface PaginatedProductListList {
   results: ProductList[];
 }
 
+export interface PaginatedProductReviewList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: ProductReview[];
+}
+
 export interface PaginatedShippingMethodList {
   count: number;
   next?: string;
@@ -489,6 +521,16 @@ export interface PatchedOrderRequest {
   confirmed_at?: string;
   shipped_at?: string;
   delivered_at?: string;
+}
+
+export interface PaymentConfigResponse {
+  active_providers: string[];
+  enable_cash_on_delivery: boolean;
+  enable_card_payment: boolean;
+  currency: string;
+  tax_rate?: string;
+  tax_label?: string;
+  tax_inclusive?: boolean;
 }
 
 export interface PaymentStatusEnum {
@@ -592,6 +634,33 @@ export interface ProductListRequest {
   is_featured?: boolean;
 }
 
+export interface ProductReview {
+  id: number;
+  product: number;
+  client: number;
+  client_name: string;
+  rating: number;
+  title?: string;
+  content?: string;
+  is_verified_purchase: boolean;
+  is_approved: boolean;
+  created_at: string;
+}
+
+export interface ProductReviewCreate {
+  id: number;
+  rating: number;
+  title?: string;
+  content?: string;
+  created_at: string;
+}
+
+export interface ProductReviewCreateRequest {
+  rating: number;
+  title?: string;
+  content?: string;
+}
+
 export interface ProductVariant {
   id: number;
   sku: string;
@@ -626,6 +695,19 @@ export interface ProductVariantRequest {
   image?: string;
   is_active?: boolean;
   sort_order?: number;
+}
+
+export interface PromoValidateRequestRequest {
+  code: string;
+  subtotal: string;
+}
+
+export interface PromoValidateResponse {
+  valid: boolean;
+  discount_amount?: string;
+  discount_type?: string;
+  discount_value?: string;
+  message: string;
 }
 
 export interface ResendVerificationCodeRequestRequest {
@@ -665,4 +747,12 @@ export interface ShippingMethodRequest {
 
 export interface StatusF43enum {
   [key: string]: any;
+}
+
+export interface StoreThemeResponse {
+  preset: string;
+  colors: Record<string, any>;
+  radius: string;
+  store_name: string;
+  payment: PaymentConfigResponse;
 }

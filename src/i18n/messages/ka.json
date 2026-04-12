@@ -55,7 +55,19 @@
     "sku": "SKU",
     "recentlyViewed": "ბოლოს ნანახი",
     "copyLink": "ბმულის კოპირება",
-    "linkCopied": "ბმული დაკოპირებულია!"
+    "linkCopied": "ბმული დაკოპირებულია!",
+    "noReviews": "შეფასებები ჯერ არ არის. იყავი პირველი!",
+    "review": "შეფასება",
+    "reviewsCount": "შეფასება",
+    "verifiedPurchase": "დადასტურებული შეძენა",
+    "writeReview": "დაწერე შეფასება",
+    "rating": "რეიტინგი",
+    "reviewTitlePlaceholder": "შეფასების სათაური (არასავალდებულო)",
+    "reviewContentPlaceholder": "გაგვიზიარე შენი გამოცდილება...",
+    "submitReview": "შეფასების გაგზავნა",
+    "reviewSubmitted": "შეფასება წარმატებით გაიგზავნა!",
+    "reviewFailed": "შეფასების გაგზავნა ვერ მოხერხდა",
+    "noSpecifications": "სპეციფიკაციები არ არის ხელმისაწვდომი"
   },
   "productsPage": {
     "title": "პროდუქტები",
@@ -125,7 +137,9 @@
     "howToContinue": "როგორ გსურთ გაგრძელება?",
     "guestCheckoutNote": "შეკვეთის განთავსების შემდეგ შეგიძლიათ ანგარიშის შექმნა.",
     "guestFieldsRequired": "გთხოვთ შეავსოთ ყველა სავალდებულო ველი",
-    "guestCheckoutFailed": "სტუმრის შეკვეთა ვერ მოხერხდა. სცადეთ ხელახლა."
+    "guestCheckoutFailed": "სტუმრის შეკვეთა ვერ მოხერხდა. სცადეთ ხელახლა.",
+    "invalidEmail": "გთხოვთ შეიყვანოთ სწორი ელ. ფოსტის მისამართი",
+    "invalidPhone": "გთხოვთ შეიყვანოთ სწორი ტელეფონის ნომერი"
   },
   "orderConfirmation": {
     "thankYou": "მადლობა!",

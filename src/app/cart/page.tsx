@@ -26,6 +26,8 @@ import {
 } from "@/hooks/use-cart";
 import { formatPrice } from "@/lib/store-config";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { getStoreTheme } from "@/api/generated/api";
+import { useQuery } from "@tanstack/react-query";
 import {
   Minus,
   Plus,
@@ -46,6 +48,17 @@ export default function CartPage() {
   const updateCartItem = useUpdateCartItem();
   const removeFromCart = useRemoveFromCart();
 
+  // Fetch theme/payment config for tax rate
+  const { data: themeData } = useQuery({
+    queryKey: ["theme"],
+    queryFn: () => getStoreTheme(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const taxRate = parseFloat(String(themeData?.payment?.tax_rate || 0));
+  const taxLabel = themeData?.payment?.tax_label || t("cart.tax");
+  const taxInclusive = themeData?.payment?.tax_inclusive || false;
+
   const handleUpdateQuantity = (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) {
       // Remove item if quantity becomes 0
@@ -65,7 +78,7 @@ export default function CartPage() {
   // Calculate totals from cart data
   const subtotal = cart?.total_amount ? parseFloat(cart.total_amount) : 0;
   const shipping = subtotal > 50 ? 0 : 10;
-  const tax = subtotal * 0.18;
+  const tax = taxInclusive ? 0 : subtotal * (taxRate / 100);
   const total = subtotal + shipping + tax;
 
   const isLoading = isAuthLoading || isCartLoading || isItemsLoading;
@@ -107,9 +120,14 @@ export default function CartPage() {
             <p className="mt-2 text-muted-foreground">
               {t("cart.loginRequired") || "Please login to view your cart"}
             </p>
-            <Button asChild className="mt-6">
-              <Link href="/login">{t("common.signIn")}</Link>
-            </Button>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Button asChild>
+                <Link href="/login">{t("common.signIn")}</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/products">{t("cart.continueShopping")}</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </StoreLayout>
@@ -313,8 +331,9 @@ export default function CartPage() {
                     )}
                   </span>
                 </div>
+                {taxRate > 0 && !taxInclusive && (
                 <div className="flex justify-between">
-                  <span>{t("cart.tax")} (18%)</span>
+                  <span>{taxLabel} ({taxRate}%)</span>
                   <span>
                     {formatPrice(
                       tax,
@@ -323,6 +342,7 @@ export default function CartPage() {
                     )}
                   </span>
                 </div>
+                )}
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>{t("cart.total")}</span>

@@ -55,7 +55,19 @@
     "sku": "SKU",
     "recentlyViewed": "Recently Viewed",
     "copyLink": "Copy Link",
-    "linkCopied": "Link copied!"
+    "linkCopied": "Link copied!",
+    "noReviews": "No reviews yet. Be the first to review!",
+    "review": "review",
+    "reviewsCount": "reviews",
+    "verifiedPurchase": "Verified Purchase",
+    "writeReview": "Write a Review",
+    "rating": "Rating",
+    "reviewTitlePlaceholder": "Review title (optional)",
+    "reviewContentPlaceholder": "Share your experience...",
+    "submitReview": "Submit Review",
+    "reviewSubmitted": "Review submitted successfully!",
+    "reviewFailed": "Failed to submit review",
+    "noSpecifications": "No specifications available"
   },
   "productsPage": {
     "title": "Products",
@@ -125,7 +137,9 @@
     "howToContinue": "How would you like to continue?",
     "guestCheckoutNote": "You can create an account after placing your order.",
     "guestFieldsRequired": "Please fill in all required fields",
-    "guestCheckoutFailed": "Guest checkout failed. Please try again."
+    "guestCheckoutFailed": "Guest checkout failed. Please try again.",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidPhone": "Please enter a valid phone number"
   },
   "orderConfirmation": {
     "thankYou": "Thank You!",
