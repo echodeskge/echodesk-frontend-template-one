@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - name: ESLint
         run: npx eslint . --max-warnings=0
         continue-on-error: true
@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - name: TypeScript check
         run: npx tsc --noEmit
 
@@ -41,7 +41,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - name: Build
         run: npm run build
         env:
