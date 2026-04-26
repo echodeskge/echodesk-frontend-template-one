@@ -1,11 +1,14 @@
 import { MetadataRoute } from "next";
+import { getTenantBaseUrl } from "@/lib/tenant-url";
 
 /**
  * Robots.txt configuration
- * Controls search engine crawler access
+ * Controls search engine crawler access. Tenant-aware sitemap URL —
+ * derived from the request host so each tenant subdomain advertises
+ * its own sitemap instead of the placeholder.
  */
-export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const baseUrl = await getTenantBaseUrl();
 
   return {
     rules: [
@@ -29,5 +32,6 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   };
 }

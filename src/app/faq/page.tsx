@@ -6,6 +6,7 @@ import {
   generateBreadcrumbSchema,
   generateFAQSchema,
 } from "@/lib/seo";
+import { getTenantBaseUrl } from "@/lib/tenant-url";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generatePageMetadata({
@@ -36,8 +37,8 @@ const faqItems = [
   },
 ];
 
-export default function FaqPage() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+export default async function FaqPage() {
+  const baseUrl = await getTenantBaseUrl();
 
   const faqSchema = generateFAQSchema(faqItems);
 

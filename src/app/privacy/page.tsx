@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { StoreLayout } from "@/components/layout/store-layout";
 import { StructuredData } from "@/components/structured-data";
 import { generatePageMetadata, generateBreadcrumbSchema } from "@/lib/seo";
+import { getTenantBaseUrl } from "@/lib/tenant-url";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generatePageMetadata({
@@ -13,8 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function PrivacyPage() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+export default async function PrivacyPage() {
+  const baseUrl = await getTenantBaseUrl();
 
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: "Home", url: baseUrl },

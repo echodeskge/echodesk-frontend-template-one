@@ -1,9 +1,20 @@
 import { Metadata } from "next";
 import { getStoreConfig } from "@/lib/store-config";
+import {
+  getTenantBaseUrl,
+  getTenantStoreName,
+  getTenantLocale,
+} from "@/lib/tenant-url";
 
 /**
  * SEO Utility Functions
- * Helper functions for generating metadata and structured data
+ * Helper functions for generating metadata and structured data.
+ *
+ * Tenant URLs are resolved per-request from the middleware-set
+ * `host` / `x-tenant-*` headers (see `src/lib/tenant-url.ts`). Do NOT
+ * fall back to `process.env.NEXT_PUBLIC_BASE_URL` here — multi-tenant
+ * deploys serve every customer from the same Next.js process and that
+ * env var always pointed at the placeholder `yourstore.com`.
  */
 
 /**
@@ -33,21 +44,37 @@ interface GenerateMetadataParams {
 }
 
 /**
- * Generate complete metadata for a page
+ * Map our 2-letter tenant locale (the middleware sets `ka` / `en`) onto
+ * the Open Graph 5-letter locale that Facebook + LinkedIn want
+ * (`ka_GE` / `en_US`).
  */
-export function generatePageMetadata({
+function ogLocale(short: "ka" | "en"): "ka_GE" | "en_US" {
+  return short === "ka" ? "ka_GE" : "en_US";
+}
+
+/**
+ * Generate complete metadata for a page. Tenant base URL + store name
+ * are resolved from request headers so canonical / OG / Twitter URLs
+ * always point at the *current* tenant domain — no `yourstore.com`
+ * placeholder leaking into production HTML.
+ */
+export async function generatePageMetadata({
   title,
   description,
   path = "",
   image,
   noIndex = false,
   keywords,
-  locale = "en_US",
+  locale,
   type = "website",
-}: GenerateMetadataParams): Metadata {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+}: GenerateMetadataParams): Promise<Metadata> {
+  const baseUrl = await getTenantBaseUrl();
+  const storeName = await getTenantStoreName();
+  const tenantLocale = await getTenantLocale();
+  const ogLocaleCode = locale || ogLocale(tenantLocale);
   const url = `${baseUrl}${path}`;
   const defaultImage = `${baseUrl}/og-image.png`;
+  const altLocale = tenantLocale === "ka" ? "en_US" : "ka_GE";
 
   return {
     title,
@@ -70,8 +97,9 @@ export function generatePageMetadata({
       title,
       description,
       url,
-      siteName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
-      locale,
+      siteName: storeName,
+      locale: ogLocaleCode,
+      alternateLocale: altLocale,
       type,
       images: [
         {
@@ -89,10 +117,6 @@ export function generatePageMetadata({
       images: [image || defaultImage],
       site: getTwitterHandle() || undefined,
       creator: getTwitterHandle() || undefined,
-    },
-    other: {
-      "og:locale": "en_US",
-      "og:locale:alternate": "ka_GE",
     },
   };
 }
@@ -112,7 +136,7 @@ export interface ProductMetadataParams {
   category?: string;
 }
 
-export function generateProductMetadata({
+export async function generateProductMetadata({
   name,
   description,
   slug,
@@ -122,8 +146,10 @@ export function generateProductMetadata({
   availability = true,
   brand,
   category,
-}: ProductMetadataParams): Metadata {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+}: ProductMetadataParams): Promise<Metadata> {
+  const baseUrl = await getTenantBaseUrl();
+  const storeName = await getTenantStoreName();
+  const tenantLocale = await getTenantLocale();
   const url = `${baseUrl}/products/${slug}`;
 
   const keywords = [name, brand, category].filter(Boolean);
@@ -139,7 +165,8 @@ export function generateProductMetadata({
       title: name,
       description,
       url,
-      siteName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
+      siteName: storeName,
+      locale: tenantLocale === "ka" ? "ka_GE" : "en_US",
       // Note: Next.js Metadata API only supports standard OG types ("website", "article", etc.).
       // The "product" OG type is not in the union. We use "website" here and set
       // "og:type": "product" via the `other` field on the product page instead.
@@ -414,18 +441,19 @@ export function generateFAQSchema(items: FAQItem[]) {
 }
 
 /**
- * Helper to get canonical URL
+ * Helper to get canonical URL — tenant-aware. Reads the request host
+ * from middleware-set headers via `getTenantBaseUrl`.
  */
-export function getCanonicalUrl(path: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+export async function getCanonicalUrl(path: string): Promise<string> {
+  const baseUrl = await getTenantBaseUrl();
   return `${baseUrl}${path}`;
 }
 
 /**
- * Helper to get base URL
+ * Helper to get base URL — tenant-aware.
  */
-export function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+export async function getBaseUrl(): Promise<string> {
+  return getTenantBaseUrl();
 }
 
 /**

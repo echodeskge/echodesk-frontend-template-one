@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { fetchAllProductSlugs } from "@/lib/fetch-server";
+import { getTenantBaseUrl } from "@/lib/tenant-url";
 
 /**
  * Dynamic sitemap generation
@@ -22,7 +23,7 @@ import { fetchAllProductSlugs } from "@/lib/fetch-server";
  * OpenGraph meta tags on each product page.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+  const baseUrl = await getTenantBaseUrl();
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

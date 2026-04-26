@@ -10,6 +10,11 @@ import { TenantProvider } from "@/contexts/tenant-context";
 import { Toaster } from "@/components/ui/sonner";
 import { getStoreConfig } from "@/lib/store-config";
 import { getTenantConfigFromHeaders } from "@/lib/tenant-utils";
+import {
+  getTenantBaseUrl,
+  getTenantStoreName,
+  getTenantLocale,
+} from "@/lib/tenant-url";
 import { ThemeSwitcher } from "@/components/demo/theme-switcher";
 import { CookieConsent } from "@/components/cookie-consent";
 
@@ -18,58 +23,60 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-// Dynamic metadata based on store config
+// Dynamic metadata based on tenant headers (multi-tenant) with the
+// env-driven store config as a localhost-dev fallback. Each tenant
+// subdomain emits its own canonical, OG URL, and PWA icons via the
+// dynamic /icon and /apple-icon routes (src/app/icon.tsx +
+// src/app/apple-icon.tsx) so favicons match the tenant's brand colour.
 export async function generateMetadata(): Promise<Metadata> {
   const config = getStoreConfig();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+  const baseUrl = await getTenantBaseUrl();
+  const storeName = await getTenantStoreName();
+  const tenantLocale = await getTenantLocale();
+  const ogLocaleCode = tenantLocale === "ka" ? "ka_GE" : "en_US";
+  const altLocale = tenantLocale === "ka" ? "en_US" : "ka_GE";
 
   return {
     metadataBase: new URL(baseUrl),
     title: {
-      default: config.store.name,
-      template: `%s | ${config.store.name}`,
+      default: storeName,
+      template: `%s | ${storeName}`,
     },
     description: config.store.description,
-    keywords: ["ecommerce", "online store", "shop", config.store.name],
-    authors: [{ name: config.store.name }],
-    creator: config.store.name,
-    publisher: config.store.name,
+    keywords: ["ecommerce", "online store", "shop", storeName],
+    authors: [{ name: storeName }],
+    creator: storeName,
+    publisher: storeName,
     formatDetection: {
       email: false,
       address: false,
       telephone: false,
     },
-    icons: {
-      icon: [
-        { url: "/favicon.ico", sizes: "any" },
-        { url: config.store.logo, type: "image/png" },
-      ],
-      shortcut: config.store.logo,
-      apple: [
-        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-      ],
-    },
+    // No `icons` here — Next.js auto-injects <link rel="icon"> +
+    // <link rel="apple-touch-icon"> from the dynamic icon.tsx /
+    // apple-icon.tsx routes, which generate per-tenant PNGs from the
+    // store name + brand colour.
     manifest: "/manifest.json",
     openGraph: {
       type: "website",
-      locale: "en_US",
+      locale: ogLocaleCode,
+      alternateLocale: altLocale,
       url: baseUrl,
-      siteName: config.store.name,
-      title: config.store.name,
+      siteName: storeName,
+      title: storeName,
       description: config.store.description,
       images: [
         {
           url: `${baseUrl}/og-image.png`,
           width: 1200,
           height: 630,
-          alt: config.store.name,
+          alt: storeName,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: config.store.name,
+      title: storeName,
       description: config.store.description,
       images: [`${baseUrl}/og-image.png`],
       site: config.social.twitter
@@ -81,10 +88,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     alternates: {
       canonical: baseUrl,
-      languages: {
-        en: baseUrl,
-        ka: baseUrl,
-      },
+      // Locale switching is cookie-based on the same path — no distinct
+      // per-locale URLs to advertise via hreflang. (See echodesk-frontend
+      // commit bbecacf for the same reasoning.)
     },
     robots: {
       index: true,
@@ -99,8 +105,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     verification: {
       google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-      // yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
-      // bing: process.env.NEXT_PUBLIC_BING_VERIFICATION,
     },
   };
 }
@@ -117,10 +121,12 @@ export default async function RootLayout({
   return (
     <html lang={tenantConfig.locale || "en"} suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#3b82f6" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/icon-192.png" sizes="192x192" />
-        <link rel="apple-touch-icon" href="/icon-512.png" sizes="512x512" />
+        {/* theme-color picks up the tenant's primary HSL via the CSS
+            variable the StoreConfigProvider injects. */}
+        <meta name="theme-color" content="hsl(var(--primary))" />
+        {/* No static <link rel="icon"> here — Next.js auto-injects
+            the per-tenant PNGs generated by src/app/icon.tsx and
+            src/app/apple-icon.tsx (first letter on brand colour). */}
         <link
           rel="search"
           type="application/opensearchdescription+xml"

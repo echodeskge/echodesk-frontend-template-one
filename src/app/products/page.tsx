@@ -1,11 +1,16 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { getStoreConfig } from "@/lib/store-config";
 import {
   generatePageMetadata,
   generateProductCollectionSchema,
   generateBreadcrumbSchema,
 } from "@/lib/seo";
+import {
+  getTenantBaseUrl,
+  getTenantStoreName,
+  getTenantLocale,
+  getTenantCurrency,
+} from "@/lib/tenant-url";
 import { StructuredData } from "@/components/structured-data";
 import { fetchProducts, ProductFilters } from "@/lib/fetch-server";
 import { ProductsPageClient } from "@/components/pages/products-page-client";
@@ -16,7 +21,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const revalidate = 60;
 
 /**
- * Products list page metadata
+ * Products list page metadata.
+ *
+ * Tenant-aware: title, description, canonical and OG URLs are all
+ * derived from the live request headers (host + middleware-set
+ * `x-tenant-store-name`) so each tenant gets its own preview card and
+ * hreflang anchor — no `yourstore.com` placeholder leaking through.
  */
 export async function generateMetadata({
   searchParams,
@@ -24,30 +34,63 @@ export async function generateMetadata({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }): Promise<Metadata> {
   const params = await searchParams;
-  const config = getStoreConfig();
+  const storeName = await getTenantStoreName();
+  const locale = await getTenantLocale();
+  const currency = await getTenantCurrency();
   const search = params.search as string | undefined;
   const onSale = params.on_sale === "true";
   const isFeatured = params.is_featured === "true";
 
-  let title = "Products";
-  let description = `Browse our collection of ${config.store.name} products`;
+  // Locale-aware copy. Most echodesk-cloud stores serve a Georgian
+  // audience; fall back to English on tenants that explicitly set
+  // `NEXT_PUBLIC_LOCALE=en` or whose backend resolved to en.
+  const isKa = locale === "ka";
 
+  let title: string;
+  let description: string;
   if (search) {
-    title = `Search results for "${search}"`;
-    description = `Search results for "${search}" in our product catalog`;
+    title = isKa
+      ? `ძიების შედეგები „${search}“ — ${storeName}`
+      : `Search results for "${search}" — ${storeName}`;
+    description = isKa
+      ? `${storeName} მაღაზიაში ნაპოვნი პროდუქტები ძიების ფრაზით „${search}“. ფასები ${currency}-ში, მიწოდება საქართველოში.`
+      : `Products in the ${storeName} catalogue matching "${search}". Priced in ${currency}, shipping inside Georgia.`;
   } else if (onSale) {
-    title = "Products on Sale";
-    description = "Browse our products currently on sale with great discounts";
+    title = isKa
+      ? `ფასდაკლებაზე — ${storeName}`
+      : `On sale — ${storeName}`;
+    description = isKa
+      ? `${storeName}-ის შემცირებული ფასით პროდუქტები. დღეს მოქმედი ფასდაკლებები — ლარში, საქართველოში მიწოდებით.`
+      : `Discounted products from ${storeName}. Today's reductions — ${currency} pricing, delivery across Georgia.`;
   } else if (isFeatured) {
-    title = "Featured Products";
-    description = "Browse our hand-picked featured products";
+    title = isKa
+      ? `რჩეული პროდუქტები — ${storeName}`
+      : `Featured products — ${storeName}`;
+    description = isKa
+      ? `${storeName}-ის ხელით შერჩეული რჩეული პროდუქტები — ბესტსელერები, ახალი ჩამოსვლა და სტუდიის რეკომენდაციები.`
+      : `Hand-picked highlights from ${storeName} — bestsellers, fresh arrivals and editor's picks.`;
+  } else {
+    title = isKa
+      ? `პროდუქტების კატალოგი — ${storeName}`
+      : `Shop all products — ${storeName}`;
+    description = isKa
+      ? `დაათვალიერე ${storeName}-ის სრული კატალოგი. ფასები ${currency}-ში, BOG/TBC გადახდის ბმულები, საქართველოში მიწოდება.`
+      : `Browse the full ${storeName} catalogue. ${currency} pricing, BOG/TBC payment links, delivery across Georgia.`;
   }
+
+  const keywords = [
+    storeName,
+    isKa ? "ონლაინ მაღაზია" : "online store",
+    isKa ? "მიტანა საქართველოში" : "delivery in Georgia",
+    `${currency} ${isKa ? "ფასები" : "pricing"}`,
+    isKa ? "BOG TBC გადახდა" : "BOG TBC payments",
+  ];
 
   return generatePageMetadata({
     title,
     description,
     path: "/products",
-    keywords: ["products", "shop", "ecommerce", config.store.name],
+    keywords,
   });
 }
 
@@ -61,17 +104,17 @@ export default async function ProductsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+  const baseUrl = await getTenantBaseUrl();
+  const storeName = await getTenantStoreName();
+  const locale = await getTenantLocale();
+  const currency = await getTenantCurrency();
+  const isKa = locale === "ka";
 
   // Parse filters from searchParams
   const filters: ProductFilters = {
     search: params.search as string | undefined,
-    minPrice: params.min_price
-      ? Number(params.min_price)
-      : undefined,
-    maxPrice: params.max_price
-      ? Number(params.max_price)
-      : undefined,
+    minPrice: params.min_price ? Number(params.min_price) : undefined,
+    maxPrice: params.max_price ? Number(params.max_price) : undefined,
     isFeatured: params.is_featured === "true" || undefined,
     onSale: params.on_sale === "true" || undefined,
     ordering: (params.ordering as string) || "-created_at",
@@ -93,18 +136,33 @@ export default async function ProductsPage({
     previous: undefined,
   }));
 
-  // Generate structured data for product collection
+  // Generate structured data for product collection — now tenant-aware.
+  const collectionName = isKa
+    ? `${storeName} — პროდუქტების კატალოგი`
+    : `${storeName} — All products`;
+  const collectionDescription = isKa
+    ? `${storeName}-ის ონლაინ კატალოგი. ფასები ${currency}-ში, საქართველოში მიწოდებით.`
+    : `${storeName} online catalogue. ${currency} pricing, delivery across Georgia.`;
   const collectionSchema = generateProductCollectionSchema({
-    name: "Products",
-    description: "Browse our product catalog",
+    name: collectionName,
+    description: collectionDescription,
     numberOfItems: productsData.count,
     url: `${baseUrl}/products`,
   });
 
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Home", url: baseUrl },
-    { name: "Products", url: `${baseUrl}/products` },
+    { name: isKa ? "მთავარი" : "Home", url: baseUrl },
+    { name: isKa ? "პროდუქტები" : "Products", url: `${baseUrl}/products` },
   ]);
+
+  // Locale-aware H1 + intro paragraph rendered above the product grid.
+  // Gives Google a unique on-page text block to anchor the category in
+  // (the audit flagged "thin category copy") + helps screen readers
+  // pick out the page topic before the first product card.
+  const heading = isKa ? `${storeName}-ის ყველა პროდუქტი` : `All products`;
+  const intro = isKa
+    ? `${storeName}-ის სრული კატალოგი — ფასები ${currency}-ში, ერთჯერადი ან განვადებითი გადახდა BOG-ისა და TBC-ის ბმულებით, მიწოდება საქართველოს ქალაქებში. გამოიყენე ფილტრები კატეგორიის, ფასისა და ფასდაკლების მიხედვით.`
+    : `The full ${storeName} catalogue — priced in ${currency}, paid via BOG or TBC links (one-off or instalments), shipped across Georgia. Filter by category, price band, or sale status to narrow down.`;
 
   return (
     <>
@@ -131,7 +189,11 @@ export default async function ProductsPage({
           </StoreLayout>
         }
       >
-        <ProductsPageClient initialData={productsData} />
+        <ProductsPageClient
+          initialData={productsData}
+          seoHeading={heading}
+          seoIntro={intro}
+        />
       </Suspense>
     </>
   );

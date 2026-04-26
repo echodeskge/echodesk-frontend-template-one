@@ -33,9 +33,20 @@ import type { PaginatedProductListList } from "@/api/generated/interfaces";
 
 interface ProductsPageClientProps {
   initialData: PaginatedProductListList;
+  /** Locale-aware H1 + intro paragraph rendered above the filter bar.
+   *  Server-component computes them per-tenant (store name, currency,
+   *  shipping region) and passes through so this client component
+   *  doesn't need to read headers itself. Both optional — when absent
+   *  the page just shows the original t("products.title") H1. */
+  seoHeading?: string;
+  seoIntro?: string;
 }
 
-export function ProductsPageClient({ initialData }: ProductsPageClientProps) {
+export function ProductsPageClient({
+  initialData,
+  seoHeading,
+  seoIntro,
+}: ProductsPageClientProps) {
   const config = useStoreConfig();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -244,7 +255,7 @@ export function ProductsPageClient({ initialData }: ProductsPageClientProps) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-3xl font-bold">
-              {t("productsPage.title")}
+              {seoHeading || t("productsPage.title")}
             </h1>
             <p className="mt-1 text-xs md:text-base text-muted-foreground">
               {isLoading
@@ -329,6 +340,15 @@ export function ProductsPageClient({ initialData }: ProductsPageClientProps) {
             </div>
           </div>
         </div>
+
+        {/* SEO intro paragraph: a short description above the grid that
+            tells crawlers what this category page actually is. Renders
+            full-width on mobile and capped at ~prose width on desktop. */}
+        {seoIntro ? (
+          <p className="mt-4 max-w-3xl text-sm md:text-base text-muted-foreground leading-relaxed">
+            {seoIntro}
+          </p>
+        ) : null}
 
         <div className="mt-8 grid gap-8 md:grid-cols-[240px_1fr]">
           {/* Desktop Filters Sidebar */}

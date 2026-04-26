@@ -6,6 +6,7 @@ import {
   generateProductSchema,
   generateBreadcrumbSchema,
 } from "@/lib/seo";
+import { getTenantBaseUrl } from "@/lib/tenant-url";
 import { StructuredData } from "@/components/structured-data";
 import {
   fetchProductBySlug,
@@ -63,7 +64,7 @@ export async function generateMetadata({
       product.short_description || product.name
     );
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+    const baseUrl = await getTenantBaseUrl();
 
     // Ensure image URL is absolute for social sharing
     let imageUrl = product.image || undefined;
@@ -116,8 +117,7 @@ export default async function ProductDetailPage({
 
   try {
     const config = getStoreConfig();
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+    const baseUrl = await getTenantBaseUrl();
 
     // Fetch product server-side
     const product = await fetchProductBySlug(slug, undefined, 60);

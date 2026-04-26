@@ -7,6 +7,7 @@ import {
   generateBreadcrumbSchema,
   generateLocalBusinessSchema,
 } from "@/lib/seo";
+import { getTenantBaseUrl, getTenantStoreName } from "@/lib/tenant-url";
 import { StructuredData } from "@/components/structured-data";
 import {
   fetchFeaturedProducts,
@@ -23,13 +24,13 @@ export const revalidate = 10;
  */
 export async function generateMetadata(): Promise<Metadata> {
   const config = getStoreConfig();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+  const storeName = await getTenantStoreName();
 
   return generatePageMetadata({
-    title: config.store.name,
+    title: storeName,
     description: config.store.description,
     path: "/",
-    keywords: ["ecommerce", "online store", "shop", config.store.name],
+    keywords: ["ecommerce", "online store", "shop", storeName],
     type: "website",
   });
 }
@@ -40,7 +41,8 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function HomePage() {
   const config = getStoreConfig();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
+  const baseUrl = await getTenantBaseUrl();
+  const storeName = await getTenantStoreName();
 
   // Fetch data server-side for SEO
   const [homepageSections, featuredProducts, itemLists] = await Promise.all([
@@ -49,16 +51,18 @@ export default async function HomePage() {
     fetchItemLists(undefined, 10).catch((): Awaited<ReturnType<typeof fetchItemLists>> => []),
   ]);
 
-  // Generate structured data for SEO
+  // Generate structured data for SEO — use the tenant store name from
+  // headers so each storefront gets its own Organization / WebSite /
+  // LocalBusiness schema, not the env-provided default name.
   const organizationSchema = generateOrganizationSchema({
-    name: config.store.name,
+    name: storeName,
     url: baseUrl,
     logo: config.store.logo,
     description: config.store.description,
   });
 
   const websiteSchema = generateWebSiteSchema({
-    name: config.store.name,
+    name: storeName,
     url: baseUrl,
     description: config.store.description,
     searchUrl: `${baseUrl}/products?search={search_term_string}`,
@@ -69,7 +73,7 @@ export default async function HomePage() {
   ]);
 
   const localBusinessSchema = generateLocalBusinessSchema({
-    name: config.store.name,
+    name: storeName,
     url: baseUrl,
     email: config.contact.email || undefined,
     telephone: config.contact.phone || undefined,

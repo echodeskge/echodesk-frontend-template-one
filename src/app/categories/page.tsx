@@ -2,15 +2,17 @@ import { Metadata } from "next";
 import { StoreLayout } from "@/components/layout/store-layout";
 import { fetchItemLists } from "@/lib/fetch-server";
 import { getStoreConfig } from "@/lib/store-config";
+import { getTenantBaseUrl, getTenantStoreName } from "@/lib/tenant-url";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = getStoreConfig();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourstore.com";
-  const title = `Categories | ${config.store.name}`;
-  const description = `Browse all product categories at ${config.store.name}. Find exactly what you're looking for.`;
+  const baseUrl = await getTenantBaseUrl();
+  const storeName = await getTenantStoreName();
+  const title = `Categories | ${storeName}`;
+  const description = `Browse all product categories at ${storeName}. Find exactly what you're looking for.`;
 
   return {
     title,
