@@ -315,6 +315,11 @@ export interface StorefrontVoltageTokens {
 export interface StorefrontConfig {
   template: StorefrontTemplate;
   voltage: StorefrontVoltageTokens;
+  /** The shop's configured display name (`store_name` on the theme
+   * endpoint). Server-fetched and passed into the StoreConfigProvider
+   * as an initial value so the header doesn't flash the schema name
+   * ("groot") for ~200ms before the client-side fetch resolves. */
+  storeName: string | null;
 }
 
 const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
@@ -326,23 +331,25 @@ const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
     radius: "soft",
     fontPair: "bricolage-inter",
   },
+  storeName: null,
 };
 
 export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
   try {
     const response = await serverFetch<{
-      storefront?: Partial<StorefrontConfig>;
+      storefront?: Partial<Omit<StorefrontConfig, "storeName">>;
+      store_name?: string;
     }>("/api/ecommerce/client/theme/", {
       next: { revalidate: 300, tags: ["storefront-config"] },
     });
     const sf = response.storefront;
-    if (!sf) return DEFAULT_STOREFRONT_CONFIG;
     return {
-      template: sf.template ?? "classic",
+      template: sf?.template ?? "classic",
       voltage: {
         ...DEFAULT_STOREFRONT_CONFIG.voltage,
-        ...(sf.voltage ?? {}),
+        ...(sf?.voltage ?? {}),
       },
+      storeName: response.store_name ?? null,
     };
   } catch (error) {
     console.error("Error fetching storefront config:", error);

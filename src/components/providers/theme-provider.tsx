@@ -37,6 +37,11 @@ export function useStoreConfig() {
 
 interface StoreConfigProviderProps {
   children: React.ReactNode;
+  /** Server-fetched shop name from the theme endpoint, passed in by
+   * the root layout so the header shows "Echodesk LLC" on the very
+   * first paint instead of the tenant schema name ("groot") flashing
+   * for ~200ms while the client-side fetch resolves. */
+  initialShopName?: string | null;
 }
 
 // Helper to get currency symbol from currency code
@@ -209,7 +214,10 @@ const fetchTheme = async (apiUrl: string): Promise<ThemeConfig | null> => {
   }
 };
 
-export function StoreConfigProvider({ children }: StoreConfigProviderProps) {
+export function StoreConfigProvider({
+  children,
+  initialShopName = null,
+}: StoreConfigProviderProps) {
   const envConfig = getStoreConfig();
   const tenant = useTenant();
   const [themeLoaded, setThemeLoaded] = useState(false);
@@ -219,10 +227,10 @@ export function StoreConfigProvider({ children }: StoreConfigProviderProps) {
   // header / footer / page titles. It's NOT the same as
   // `tenant.storeName`, which comes from middleware and resolves to
   // the schema name ("groot") for tenants who haven't set a custom
-  // store name in the tenant table. The theme endpoint exposes the
-  // shop name; we plumb it in here so every consumer of
-  // `useStoreConfig()` (header, footer, title tags) gets the right one.
-  const [shopName, setShopName] = useState<string | null>(null);
+  // store name in the tenant table. Seeded from the server-fetched
+  // value so the first paint is correct; refreshed on mount in case
+  // the cache is stale.
+  const [shopName, setShopName] = useState<string | null>(initialShopName);
 
   // Get API URL from tenant context (multi-tenant) or fall back to env var
   const apiUrl = tenant.apiUrl || process.env.NEXT_PUBLIC_API_URL || "https://demo.api.echodesk.ge";

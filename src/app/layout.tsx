@@ -184,7 +184,7 @@ export default async function RootLayout({
               <QueryProvider>
                 <AuthProvider>
                   <LanguageProvider>
-                    <StoreConfigProvider>
+                    <StoreConfigProvider initialShopName={storefront.storeName}>
                       {children}
                       <Toaster position="bottom-right" />
                       <CookieConsent />
