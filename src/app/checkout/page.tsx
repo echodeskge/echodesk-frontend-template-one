@@ -71,6 +71,8 @@ interface GuestInfo {
   first_name: string;
   last_name: string;
   phone: string;
+  address: string;
+  city: string;
 }
 
 export default function CheckoutPage() {
@@ -86,6 +88,8 @@ export default function CheckoutPage() {
     first_name: "",
     last_name: "",
     phone: "",
+    address: "",
+    city: "",
   });
   const [guestSubmitting, setGuestSubmitting] = useState(false);
 
@@ -548,7 +552,13 @@ export default function CheckoutPage() {
 
   // Guest checkout handler
   const handleGuestCheckout = async () => {
-    if (!guestInfo.email || !guestInfo.first_name || !guestInfo.last_name) {
+    if (
+      !guestInfo.email ||
+      !guestInfo.first_name ||
+      !guestInfo.last_name ||
+      !guestInfo.address ||
+      !guestInfo.city
+    ) {
       toast.error(t("checkout.guestFieldsRequired") || "Please fill in all required fields");
       return;
     }
@@ -584,7 +594,11 @@ export default function CheckoutPage() {
         first_name: guestInfo.first_name,
         last_name: guestInfo.last_name,
         phone: guestInfo.phone || "",
-        address: { address: "", city: "" },
+        address: {
+          address: guestInfo.address,
+          city: guestInfo.city,
+          label: "Delivery",
+        },
         items: localCart.length > 0 ? localCart : [],
         notes: orderNotes || undefined,
       });
@@ -758,6 +772,38 @@ export default function CheckoutPage() {
                       setGuestInfo((prev) => ({
                         ...prev,
                         phone: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guest-address">
+                    {t("addresses.address") || "Address"} *
+                  </Label>
+                  <Input
+                    id="guest-address"
+                    placeholder={t("addresses.addressPlaceholder") || "Street, building, apt"}
+                    value={guestInfo.address}
+                    onChange={(e) =>
+                      setGuestInfo((prev) => ({
+                        ...prev,
+                        address: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guest-city">
+                    {t("addresses.city") || "City"} *
+                  </Label>
+                  <Input
+                    id="guest-city"
+                    placeholder={t("addresses.cityPlaceholder") || "Tbilisi"}
+                    value={guestInfo.city}
+                    onChange={(e) =>
+                      setGuestInfo((prev) => ({
+                        ...prev,
+                        city: e.target.value,
                       }))
                     }
                   />
