@@ -145,10 +145,10 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                 <Check className="h-4 w-4" /> {t("home.feature1", "30-day returns")}
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <Check className="h-4 w-4" /> {t("home.feature2", "87 countries")}
+                <Check className="h-4 w-4" /> {t("home.feature2", "Same-day in Tbilisi")}
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <Check className="h-4 w-4" /> {t("home.feature3", "4.9 / 41k reviews")}
+                <Check className="h-4 w-4" /> {t("home.feature3", "1-month warranty")}
               </span>
             </div>
           </div>
@@ -596,10 +596,13 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
           }}
         >
           {[
-            ["41,000+", t("home.statHappy", "happy customers")],
-            ["87", t("home.statCountries", "countries shipped")],
-            ["4.9 / 5", t("home.statRating", "average rating")],
+            // Verifiable trust signals only — fake "41,000 customers" /
+            // "87 countries" claims attract Google trust action and
+            // erode user trust if disproven.
+            ["1mo", t("home.statWarranty", "warranty on every order")],
+            ["30d", t("home.statReturns", "free returns")],
             ["< 1h", t("home.statSupport", "support response")],
+            ["GEL", t("home.statCurrency", "priced in Lari, paid via BOG/TBC")],
           ].map(([n, l]) => (
             <div key={l} style={{ background: "var(--bg)", padding: 32 }}>
               <div className="display" style={{ fontSize: "clamp(32px, 4vw, 56px)" }}>

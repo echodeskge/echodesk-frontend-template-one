@@ -86,11 +86,25 @@ export async function generateMetadata({
     isKa ? "BOG TBC გადახდა" : "BOG TBC payments",
   ];
 
+  // Soft-launch defence: if the tenant has zero published products,
+  // noindex the listing so search engines don't memorise an empty
+  // store and waste crawl budget. Re-evaluated on every request, so
+  // the noindex flips off automatically the moment products are
+  // added without needing a redeploy.
+  let isEmptyCatalogue = false;
+  try {
+    const probe = await fetchProducts({ page: 1 }, 60);
+    isEmptyCatalogue = (probe?.count ?? 0) === 0;
+  } catch {
+    /* fall through — index by default if the probe fails */
+  }
+
   return generatePageMetadata({
     title,
     description,
     path: "/products",
     keywords,
+    noIndex: isEmptyCatalogue,
   });
 }
 
