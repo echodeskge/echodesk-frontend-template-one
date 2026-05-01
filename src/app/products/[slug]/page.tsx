@@ -39,8 +39,14 @@ export async function generateMetadata({
     const product = await fetchProductBySlug(slug);
 
     if (!product) {
+      // Unknown product slug — make sure crawlers don't index this URL
+      // as a "Product Not Found" page consolidated to the homepage.
+      // The default export will also call notFound() so the response
+      // is a real 404, but the metadata block is read independently
+      // by Google for the index decision.
       return {
-        title: "Product Not Found",
+        title: "Product not found",
+        robots: { index: false, follow: false },
       };
     }
 
@@ -100,7 +106,8 @@ export async function generateMetadata({
   } catch (error) {
     console.error("Error generating product metadata:", error);
     return {
-      title: "Product Not Found",
+      title: "Product not found",
+      robots: { index: false, follow: false },
     };
   }
 }

@@ -33,7 +33,17 @@ const inter = Inter({
 export async function generateMetadata(): Promise<Metadata> {
   const config = getStoreConfig();
   const baseUrl = await getTenantBaseUrl();
-  const storeName = await getTenantStoreName();
+  // Prefer the EcommerceSettings.store_name the tenant actually
+  // configured ("Refurb") over the resolve-domain fallback that
+  // returns the schema slug ("groot"). The resolve-domain endpoint
+  // was previously dropping the configured name because it was
+  // querying EcommerceSettings outside a schema_context — fixed on
+  // backend in tenants/views.py:1852, but the storefront also reads
+  // the proper name straight from the theme endpoint as a defence
+  // in depth.
+  const storefront = await fetchStorefrontConfig();
+  const fallbackStoreName = await getTenantStoreName();
+  const storeName = storefront.storeName || fallbackStoreName;
   const tenantLocale = await getTenantLocale();
   const ogLocaleCode = tenantLocale === "ka" ? "ka_GE" : "en_US";
   const altLocale = tenantLocale === "ka" ? "en_US" : "ka_GE";

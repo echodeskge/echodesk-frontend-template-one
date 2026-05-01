@@ -5,6 +5,19 @@ import {
   getTenantStoreName,
   getTenantLocale,
 } from "@/lib/tenant-url";
+import { fetchStorefrontConfig } from "@/lib/fetch-server";
+
+/**
+ * Resolve the canonical store name. Prefer EcommerceSettings.store_name
+ * (the value tenants type into the admin's "Store name" field) over
+ * the resolve-domain header fallback, which serves the schema slug
+ * for tenants who haven't pinned that field on the Tenant model.
+ */
+async function resolveStoreName(): Promise<string> {
+  const sf = await fetchStorefrontConfig().catch(() => ({ storeName: null as string | null }));
+  if (sf.storeName) return sf.storeName;
+  return getTenantStoreName();
+}
 
 /**
  * SEO Utility Functions
@@ -69,7 +82,7 @@ export async function generatePageMetadata({
   type = "website",
 }: GenerateMetadataParams): Promise<Metadata> {
   const baseUrl = await getTenantBaseUrl();
-  const storeName = await getTenantStoreName();
+  const storeName = await resolveStoreName();
   const tenantLocale = await getTenantLocale();
   const ogLocaleCode = locale || ogLocale(tenantLocale);
   const url = `${baseUrl}${path}`;
@@ -154,7 +167,7 @@ export async function generateProductMetadata({
   category,
 }: ProductMetadataParams): Promise<Metadata> {
   const baseUrl = await getTenantBaseUrl();
-  const storeName = await getTenantStoreName();
+  const storeName = await resolveStoreName();
   const tenantLocale = await getTenantLocale();
   const url = `${baseUrl}/products/${slug}`;
 
