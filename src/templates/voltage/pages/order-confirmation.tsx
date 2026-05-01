@@ -22,7 +22,12 @@ export function VoltageOrderConfirmationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
-  const { data: order, isLoading, isError } = useOrder(orderId);
+  // Public lookup token written into the URL after a guest checkout.
+  // When present, the hook fetches the order via the public-by-token
+  // endpoint instead of the auth-only retrieve route — so guests can
+  // see their confirmation page without an account.
+  const publicToken = searchParams.get("token");
+  const { data: order, isLoading, isError } = useOrder(orderId, publicToken);
 
   useEffect(() => {
     if (!orderId) router.push("/");

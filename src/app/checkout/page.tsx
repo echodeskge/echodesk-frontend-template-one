@@ -594,7 +594,21 @@ export default function CheckoutPage() {
         return;
       }
 
-      router.push(`/order-confirmation?order_id=${result.id}`);
+      // Append the public_token so the order-confirmation page can
+      // fetch the order without auth (guests don't have a JWT).
+      const tokenParam = (result as { public_token?: string }).public_token;
+      const qs = tokenParam
+        ? `?order_id=${result.id}&token=${encodeURIComponent(tokenParam)}`
+        : `?order_id=${result.id}`;
+      // Clear the local guest cart now that the order is placed so
+      // the visitor doesn't see stale items if they navigate back.
+      try {
+        localStorage.removeItem("guest_cart");
+        window.dispatchEvent(new CustomEvent("guest-cart-changed"));
+      } catch {
+        /* private mode etc. — best-effort */
+      }
+      router.push(`/order-confirmation${qs}`);
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: Record<string, unknown> } };
       const detail = axiosError.response?.data?.detail;

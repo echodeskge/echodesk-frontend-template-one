@@ -4,6 +4,7 @@ import {
   ecommerceClientOrdersRetrieve,
   ecommerceClientOrdersCreate,
 } from "@/api/generated/api";
+import axios from "@/api/axios";
 import type { Order, OrderCreateRequest } from "@/api/generated/interfaces";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
@@ -20,14 +21,28 @@ export function useOrders(page?: number, ordering?: string) {
   });
 }
 
-// Hook for fetching single order
-export function useOrder(id: string | null) {
+// Hook for fetching single order. When `publicToken` is supplied, hits
+// the public lookup endpoint that doesn't require auth — used by the
+// guest-checkout flow to render the order-confirmation page after a
+// guest places an order. Direct axios call instead of the generated
+// client because the generator runs against the live schema and the
+// new endpoint may not be regenerated yet on this branch.
+export function useOrder(id: string | null, publicToken?: string | null) {
   const { isAuthenticated } = useAuth();
+  const useTokenPath = !!publicToken;
 
   return useQuery({
-    queryKey: ["order", id],
-    queryFn: () => ecommerceClientOrdersRetrieve(id!),
-    enabled: isAuthenticated && !!id,
+    queryKey: ["order", id, publicToken],
+    queryFn: async () => {
+      if (useTokenPath) {
+        const res = await axios.get<Order>(
+          `/api/ecommerce/client/orders/by-token/?token=${encodeURIComponent(publicToken!)}`,
+        );
+        return res.data;
+      }
+      return ecommerceClientOrdersRetrieve(id!) as Promise<Order>;
+    },
+    enabled: useTokenPath ? true : isAuthenticated && !!id,
     staleTime: 60 * 1000,
   });
 }

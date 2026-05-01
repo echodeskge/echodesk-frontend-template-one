@@ -30,11 +30,14 @@ function OrderConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
+  // Guest-checkout flow appends a public token so the confirmation can
+  // be viewed without an account.
+  const publicToken = searchParams.get("token");
   const config = useStoreConfig();
   const { t, getLocalizedValue } = useLanguage();
   const { template } = useStorefrontTemplate();
 
-  const { data: order, isLoading, isError } = useOrder(orderId);
+  const { data: order, isLoading, isError } = useOrder(orderId, publicToken);
 
   // Redirect if no order_id
   useEffect(() => {
