@@ -10,8 +10,9 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useEffect } from "react";
-import { CheckCircle2, ArrowRight, Truck, Package } from "lucide-react";
+import { CheckCircle2, ArrowRight, Truck, Package, UserPlus } from "lucide-react";
 import { useOrder } from "@/hooks/use-orders";
+import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { Btn, Pill } from "../components";
 import { useTranslate } from "../use-translate";
@@ -20,6 +21,7 @@ export function VoltageOrderConfirmationPage() {
   const t = useTranslate();
   const { getLocalizedValue } = useLanguage();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
   // Public lookup token written into the URL after a guest checkout.
@@ -28,6 +30,7 @@ export function VoltageOrderConfirmationPage() {
   // see their confirmation page without an account.
   const publicToken = searchParams.get("token");
   const { data: order, isLoading, isError } = useOrder(orderId, publicToken);
+  const isGuestView = !!publicToken && !isAuthenticated;
 
   useEffect(() => {
     if (!orderId) router.push("/");
@@ -227,15 +230,72 @@ export function VoltageOrderConfirmationPage() {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 16, flexWrap: "wrap" }}>
-          <Btn
-            variant="ink"
-            size="lg"
-            iconRight={<ArrowRight className="h-5 w-5" />}
-            onClick={() => router.push("/account")}
+        {isGuestView && order.client && (
+          <div
+            style={{
+              padding: 24,
+              background: "var(--accent)",
+              color: "var(--accent-ink)",
+              border: "1.5px solid var(--ink)",
+              borderRadius: "var(--radius)",
+              display: "grid",
+              gridTemplateColumns: "auto 1fr auto",
+              gap: 16,
+              alignItems: "center",
+            }}
           >
-            {t("orderConfirmation.viewAccount", "View my account")}
-          </Btn>
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 999,
+                background: "var(--bg)",
+                color: "var(--ink)",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="display" style={{ fontSize: 22, lineHeight: 1.1 }}>
+                {t("orderConfirmation.claimTitle", "Claim this order.")}
+              </div>
+              <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
+                {t(
+                  "orderConfirmation.claimSubcopy",
+                  "Create a free account to track every order, save addresses, and check out faster next time.",
+                )}
+              </div>
+            </div>
+            <Btn
+              variant="ink"
+              size="md"
+              iconRight={<ArrowRight className="h-4 w-4" />}
+              onClick={() =>
+                router.push(
+                  `/register?email=${encodeURIComponent(
+                    (order.client as unknown as { email?: string })?.email || "",
+                  )}&callbackUrl=${encodeURIComponent(`/order-confirmation?order_id=${order.id}`)}`,
+                )
+              }
+            >
+              {t("orderConfirmation.claimCta", "Create account")}
+            </Btn>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 16, flexWrap: "wrap" }}>
+          {!isGuestView && (
+            <Btn
+              variant="ink"
+              size="lg"
+              iconRight={<ArrowRight className="h-5 w-5" />}
+              onClick={() => router.push("/account")}
+            >
+              {t("orderConfirmation.viewAccount", "View my account")}
+            </Btn>
+          )}
           <Btn
             variant="outline"
             size="lg"

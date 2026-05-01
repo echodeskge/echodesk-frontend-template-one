@@ -215,7 +215,20 @@
     "pickCourier": "Pick a courier before placing the order.",
     "dropPinRequired": "Drop a pin on the map so the courier knows where to deliver.",
     "saving": "Saving…",
-    "retry": "Retry"
+    "retry": "Retry",
+    "almostYours": "Almost yours.",
+    "cardHint": "Secure 3-D checkout — you'll be redirected to BOG.",
+    "cardPayment": "Card · Bank of Georgia",
+    "cashOnDelivery": "Cash on delivery",
+    "codHint": "Pay the courier in cash on arrival.",
+    "contact": "Contact",
+    "deliveryAddress": "Delivery address",
+    "hiThere": "Hi there.",
+    "manageAddresses": "Manage addresses",
+    "notes": "Order notes",
+    "notesPlaceholder": "Anything we should know?",
+    "payment": "Payment",
+    "placingOrder": "Placing order…"
   },
   "orderConfirmation": {
     "thankYou": "Thank you.",
@@ -227,7 +240,10 @@
     "keepShopping": "Keep shopping",
     "loading": "Loading order…",
     "viewAccount": "View my account",
-    "subcopy": "We've received your order and are getting it ready. Check your inbox — a confirmation email is on its way."
+    "subcopy": "We've received your order and are getting it ready. Check your inbox — a confirmation email is on its way.",
+    "claimCta": "Create account",
+    "claimTitle": "Claim this order.",
+    "claimSubcopy": "Create a free account to track every order, save addresses, and check out faster next time."
   },
   "cookies": {
     "message": "We use cookies to improve your experience. By continuing, you agree to our cookie policy.",

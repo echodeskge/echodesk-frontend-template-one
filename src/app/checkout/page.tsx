@@ -14,6 +14,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useStoreConfig } from "@/components/providers/theme-provider";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageCheckoutPage } from "@/templates/voltage/pages/checkout";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useCart, useCartItems } from "@/hooks/use-cart";
@@ -80,6 +82,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { t, getLocalizedValue } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   // Guest checkout mode: null = not decided, "guest" = guest, "authenticated" = signed in
   const [checkoutMode, setCheckoutMode] = useState<"guest" | "authenticated" | null>(null);
@@ -523,6 +526,16 @@ export default function CheckoutPage() {
   };
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
+
+  // Voltage tenants get the bold single-page checkout. All hooks above
+  // already ran so it's safe to short-circuit out of the classic body.
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageCheckoutPage />
+      </StoreLayout>
+    );
+  }
 
   // Loading state
   if (isAuthLoading || isCartLoading || isItemsLoading) {
