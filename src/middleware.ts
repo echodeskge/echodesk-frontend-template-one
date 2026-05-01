@@ -145,31 +145,44 @@ export default auth(async (req) => {
     return NextResponse.next();
   }
 
-  // Create response with tenant headers
-  const response = handleAuthRoutes(req, pathname, isAuthenticated, bot);
+  // Compute auth-route handling. If it returns a redirect (e.g.
+  // unauthenticated visitor hitting /account), we honour it instead
+  // of discarding it — the previous version always overwrote the
+  // result with NextResponse.next() below, which meant middleware-
+  // level protection of /account / /checkout etc. was effectively
+  // disabled and the redirect-to-login only happened later via
+  // each page's own client-side useEffect. That created flicker
+  // and, on slow auth resolution, looked like "logo bounces me to
+  // /login multiple times".
+  const authResp = handleAuthRoutes(req, pathname, isAuthenticated, bot);
 
-  // Set tenant configuration headers for server components to read
-  const headers = new Headers(response.headers);
-  headers.set("x-tenant-id", String(tenantConfig.tenant_id));
-  headers.set("x-tenant-schema", tenantConfig.schema);
-  headers.set("x-tenant-api-url", tenantConfig.api_url);
-  headers.set("x-tenant-store-name", tenantConfig.store_name);
-  headers.set("x-tenant-store-logo", tenantConfig.store_logo || "");
-  headers.set("x-tenant-primary-color", tenantConfig.primary_color || "");
-  headers.set("x-tenant-secondary-color", tenantConfig.secondary_color || "");
-  headers.set("x-tenant-accent-color", tenantConfig.accent_color || "");
-  headers.set("x-tenant-currency", tenantConfig.currency);
-  headers.set("x-tenant-locale", tenantConfig.locale);
-  headers.set("x-tenant-contact-email", tenantConfig.contact?.email || "");
-  headers.set("x-tenant-contact-phone", tenantConfig.contact?.phone || "");
+  // Build the request headers we want server components to read.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-tenant-id", String(tenantConfig.tenant_id));
+  requestHeaders.set("x-tenant-schema", tenantConfig.schema);
+  requestHeaders.set("x-tenant-api-url", tenantConfig.api_url);
+  requestHeaders.set("x-tenant-store-name", tenantConfig.store_name);
+  requestHeaders.set("x-tenant-store-logo", tenantConfig.store_logo || "");
+  requestHeaders.set("x-tenant-primary-color", tenantConfig.primary_color || "");
+  requestHeaders.set("x-tenant-secondary-color", tenantConfig.secondary_color || "");
+  requestHeaders.set("x-tenant-accent-color", tenantConfig.accent_color || "");
+  requestHeaders.set("x-tenant-currency", tenantConfig.currency);
+  requestHeaders.set("x-tenant-locale", tenantConfig.locale);
+  requestHeaders.set("x-tenant-contact-email", tenantConfig.contact?.email || "");
+  requestHeaders.set("x-tenant-contact-phone", tenantConfig.contact?.phone || "");
+  requestHeaders.set("x-tenant-features", JSON.stringify(tenantConfig.features));
 
-  // Encode features as JSON for complex data
-  headers.set("x-tenant-features", JSON.stringify(tenantConfig.features));
+  // If auth resolution produced a redirect, return it directly. We
+  // don't need the tenant headers on a redirect response — the
+  // browser is going to issue a fresh request to the redirect target.
+  if (authResp.headers.get("location")) {
+    return authResp;
+  }
 
-  // Return response with headers
+  // Otherwise let the request through with tenant headers attached.
   return NextResponse.next({
     request: {
-      headers: headers,
+      headers: requestHeaders,
     },
   });
 });

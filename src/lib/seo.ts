@@ -73,7 +73,13 @@ export async function generatePageMetadata({
   const tenantLocale = await getTenantLocale();
   const ogLocaleCode = locale || ogLocale(tenantLocale);
   const url = `${baseUrl}${path}`;
-  const defaultImage = `${baseUrl}/og-image.png`;
+  // Next.js's app/opengraph-image.tsx is auto-routed at /opengraph-image
+  // and generates a tenant-branded 1200×630 PNG at request time. The
+  // previous default `${baseUrl}/og-image.png` was a static path that
+  // didn't exist anywhere — every share / scrape was hitting a 404
+  // image (which Facebook's Debugger flags as a "Bad Response Code"
+  // resource fetch).
+  const defaultImage = `${baseUrl}/opengraph-image`;
   const altLocale = tenantLocale === "ka" ? "en_US" : "ka_GE";
 
   return {
@@ -152,6 +158,14 @@ export async function generateProductMetadata({
   const tenantLocale = await getTenantLocale();
   const url = `${baseUrl}/products/${slug}`;
 
+  // Auto-generated per-product OG card from
+  // src/app/products/[slug]/opengraph-image.tsx — composites the
+  // product photo + name + price + store name onto a 1200×630 PNG.
+  // Falls back to the route-level Next-generated image which itself
+  // falls back to the root opengraph-image, so there's always *some*
+  // valid image URL even if the product has no uploaded photo.
+  const productOgImage = `${baseUrl}/products/${encodeURIComponent(slug)}/opengraph-image`;
+
   const keywords = [name, brand, category].filter(Boolean);
 
   return {
@@ -171,22 +185,20 @@ export async function generateProductMetadata({
       // The "product" OG type is not in the union. We use "website" here and set
       // "og:type": "product" via the `other` field on the product page instead.
       type: "website",
-      images: image
-        ? [
-            {
-              url: image,
-              width: 1200,
-              height: 1200,
-              alt: name,
-            },
-          ]
-        : undefined,
+      images: [
+        {
+          url: productOgImage,
+          width: 1200,
+          height: 630,
+          alt: name,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: name,
       description,
-      images: image ? [image] : undefined,
+      images: [productOgImage],
       site: getTwitterHandle() || undefined,
       creator: getTwitterHandle() || undefined,
     },

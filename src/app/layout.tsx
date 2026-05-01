@@ -69,7 +69,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: config.store.description,
       images: [
         {
-          url: `${baseUrl}/og-image.png`,
+          url: `${baseUrl}/opengraph-image`,
           width: 1200,
           height: 630,
           alt: storeName,
@@ -80,7 +80,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: storeName,
       description: config.store.description,
-      images: [`${baseUrl}/og-image.png`],
+      images: [`${baseUrl}/opengraph-image`],
       site: config.social.twitter
         ? `@${config.social.twitter.split("/").pop()}`
         : process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined,

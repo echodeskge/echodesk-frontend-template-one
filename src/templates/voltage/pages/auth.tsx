@@ -49,7 +49,12 @@ export function VoltageAuthPage({ initialMode = "login" }: VoltageAuthPageProps)
         // Auth context login takes `{ identifier, password }` —
         // identifier may be email or phone.
         await login({ identifier: email, password });
-        router.push("/account");
+        // Hard-nav so the browser includes the freshly-set NextAuth
+        // session cookie on the next request. router.push() left the
+        // in-memory useSession() stale, which made /account's
+        // isAuthenticated guard bounce back to /login.
+        window.location.assign("/account");
+        return;
       } else {
         if (!firstName || !lastName) {
           toast.error(t("auth.fillName", "Please enter your name"));

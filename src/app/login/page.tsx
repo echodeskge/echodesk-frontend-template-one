@@ -45,7 +45,15 @@ function LoginForm() {
         identifier: formData.identifier,
         password: formData.password,
       });
-      router.push(safeCallback);
+      // Use a full-page navigation so the browser sends the fresh
+      // NextAuth session cookie on the next request. router.push()
+      // does a client-side soft nav and the in-memory useSession()
+      // cache is still anonymous — that meant /account's
+      // isAuthenticated guard immediately bounced the visitor back
+      // to /login (the "login successful toast then loops to login"
+      // bug, especially visible on custom domains).
+      window.location.assign(safeCallback);
+      return;
     } catch (error: any) {
       setLoginError(
         t("auth.invalidCredentials") ||
