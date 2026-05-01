@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { fetchProductBySlug } from "@/lib/fetch-server";
+import { fetchProductBySlug, fetchStorefrontConfig } from "@/lib/fetch-server";
 import { getTenantBaseUrl, getTenantStoreName } from "@/lib/tenant-url";
 
 /**
@@ -50,11 +50,18 @@ export default async function ProductOpengraphImage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [product, storeName, baseUrl] = await Promise.all([
+  const [product, fallbackStoreName, baseUrl, storefrontConfig] = await Promise.all([
     fetchProductBySlug(slug).catch(() => null),
     getTenantStoreName().catch(() => "Store"),
     getTenantBaseUrl().catch(() => ""),
+    fetchStorefrontConfig().catch(() => ({ storeName: null })),
   ]);
+
+  // Prefer the EcommerceSettings.store_name the tenant configured in
+  // /settings/ecommerce ("Refurb") over the Tenant.store_name middleware
+  // header which is the schema slug ("groot"). Fall back to the slug
+  // only when EcommerceSettings hasn't been touched yet.
+  const storeName = storefrontConfig.storeName || fallbackStoreName;
 
   if (!product) {
     // Fall through to the root-level opengraph-image (Next does this
@@ -93,18 +100,42 @@ export default async function ProductOpengraphImage({
   const was = wasRaw ? `${Number(wasRaw).toFixed(0)} GEL` : null;
   const rawImageUrl = splitImage(product.image);
 
-  // Pipe the product photo through Next's image optimizer
-  // (`/_next/image`) so Satori receives a JPEG from our own origin
-  // instead of a WebP from the DigitalOcean Spaces bucket. Satori's
-  // direct external-image fetch was silently failing (WebP decoder
-  // edge cases + cross-origin latency on the Spaces CDN), leaving
-  // the OG card with the placeholder gradient instead of the photo.
-  // The optimizer auto-converts to JPEG, applies sensible quality
-  // compression, and resolves the URL to a same-origin path.
-  const imageUrl =
-    rawImageUrl && baseUrl
-      ? `${baseUrl}/_next/image?url=${encodeURIComponent(rawImageUrl)}&w=1200&q=75`
-      : rawImageUrl;
+  // Fetch the product photo through Next's image optimizer and inline
+  // the resulting JPEG as a data URL. Three things in one:
+  //   1. Same-origin URL (no cross-origin issues to the Spaces CDN).
+  //   2. Optimizer auto-converts WebP → JPEG (Satori-friendly format).
+  //   3. Inlining bypasses the Satori-internal fetch path that has
+  //      been silently failing on every social share — the renderer
+  //      gets the bytes directly and never has to make a network call.
+  // 5s timeout so a slow origin doesn't block the whole OG response.
+  let imageDataUrl: string | null = null;
+  if (rawImageUrl && baseUrl) {
+    const optimizedUrl = `${baseUrl}/_next/image?url=${encodeURIComponent(rawImageUrl)}&w=1200&q=75`;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      const res = await fetch(optimizedUrl, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        // btoa works on edge runtime; Buffer.toString('base64') doesn't.
+        const bin = new Uint8Array(buf);
+        let s = "";
+        const chunk = 0x8000;
+        for (let i = 0; i < bin.length; i += chunk) {
+          s += String.fromCharCode.apply(
+            null,
+            Array.from(bin.subarray(i, i + chunk)),
+          );
+        }
+        const b64 = btoa(s);
+        const mime = res.headers.get("content-type") || "image/jpeg";
+        imageDataUrl = `data:${mime};base64,${b64}`;
+      }
+    } catch {
+      /* fall through to placeholder */
+    }
+  }
 
   return new ImageResponse(
     (
@@ -132,9 +163,9 @@ export default async function ProductOpengraphImage({
             overflow: "hidden",
           }}
         >
-          {imageUrl ? (
+          {imageDataUrl ? (
             <img
-              src={imageUrl}
+              src={imageDataUrl}
               alt={name}
               width={600}
               height={630}
