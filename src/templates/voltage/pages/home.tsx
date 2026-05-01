@@ -89,21 +89,30 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
             <h1
               className="display display-shrink"
               style={{ fontSize: "clamp(64px, 9vw, 144px)", margin: "20px 0" }}
+              // Plain-text extractors (Google, screen readers, AI
+              // scrapers) flatten the styled spans + <br> below into
+              // "Gear thatactuallyfeels good." with no spaces. Set an
+              // explicit accessible label so the H1 reads cleanly when
+              // CSS is stripped, and mark the decorative spans
+              // aria-hidden so they aren't double-announced.
+              aria-label={`${t("home.heroLine1", "Gear that")} ${t("home.heroAccent", "actually")} ${t("home.heroLine2", "feels good.")}`}
             >
-              {t("home.heroLine1", "Gear that")}{" "}
-              <span
-                className="hero-highlight"
-                style={{
-                  background: "var(--accent)",
-                  padding: "0 12px",
-                  borderRadius: 12,
-                  display: "inline-block",
-                }}
-              >
-                {t("home.heroAccent", "actually")}
+              <span aria-hidden="true">
+                {t("home.heroLine1", "Gear that")}{" "}
+                <span
+                  className="hero-highlight"
+                  style={{
+                    background: "var(--accent)",
+                    padding: "0 12px",
+                    borderRadius: 12,
+                    display: "inline-block",
+                  }}
+                >
+                  {t("home.heroAccent", "actually")}
+                </span>
+                <br />
+                {t("home.heroLine2", "feels good.")}
               </span>
-              <br />
-              {t("home.heroLine2", "feels good.")}
             </h1>
             <p style={{ fontSize: 18, maxWidth: 480, opacity: 0.75, lineHeight: 1.5 }}>
               {t("home.heroSubcopy", "Honest electronics. Same-day delivery in Tbilisi, one-month warranty on everything, and humans on the other end of every email.")}

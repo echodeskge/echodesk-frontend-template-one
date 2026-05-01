@@ -8,6 +8,7 @@ import {
   generateLocalBusinessSchema,
 } from "@/lib/seo";
 import { getTenantBaseUrl, getTenantStoreName } from "@/lib/tenant-url";
+import { fetchStorefrontConfig } from "@/lib/fetch-server";
 import { StructuredData } from "@/components/structured-data";
 import {
   fetchFeaturedProducts,
@@ -24,7 +25,10 @@ export const revalidate = 10;
  */
 export async function generateMetadata(): Promise<Metadata> {
   const config = getStoreConfig();
-  const storeName = await getTenantStoreName();
+  // Prefer EcommerceSettings.store_name (theme endpoint, "Refurb")
+  // over the resolve-domain header fallback (schema slug "groot").
+  const sf = await fetchStorefrontConfig().catch(() => ({ storeName: null as string | null }));
+  const storeName = sf.storeName || (await getTenantStoreName());
 
   return generatePageMetadata({
     title: storeName,
@@ -42,7 +46,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const config = getStoreConfig();
   const baseUrl = await getTenantBaseUrl();
-  const storeName = await getTenantStoreName();
+  const sf = await fetchStorefrontConfig().catch(() => ({ storeName: null as string | null }));
+  const storeName = sf.storeName || (await getTenantStoreName());
 
   // Fetch data server-side for SEO
   const [homepageSections, featuredProducts, itemLists] = await Promise.all([
@@ -51,14 +56,35 @@ export default async function HomePage() {
     fetchItemLists(undefined, 10).catch((): Awaited<ReturnType<typeof fetchItemLists>> => []),
   ]);
 
-  // Generate structured data for SEO — use the tenant store name from
-  // headers so each storefront gets its own Organization / WebSite /
-  // LocalBusiness schema, not the env-provided default name.
+  // Build sameAs array from configured social links — Schema.org uses
+  // this to connect the brand entity to its profiles on FB / IG /
+  // Twitter, which improves Knowledge Panel eligibility.
+  const sameAs = [
+    config.social?.facebook,
+    config.social?.instagram,
+    config.social?.twitter,
+  ].filter((u): u is string => !!u && (u.startsWith("http://") || u.startsWith("https://")));
+
+  // Generate structured data for SEO. Logo, address, and contact info
+  // all set explicitly so Google Rich Results validation passes.
   const organizationSchema = generateOrganizationSchema({
     name: storeName,
     url: baseUrl,
     logo: config.store.logo,
     description: config.store.description,
+    addressCountry: "GE",
+    addressLocality: "Tbilisi",
+    sameAs,
+    ...(config.contact.phone || config.contact.email
+      ? {
+          contactPoint: {
+            telephone: config.contact.phone || "",
+            contactType: "customer service",
+            email: config.contact.email || undefined,
+            availableLanguage: ["en", "ka", "ru"],
+          },
+        }
+      : {}),
   });
 
   const websiteSchema = generateWebSiteSchema({
@@ -75,9 +101,15 @@ export default async function HomePage() {
   const localBusinessSchema = generateLocalBusinessSchema({
     name: storeName,
     url: baseUrl,
+    logo: config.store.logo,
     email: config.contact.email || undefined,
     telephone: config.contact.phone || undefined,
     address: config.contact.address || undefined,
+    addressCountry: "GE",
+    addressLocality: "Tbilisi",
+    currenciesAccepted: "GEL",
+    paymentAccepted: "Cash, Credit Card, Bank Transfer, BOG, TBC",
+    sameAs,
   });
 
   return (

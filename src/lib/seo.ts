@@ -250,9 +250,21 @@ export interface OrganizationSchema {
     telephone: string;
     contactType: string;
     email?: string;
+    availableLanguage?: string[];
   };
   sameAs?: string[];
+  /** Country code (ISO 3166-1 alpha-2). Defaults to GE (Georgia). */
+  addressCountry?: string;
+  addressLocality?: string;
+  postalAddress?: string;
 }
+
+const absoluteLogo = (logo: string | undefined | null, baseUrl: string): string => {
+  if (!logo) return `${baseUrl}/icon`;
+  if (logo.startsWith("http://") || logo.startsWith("https://")) return logo;
+  if (logo.startsWith("/")) return `${baseUrl}${logo}`;
+  return `${baseUrl}/${logo}`;
+};
 
 export function generateOrganizationSchema({
   name,
@@ -261,14 +273,27 @@ export function generateOrganizationSchema({
   description,
   contactPoint,
   sameAs = [],
+  addressCountry = "GE",
+  addressLocality = "Tbilisi",
+  postalAddress,
 }: OrganizationSchema) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name,
     url,
-    logo,
-    description,
+    // Schema.org requires absolute URL for logo. The auto-generated
+    // /icon route returns a tenant-branded PNG so this always
+    // resolves to something valid even before the tenant uploads a
+    // proper logo.
+    logo: absoluteLogo(logo, url),
+    ...(description && { description }),
+    address: {
+      "@type": "PostalAddress",
+      addressCountry,
+      addressLocality,
+      ...(postalAddress && { streetAddress: postalAddress }),
+    },
     ...(contactPoint && { contactPoint }),
     ...(sameAs.length > 0 && { sameAs }),
   };
@@ -429,31 +454,55 @@ export function generateProductCollectionSchema({
 export interface LocalBusinessSchema {
   name: string;
   url: string;
+  logo?: string;
   email?: string;
   telephone?: string;
   address?: string;
+  /** ISO 3166-1 alpha-2, defaults to GE (Georgia). */
+  addressCountry?: string;
+  addressLocality?: string;
+  currenciesAccepted?: string;
+  paymentAccepted?: string;
+  priceRange?: string;
+  sameAs?: string[];
 }
 
 export function generateLocalBusinessSchema({
   name,
   url,
+  logo,
   email,
   telephone,
   address,
+  addressCountry = "GE",
+  addressLocality = "Tbilisi",
+  currenciesAccepted = "GEL",
+  paymentAccepted = "Cash, Credit Card, Bank Transfer",
+  priceRange,
+  sameAs = [],
 }: LocalBusinessSchema) {
   return {
     "@context": "https://schema.org",
-    "@type": "Store",
+    // OnlineStore is the modern Schema.org type for an internet
+    // retailer; the older `Store` type is kept as a secondary type so
+    // tools that don't recognise OnlineStore yet still pick something
+    // up.
+    "@type": ["OnlineStore", "Store"],
     name,
     url,
+    logo: absoluteLogo(logo, url),
+    address: {
+      "@type": "PostalAddress",
+      addressCountry,
+      addressLocality,
+      ...(address && address !== addressLocality && { streetAddress: address }),
+    },
+    currenciesAccepted,
+    paymentAccepted,
+    ...(priceRange && { priceRange }),
     ...(email && { email }),
     ...(telephone && { telephone }),
-    ...(address && {
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: address,
-      },
-    }),
+    ...(sameAs.length > 0 && { sameAs }),
   };
 }
 
