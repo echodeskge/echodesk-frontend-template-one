@@ -321,8 +321,10 @@ export interface Order {
   updated_at: string;
   paid_at: string;
   confirmed_at?: string;
+  processing_at?: string;
   shipped_at?: string;
   delivered_at?: string;
+  cancelled_at?: string;
 }
 
 export interface OrderCreate {
@@ -349,6 +351,7 @@ export interface OrderItem {
   product: number;
   variant?: number;
   product_name: any;
+  product_image: string;
   quantity: number;
   price: string;
   subtotal: string;
@@ -382,8 +385,10 @@ export interface OrderRequest {
   payment_status?: PaymentStatusEnum;
   payment_method?: string;
   confirmed_at?: string;
+  processing_at?: string;
   shipped_at?: string;
   delivered_at?: string;
+  cancelled_at?: string;
 }
 
 export interface OrderStatusEnum {
@@ -534,8 +539,10 @@ export interface PatchedOrderRequest {
   payment_status?: PaymentStatusEnum;
   payment_method?: string;
   confirmed_at?: string;
+  processing_at?: string;
   shipped_at?: string;
   delivered_at?: string;
+  cancelled_at?: string;
 }
 
 export interface PaymentConfigResponse {
@@ -600,8 +607,8 @@ export interface ProductDetail {
   meta_description?: any;
   attribute_values: ProductAttributeValue[];
   variants: ProductVariant[];
-  average_rating?: number;
-  review_count?: number;
+  average_rating: string;
+  review_count: string;
   created_at: string;
   updated_at: string;
   created_by: number;
@@ -634,8 +641,8 @@ export interface ProductList {
   is_low_stock: boolean;
   is_in_stock: boolean;
   attribute_values: ProductAttributeValue[];
-  average_rating?: number;
-  review_count?: number;
+  average_rating: string;
+  review_count: string;
   created_at: string;
   updated_at: string;
 }

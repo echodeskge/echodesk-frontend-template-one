@@ -322,6 +322,48 @@ function OrderConfirmationContent() {
             </Card>
           )}
 
+          {/* Courier card — rendered when no static shipping_method is set
+               but Quickshipper booked a courier (tenant has Quickshipper on).
+               Same fields as the static-method block, plus the courier name. */}
+          {!order.shipping_method_details &&
+            (order.courier_provider || order.tracking_number) && (
+              <Card className="mb-8">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                    <Truck className="h-4 w-4" />
+                    {t("orderConfirmation.courier") || "Courier"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground space-y-1">
+                  {order.courier_provider && (
+                    <p className="font-medium text-foreground capitalize">
+                      {order.courier_provider}
+                    </p>
+                  )}
+                  {order.tracking_number && (
+                    <p>
+                      {t("orderConfirmation.trackingNumber") || "Tracking"}:{" "}
+                      <span className="font-mono">{order.tracking_number}</span>
+                    </p>
+                  )}
+                  {order.estimated_delivery_date && (
+                    <p>
+                      {t("orderConfirmation.estimatedDelivery") ||
+                        "Estimated delivery"}
+                      :{" "}
+                      {new Date(order.estimated_delivery_date).toLocaleDateString()}
+                    </p>
+                  )}
+                  {!order.tracking_number && (
+                    <p>
+                      {t("orderConfirmation.courierBooking") ||
+                        "We're handing your order to the courier — tracking will appear here within a few minutes."}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
           {/* Notes */}
           {order.notes && (
             <Card className="mb-8">

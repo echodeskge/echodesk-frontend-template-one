@@ -1,5 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Leaflet base styles for the checkout AddressMapPicker. Loaded from a
+   real CSS file (not lazy-imported in the component) so tile/marker
+   positioning works on first render. */
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
 

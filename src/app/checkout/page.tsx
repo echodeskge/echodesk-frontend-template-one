@@ -44,6 +44,7 @@ import {
   ClipboardList,
   Tag,
 } from "lucide-react";
+import { AddressMapPicker } from "@/components/checkout/address-map-picker";
 
 interface SavedCard {
   id: number;
@@ -107,6 +108,11 @@ export default function CheckoutPage() {
     extra_instructions: "",
     is_default: false,
   });
+  // Lat/lng for the new-address form. Stored separately as numbers for
+  // the map picker (the `ClientAddressRequest` type carries them as
+  // strings, so we serialize when saving).
+  const [newAddressLat, setNewAddressLat] = useState<number | null>(null);
+  const [newAddressLng, setNewAddressLng] = useState<number | null>(null);
 
   // Data fetching
   const { data: cart, isLoading: isCartLoading } = useCart();
@@ -154,6 +160,12 @@ export default function CheckoutPage() {
   const taxRate = parseFloat(String(themeData?.payment?.tax_rate || 0));
   const taxLabel = themeData?.payment?.tax_label || "Tax";
   const taxInclusive = themeData?.payment?.tax_inclusive || false;
+  // Tenant has Quickshipper enabled? Drives whether we show the map picker
+  // and replace static shipping methods with a live courier quote.
+  const quickshipperEnabled = Boolean(
+    (themeData as { shipping?: { quickshipper_enabled?: boolean } } | undefined)?.shipping
+      ?.quickshipper_enabled,
+  );
 
   // Selected shipping method
   const selectedShippingMethod = shippingMethods.find(
@@ -162,13 +174,64 @@ export default function CheckoutPage() {
 
   // Calculate totals
   const subtotal = cart?.total_amount ? parseFloat(cart.total_amount) : 0;
-  const shippingCost =
-    selectedShippingMethod
-      ? selectedShippingMethod.free_shipping_threshold &&
-        subtotal >= parseFloat(selectedShippingMethod.free_shipping_threshold)
-        ? 0
-        : parseFloat(selectedShippingMethod.price ?? "0")
-      : 0;
+
+  // Live Quickshipper quote, only fetched when:
+  //   - the tenant has Quickshipper enabled (theme flag),
+  //   - we have a cart and a delivery address selected, and
+  //   - the address has lat/lng on file (the picker fills those).
+  // Disabled at all other times so the static shipping methods drive the UI.
+  const selectedAddressForQuote = addresses.find(
+    (a) => a.id === selectedAddressId,
+  );
+  const quoteEnabled =
+    quickshipperEnabled &&
+    !!cart?.id &&
+    !!selectedAddressId &&
+    !!selectedAddressForQuote?.latitude &&
+    !!selectedAddressForQuote?.longitude;
+  const {
+    data: liveQuote,
+    isLoading: isQuoteLoading,
+    isError: isQuoteError,
+    error: quoteError,
+    refetch: refetchQuote,
+  } = useQuery<{
+    provider: string;
+    provider_name: string;
+    provider_logo_url?: string | null;
+    provider_id?: number;
+    provider_fee_id?: string | number;
+    parcel_dimensions_id?: number;
+    price: number;
+    currency: string;
+    display_name?: string | null;
+    distance_km?: number | null;
+  }>({
+    queryKey: ["quickshipper-quote", cart?.id, selectedAddressId],
+    queryFn: async () => {
+      const { default: axios } = await import("@/api/axios");
+      const res = await axios.post("/api/ecommerce/client/shipping/quote/", {
+        cart_id: cart!.id,
+        delivery_address_id: selectedAddressId!,
+      });
+      return res.data;
+    },
+    enabled: quoteEnabled,
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+
+  // Shipping cost: live quote when Quickshipper is on, otherwise static method.
+  const shippingCost = quickshipperEnabled
+    ? liveQuote
+      ? liveQuote.price
+      : 0
+    : selectedShippingMethod
+    ? selectedShippingMethod.free_shipping_threshold &&
+      subtotal >= parseFloat(selectedShippingMethod.free_shipping_threshold)
+      ? 0
+      : parseFloat(selectedShippingMethod.price ?? "0")
+    : 0;
   const taxAmount = taxInclusive ? 0 : subtotal * (taxRate / 100);
   const total = subtotal + shippingCost + taxAmount - promoDiscount;
 
@@ -223,9 +286,21 @@ export default function CheckoutPage() {
       toast.error(t("checkout.fillRequired") || "Please fill in all required fields");
       return;
     }
+    if (quickshipperEnabled && (newAddressLat == null || newAddressLng == null)) {
+      toast.error(
+        t("checkout.dropPinRequired") ||
+          "Drop a pin on the map so the courier knows where to deliver.",
+      );
+      return;
+    }
 
     try {
-      const result = await createAddress.mutateAsync(newAddress);
+      const payload: ClientAddressRequest = {
+        ...newAddress,
+        ...(newAddressLat != null && { latitude: newAddressLat.toFixed(6) }),
+        ...(newAddressLng != null && { longitude: newAddressLng.toFixed(6) }),
+      };
+      const result = await createAddress.mutateAsync(payload);
       setSelectedAddressId(result.id);
       setShowAddressForm(false);
       setNewAddress({
@@ -237,6 +312,8 @@ export default function CheckoutPage() {
         extra_instructions: "",
         is_default: false,
       });
+      setNewAddressLat(null);
+      setNewAddressLng(null);
     } catch {
       // Error is handled by the hook
     }
@@ -297,12 +374,23 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (quickshipperEnabled && !liveQuote) {
+      toast.error(
+        t("checkout.quoteRequired") ||
+          "Pick an address with a map pin so we can calculate the courier price.",
+      );
+      return;
+    }
+
     try {
       const orderData = {
         cart_id: cart.id,
         delivery_address_id: selectedAddressId,
         notes: orderNotes || undefined,
-        ...(selectedShippingMethodId ? { shipping_method_id: selectedShippingMethodId } : {}),
+        // Static method only when Quickshipper isn't taking over.
+        ...(!quickshipperEnabled && selectedShippingMethodId
+          ? { shipping_method_id: selectedShippingMethodId }
+          : {}),
         ...(promoApplied && promoCode ? { promo_code: promoCode } : {}),
         ...(paymentMethod === "card" && selectedCardId ? { card_id: selectedCardId } : {}),
       };
@@ -883,6 +971,26 @@ export default function CheckoutPage() {
                           }
                         />
                       </div>
+                      {quickshipperEnabled && (
+                        <div className="space-y-2">
+                          <Label>
+                            {t("addresses.mapPin") || "Pin on map"}{" "}
+                            <span className="text-destructive">*</span>
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {t("addresses.mapPinHelper") ||
+                              "The courier needs an exact location to deliver to your door. Click the map to drop a pin, then drag to refine."}
+                          </p>
+                          <AddressMapPicker
+                            latitude={newAddressLat}
+                            longitude={newAddressLng}
+                            onChange={(lat, lng) => {
+                              setNewAddressLat(lat);
+                              setNewAddressLng(lng);
+                            }}
+                          />
+                        </div>
+                      )}
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
@@ -932,7 +1040,78 @@ export default function CheckoutPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Shipping Method Selector */}
-                  {shippingMethods.length > 0 && (
+                  {quickshipperEnabled ? (
+                    <div className="space-y-3">
+                      <h3 className="flex items-center gap-2 font-medium">
+                        <Truck className="h-4 w-4" />
+                        {t("checkout.shippingMethod") || "Shipping Method"}
+                      </h3>
+                      {!quoteEnabled ? (
+                        <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                          {t("checkout.quotePickAddress") ||
+                            "Pick a delivery address with a map pin to see the courier price."}
+                        </div>
+                      ) : isQuoteLoading ? (
+                        <div className="rounded-lg border p-4 flex items-center gap-3 text-sm">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>{t("checkout.quoteLoading") || "Calculating courier price…"}</span>
+                        </div>
+                      ) : isQuoteError ? (
+                        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-2 text-sm">
+                          <p className="font-medium text-destructive">
+                            {t("checkout.quoteFailed") ||
+                              "Couldn't get a courier price for this address."}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {(quoteError as { response?: { data?: { error?: string } } } | null)
+                              ?.response?.data?.error || (quoteError as Error)?.message}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => refetchQuote()}
+                          >
+                            {t("checkout.retry") || "Retry"}
+                          </Button>
+                        </div>
+                      ) : liveQuote ? (
+                        <div className="rounded-lg border border-primary bg-primary/5 p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {liveQuote.provider_logo_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={liveQuote.provider_logo_url}
+                                alt={liveQuote.provider_name}
+                                className="h-8 w-8 rounded object-contain"
+                              />
+                            ) : (
+                              <Truck className="h-5 w-5" />
+                            )}
+                            <div>
+                              <p className="font-medium">
+                                {liveQuote.provider_name || "Quickshipper"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {liveQuote.display_name ||
+                                  (liveQuote.distance_km
+                                    ? `${liveQuote.distance_km.toFixed(1)} km`
+                                    : t("checkout.courierDelivery") || "Courier delivery")}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="font-medium">
+                            {formatPrice(
+                              liveQuote.price,
+                              liveQuote.currency || config.locale.currency,
+                              config.locale.locale,
+                            )}
+                          </p>
+                        </div>
+                      ) : null}
+                      <Separator />
+                    </div>
+                  ) : shippingMethods.length > 0 ? (
                     <div className="space-y-3">
                       <h3 className="flex items-center gap-2 font-medium">
                         <Truck className="h-4 w-4" />
@@ -1001,7 +1180,7 @@ export default function CheckoutPage() {
                       )}
                       <Separator />
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Payment Method */}
                   <RadioGroup
