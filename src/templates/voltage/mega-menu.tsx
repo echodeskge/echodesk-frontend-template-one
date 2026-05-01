@@ -131,12 +131,12 @@ export function MegaMenu({ onClose }: MegaMenuProps) {
             <NavRow
               icon={<Zap className="h-4 w-4" />}
               label={t("nav.sale", "Sale")}
-              onClick={() => navTo("/sale")}
+              onClick={() => navTo("/products?tag=sale")}
             />
             <NavRow
               icon={<ArrowUpRight className="h-4 w-4" />}
               label={t("nav.newArrivals", "New arrivals")}
-              onClick={() => navTo("/new-arrivals")}
+              onClick={() => navTo("/products?tag=new")}
             />
 
             {/* Categories */}

@@ -216,8 +216,8 @@ function VoltageHeader() {
           </Link>
           <nav className="hidden lg:flex items-center gap-1 justify-center flex-1">
             <NavLink href="/products">{t("nav.shop", "Shop")}</NavLink>
-            <NavLink href="/sale">{t("nav.sale", "Sale")}</NavLink>
-            <NavLink href="/new-arrivals">{t("nav.newArrivals", "New")}</NavLink>
+            <NavLink href="/products?tag=sale">{t("nav.sale", "Sale")}</NavLink>
+            <NavLink href="/products?tag=new">{t("nav.newArrivals", "New")}</NavLink>
           </nav>
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
@@ -365,9 +365,9 @@ function VoltageFooter({ storeName }: { storeName: string }) {
             <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-3">Shop</div>
             <ul className="space-y-2 text-sm">
               <li><Link href="/products">All Products</Link></li>
-              <li><Link href="/sale">Sale</Link></li>
+              <li><Link href="/products?tag=sale">Sale</Link></li>
               <li><Link href="/categories">Categories</Link></li>
-              <li><Link href="/new-arrivals">New Arrivals</Link></li>
+              <li><Link href="/products?tag=new">New Arrivals</Link></li>
             </ul>
           </div>
           <div>

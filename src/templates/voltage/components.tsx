@@ -368,7 +368,7 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
       }}
     >
       <div className="pc-image" style={{ position: "relative", aspectRatio: "1 / 1" }}>
-        <div className="pc-tile" style={{ position: "relative", inset: 0 }}>
+        <div className="pc-tile" style={{ position: "absolute", inset: 0 }}>
           <ProductTile
             idx={idx}
             size="100%"
@@ -377,7 +377,7 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
             category={category}
           />
         </div>
-        <div className="pc-tile alt" aria-hidden="true">
+        <div className="pc-tile alt" aria-hidden="true" style={{ position: "absolute", inset: 0 }}>
           <ProductTile
             idx={altIdx}
             size="100%"

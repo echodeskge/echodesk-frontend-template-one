@@ -123,10 +123,11 @@ export function VoltageListingPage() {
           style={{
             position: "sticky",
             top: 90,
-            background: "var(--card)",
-            border: "1.5px solid var(--line)",
+            background: "var(--muted)",
+            border: "1.5px solid var(--ink)",
             borderRadius: "var(--radius)",
             padding: 20,
+            color: "var(--ink)",
           }}
         >
           <div
