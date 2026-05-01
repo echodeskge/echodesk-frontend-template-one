@@ -7,9 +7,11 @@ import { SessionProvider } from "@/components/providers/session-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import { LanguageProvider } from "@/contexts/language-context";
 import { TenantProvider } from "@/contexts/tenant-context";
+import { StorefrontConfigProvider } from "@/contexts/storefront-config-context";
 import { Toaster } from "@/components/ui/sonner";
 import { getStoreConfig } from "@/lib/store-config";
 import { getTenantConfigFromHeaders } from "@/lib/tenant-utils";
+import { fetchStorefrontConfig } from "@/lib/fetch-server";
 import {
   getTenantBaseUrl,
   getTenantStoreName,
@@ -118,8 +120,25 @@ export default async function RootLayout({
   // Falls back to environment variables for development/preview
   const tenantConfig = await getTenantConfigFromHeaders();
 
+  // Resolve the tenant's storefront template + Voltage tokens server-side
+  // so the SSR'd <html> already carries `data-template` / `data-theme`
+  // markers. Without this, the Voltage CSS rules (all gated on
+  // `[data-template="voltage"]`) don't apply on first paint and the
+  // classic shell flashes for ~500ms before client React swaps it.
+  const storefront = await fetchStorefrontConfig();
+  const isVoltage = storefront.template === "voltage";
+
   return (
-    <html lang={tenantConfig.locale || "en"} suppressHydrationWarning>
+    <html
+      lang={tenantConfig.locale || "en"}
+      suppressHydrationWarning
+      data-template={storefront.template}
+      data-theme={isVoltage ? storefront.voltage.theme : undefined}
+      data-mode={isVoltage ? storefront.voltage.mode : undefined}
+      data-density={isVoltage ? storefront.voltage.density : undefined}
+      data-radius={isVoltage ? storefront.voltage.radius : undefined}
+      data-fontpair={isVoltage ? storefront.voltage.fontPair : undefined}
+    >
       <head>
         {/* theme-color picks up the tenant's primary HSL via the CSS
             variable the StoreConfigProvider injects. */}
@@ -139,23 +158,43 @@ export default async function RootLayout({
             <link rel="preconnect" href={tenantConfig.apiUrl} />
           </>
         )}
+        {/* Voltage tenants need Bricolage Grotesque + paired UI fonts.
+            Inject only when the chosen template needs them so classic
+            tenants don't pay the bytes. */}
+        {isVoltage && (
+          <>
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link
+              rel="preconnect"
+              href="https://fonts.gstatic.com"
+              crossOrigin="anonymous"
+            />
+            {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+            <link
+              href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif&family=DM+Sans:wght@400;500;600;700&display=swap"
+              rel="stylesheet"
+            />
+          </>
+        )}
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <TenantProvider config={tenantConfig}>
-          <SessionProvider>
-            <QueryProvider>
-              <AuthProvider>
-                <LanguageProvider>
-                  <StoreConfigProvider>
-                    {children}
-                    <Toaster position="bottom-right" />
-                    <CookieConsent />
-                    <ThemeSwitcher />
-                  </StoreConfigProvider>
-                </LanguageProvider>
-              </AuthProvider>
-            </QueryProvider>
-          </SessionProvider>
+          <StorefrontConfigProvider config={storefront}>
+            <SessionProvider>
+              <QueryProvider>
+                <AuthProvider>
+                  <LanguageProvider>
+                    <StoreConfigProvider>
+                      {children}
+                      <Toaster position="bottom-right" />
+                      <CookieConsent />
+                      <ThemeSwitcher />
+                    </StoreConfigProvider>
+                  </LanguageProvider>
+                </AuthProvider>
+              </QueryProvider>
+            </SessionProvider>
+          </StorefrontConfigProvider>
         </TenantProvider>
       </body>
     </html>

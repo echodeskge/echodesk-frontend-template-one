@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ShoppingCart, Heart, User, Search, Menu, Truck, ShieldCheck, Sun, Moon } from "lucide-react";
@@ -37,32 +37,13 @@ interface VoltageLayoutProps {
  */
 export function VoltageLayout({ children }: VoltageLayoutProps) {
   const config = useStoreConfig();
-  const { template, voltage } = useStorefrontTemplate();
 
-  // Sync the data-* attributes on <html> on every change. We cannot
-  // declare them in the SSR layout because the values come from a
-  // tenant-scoped fetch that resolves client-side after hydration.
-  useEffect(() => {
-    const root = document.documentElement;
-    root.dataset.template = template;
-    root.dataset.theme = voltage.theme;
-    root.dataset.mode = voltage.mode;
-    root.dataset.density = voltage.density;
-    root.dataset.radius = voltage.radius;
-    root.dataset.fontpair = voltage.fontPair;
-    return () => {
-      // When the user navigates to a tenant on the classic template
-      // (rare but possible during dev / preview), strip our markers
-      // so the classic theme provider isn't fighting our variables.
-      delete root.dataset.template;
-      delete root.dataset.theme;
-      delete root.dataset.mode;
-      delete root.dataset.density;
-      delete root.dataset.radius;
-      delete root.dataset.fontpair;
-    };
-  }, [template, voltage.theme, voltage.mode, voltage.density, voltage.radius, voltage.fontPair]);
-
+  // The `data-template`, `data-theme`, `data-mode`, `data-density`,
+  // `data-radius`, and `data-fontpair` attributes are now set
+  // server-side on `<html>` by `app/layout.tsx`, so the Voltage CSS
+  // resolves on the first paint and there's no flash of the classic
+  // shell on refresh. Voltage's Google Fonts `<link>` is also injected
+  // server-side in the root layout `<head>`.
   return (
     <div className="flex min-h-screen flex-col bg-[var(--bg)] text-[var(--ink)]">
       <a
@@ -71,32 +52,12 @@ export function VoltageLayout({ children }: VoltageLayoutProps) {
       >
         Skip to main content
       </a>
-      <VoltageFontsLink />
       <VoltageHeader />
       <main id="main-content" className="flex-1">
         {children}
       </main>
       <VoltageFooter storeName={config.store?.name || "Storefront"} />
     </div>
-  );
-}
-
-/**
- * Loads the four Google Fonts families Voltage uses. Inserted as a
- * normal `<link>` rather than `next/font` because Bricolage Grotesque
- * needs the variable optical-size axis (`opsz`) which `next/font` 14.x
- * doesn't surface, and we'd lose 80% of Voltage's character without
- * variable Bricolage.
- */
-function VoltageFontsLink() {
-  return (
-    <>
-      {/* eslint-disable-next-line @next/next/no-css-tags */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif&family=DM+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-    </>
   );
 }
 

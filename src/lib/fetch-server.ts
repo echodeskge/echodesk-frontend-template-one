@@ -291,3 +291,61 @@ export async function fetchStoreConfig(
     return null;
   }
 }
+
+/**
+ * Storefront template + Voltage tokens (server-side).
+ * Decides which design the tenant renders before SSR so the first byte
+ * already carries the right `<html data-template>` markers — kills the
+ * flash where the classic shell renders for ~500ms before client-side
+ * React Query swaps in Voltage.
+ *
+ * Cached for 5 minutes via Next's data cache; tagged so the admin can
+ * call `revalidateTag('storefront-config')` after saving settings.
+ */
+export type StorefrontTemplate = "classic" | "voltage";
+
+export interface StorefrontVoltageTokens {
+  theme: string;
+  mode: "light" | "dark";
+  density: "compact" | "cozy" | "comfortable";
+  radius: "sharp" | "soft" | "rounded";
+  fontPair: string;
+}
+
+export interface StorefrontConfig {
+  template: StorefrontTemplate;
+  voltage: StorefrontVoltageTokens;
+}
+
+const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
+  template: "classic",
+  voltage: {
+    theme: "refurb",
+    mode: "light",
+    density: "cozy",
+    radius: "soft",
+    fontPair: "bricolage-inter",
+  },
+};
+
+export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
+  try {
+    const response = await serverFetch<{
+      storefront?: Partial<StorefrontConfig>;
+    }>("/api/ecommerce/client/theme/", {
+      next: { revalidate: 300, tags: ["storefront-config"] },
+    });
+    const sf = response.storefront;
+    if (!sf) return DEFAULT_STOREFRONT_CONFIG;
+    return {
+      template: sf.template ?? "classic",
+      voltage: {
+        ...DEFAULT_STOREFRONT_CONFIG.voltage,
+        ...(sf.voltage ?? {}),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching storefront config:", error);
+    return DEFAULT_STOREFRONT_CONFIG;
+  }
+}
