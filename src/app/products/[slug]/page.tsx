@@ -74,7 +74,7 @@ export async function generateMetadata({
       imageUrl = `${apiBase}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
     }
 
-    const baseMetadata = generateProductMetadata({
+    const baseMetadata = await generateProductMetadata({
       name,
       description: description || name,
       slug,
