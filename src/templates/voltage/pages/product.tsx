@@ -46,22 +46,22 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const was = product.compare_at_price ? Number(product.compare_at_price) : null;
   const rating = product.average_rating != null ? Number(product.average_rating) : 0;
   const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
-  // Build the gallery from the sorted `product.images` list (sorted by
-  // sort_order, then id as tiebreaker — first uploaded becomes the
-  // hero). Fall back to the singular `product.image` only when the
-  // images array is empty so the order on the admin matches the order
-  // visitors see.
+  // Gallery order: `product.image` (the primary, set in admin) goes
+  // first as the hero, then the rest of `product.images` sorted by
+  // sort_order ascending (id as tiebreaker). De-duped by URL so a
+  // backend that repeats the primary inside the array doesn't render
+  // it twice.
+  const galleryUrls: string[] = [];
+  if (product.image) galleryUrls.push(product.image);
   const sortedImages = [...(product.images || [])].sort((a, b) => {
     const ao = a.sort_order ?? 0;
     const bo = b.sort_order ?? 0;
     if (ao !== bo) return ao - bo;
     return a.id - b.id;
   });
-  const galleryUrls: string[] = [];
   for (const img of sortedImages) {
     if (img.image && !galleryUrls.includes(img.image)) galleryUrls.push(img.image);
   }
-  if (galleryUrls.length === 0 && product.image) galleryUrls.push(product.image);
   const heroImg = galleryUrls[imgIdx] || null;
 
   const handleAddToCart = () => {
