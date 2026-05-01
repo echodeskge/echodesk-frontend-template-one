@@ -172,6 +172,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                   key={url}
                   type="button"
                   onClick={() => setImgIdx(i)}
+                  aria-label={`View image ${i + 1} of ${name}`}
                   style={{
                     padding: 0,
                     border: imgIdx === i ? "2px solid var(--ink)" : "1.5px solid var(--line)",
@@ -185,7 +186,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                 >
                   <Image
                     src={url}
-                    alt=""
+                    alt={`${name} — image ${i + 1}`}
                     fill
                     unoptimized
                     style={{ objectFit: "cover" }}

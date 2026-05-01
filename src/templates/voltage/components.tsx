@@ -237,6 +237,9 @@ interface ProductTileProps {
   category?: string;
   /** Wrapper rotation in degrees. */
   rotate?: number;
+  /** Accessible alt text for the product image. Pass the localised
+   * product name for SEO + screen-reader compliance. */
+  alt?: string;
 }
 
 export function ProductTile({
@@ -246,6 +249,7 @@ export function ProductTile({
   tag,
   category,
   rotate = 0,
+  alt = "",
 }: ProductTileProps) {
   const tile = VOLTAGE_TILES[idx % VOLTAGE_TILES.length];
   const sizeCSS = typeof size === "number" ? `${size}px` : size;
@@ -268,13 +272,18 @@ export function ProductTile({
       {imageUrl ? (
         <Image
           src={imageUrl}
-          alt=""
+          alt={alt}
           fill
           unoptimized
           style={{ objectFit: "cover" }}
         />
       ) : (
-        <svg viewBox="0 0 128 128" style={{ width: "64%", height: "64%", color: "var(--ink)" }}>
+        <svg
+          viewBox="0 0 128 128"
+          style={{ width: "64%", height: "64%", color: "var(--ink)" }}
+          role="img"
+          aria-label={alt || "Product placeholder"}
+        >
           {ICON_BY_CATEGORY[category || "default"] || ICON_BY_CATEGORY.default}
         </svg>
       )}
@@ -390,6 +399,7 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
             imageUrl={imgSrc}
             tag={tag}
             category={category}
+            alt={displayName || ""}
           />
         </div>
         <div className="pc-tile alt" aria-hidden="true" style={{ position: "absolute", inset: 0 }}>
@@ -399,6 +409,8 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
             imageUrl={altImgSrc}
             category={category}
             rotate={-3}
+            // Hover-swap tile is decorative — primary already has alt.
+            alt=""
           />
         </div>
         <button
