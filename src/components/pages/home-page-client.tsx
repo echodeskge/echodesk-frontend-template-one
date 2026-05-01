@@ -13,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ProductList } from "@/api/generated/interfaces";
 import type { HomepageSection as HomepageSectionType } from "@/types/homepage";
 import type { ItemList } from "@/lib/fetch-server";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageHomePage } from "@/templates/voltage/pages/home";
 
 interface HomePageClientProps {
   homepageSections: HomepageSectionType[];
@@ -28,6 +30,20 @@ export function HomePageClient({
   const config = useStoreConfig();
   const { t, getLocalizedValue, currentLanguage } = useLanguage();
   const { options: categoryOptions } = useCategoryOptions();
+  const { template } = useStorefrontTemplate();
+
+  // Voltage tenants get the bold ported design; classic tenants keep
+  // the existing shadcn-styled fallback below. Dynamic homepage
+  // sections (the Homepage Builder) only apply to the classic shell
+  // for now — the Voltage layout has its own narrative composition
+  // and the section-block primitives haven't been ported yet.
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageHomePage featuredProducts={featuredProducts} itemLists={itemLists} />
+      </StoreLayout>
+    );
+  }
 
   // If homepage sections are configured, render them dynamically
   const hasDynamicSections = homepageSections && homepageSections.length > 0;

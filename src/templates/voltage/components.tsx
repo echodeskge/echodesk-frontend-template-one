@@ -1,0 +1,484 @@
+"use client";
+
+/*
+ * Voltage primitives — buttons, pills, stars, product tiles/cards,
+ * section headers, marquee. Ported from the prototype's
+ * `templates/echodesk/primitives.jsx` but inline-styled instead of
+ * Tailwind so the prototype's exact look transfers verbatim.
+ *
+ * Real data flows through these components — `ProductCard` takes
+ * the storefront's `Product` interface from `src/api/generated/...`,
+ * not the prototype's hard-coded `PRODUCTS` constant.
+ */
+
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { ArrowRight } from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
+import type { ProductList } from "@/api/generated/interfaces";
+
+// Tile colour palette — six accent-mixed pastel backgrounds the
+// prototype used per category card. Resolved against the active
+// Voltage tokens at runtime.
+export const VOLTAGE_TILES = [
+  "var(--tile-1)",
+  "var(--tile-2)",
+  "var(--tile-3)",
+  "var(--tile-4)",
+  "var(--tile-5)",
+  "var(--tile-6)",
+];
+
+/* ================================================================ */
+/*  Btn — accent / ink / outline / ghost / soft / danger             */
+/* ================================================================ */
+
+type BtnVariant = "primary" | "ink" | "outline" | "ghost" | "soft" | "danger";
+type BtnSize = "sm" | "md" | "lg";
+
+interface BtnProps {
+  variant?: BtnVariant;
+  size?: BtnSize;
+  iconRight?: ReactNode;
+  icon?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+  children?: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit";
+}
+
+const BTN_SIZES: Record<BtnSize, { h: number; px: number; fz: number }> = {
+  sm: { h: 36, px: 14, fz: 13 },
+  md: { h: 46, px: 20, fz: 14 },
+  lg: { h: 56, px: 28, fz: 16 },
+};
+
+export function Btn({
+  variant = "primary",
+  size = "md",
+  icon,
+  iconRight,
+  className = "",
+  style = {},
+  children,
+  onClick,
+  disabled,
+  type = "button",
+}: BtnProps) {
+  const s = BTN_SIZES[size];
+  const variantStyle: CSSProperties = (
+    {
+      primary: {
+        background: "var(--accent)",
+        color: "var(--accent-ink)",
+        border: "1.5px solid color-mix(in oklch, var(--accent) 70%, var(--ink))",
+      },
+      ink: {
+        background: "var(--ink)",
+        color: "var(--bg)",
+        border: "1.5px solid var(--ink)",
+      },
+      outline: {
+        background: "transparent",
+        color: "var(--ink)",
+        border: "1.5px solid var(--ink)",
+      },
+      ghost: {
+        background: "transparent",
+        color: "var(--ink)",
+        border: "1.5px solid transparent",
+      },
+      soft: {
+        background: "var(--muted)",
+        color: "var(--ink)",
+        border: "1.5px solid var(--line)",
+      },
+      danger: {
+        background: "var(--danger)",
+        color: "white",
+        border: "1.5px solid var(--danger)",
+      },
+    } as Record<BtnVariant, CSSProperties>
+  )[variant];
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`btn-${variant} ${className}`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        height: s.h,
+        padding: `0 ${s.px}px`,
+        fontSize: s.fz,
+        fontWeight: 600,
+        borderRadius: "var(--radius-pill)",
+        whiteSpace: "nowrap",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.6 : 1,
+        ...variantStyle,
+        ...style,
+      }}
+    >
+      {icon}
+      {children}
+      {iconRight}
+    </button>
+  );
+}
+
+/* ================================================================ */
+/*  Pill — sticker-style label, sometimes rotated                    */
+/* ================================================================ */
+
+interface PillProps {
+  children: ReactNode;
+  color?: string;
+  style?: CSSProperties;
+  className?: string;
+}
+
+export function Pill({ children, color, style = {}, className = "" }: PillProps) {
+  return (
+    <span
+      className={className}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "4px 10px",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        borderRadius: "var(--radius-pill)",
+        border: "1.5px solid var(--ink)",
+        background: color || "var(--bg)",
+        color: "var(--ink)",
+        whiteSpace: "nowrap",
+        ...style,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/* ================================================================ */
+/*  Stars — 5-up filled/empty rating row                             */
+/* ================================================================ */
+
+export function Stars({ value = 5, size = 14 }: { value?: number; size?: number }) {
+  return (
+    <span style={{ display: "inline-flex", gap: 1, color: "var(--ink)" }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg
+          key={i}
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          style={{ opacity: i <= Math.round(value) ? 1 : 0.18 }}
+        >
+          <path d="m12 2 3.1 6.5 7 .9-5 4.9 1.3 7-6.4-3.5-6.4 3.5 1.3-7-5-4.9 7-.9z" />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+/* ================================================================ */
+/*  ProductTile — coloured background + simple icon for a category   */
+/* ================================================================ */
+
+const ICON_BY_CATEGORY: Record<string, ReactNode> = {
+  audio: (
+    <g stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round">
+      <path d="M30 80V60a35 35 0 0 1 70 0v20" />
+      <rect x="22" y="78" width="22" height="34" rx="4" fill="currentColor" />
+      <rect x="86" y="78" width="22" height="34" rx="4" fill="currentColor" />
+    </g>
+  ),
+  laptops: (
+    <g stroke="currentColor" strokeWidth="3" fill="none" strokeLinejoin="round">
+      <rect x="22" y="34" width="86" height="56" rx="4" fill="currentColor" fillOpacity=".18" />
+      <path d="M14 96h102l-6 8H20z" fill="currentColor" />
+    </g>
+  ),
+  phones: (
+    <g stroke="currentColor" strokeWidth="3" fill="none" strokeLinejoin="round">
+      <rect x="42" y="22" width="46" height="86" rx="8" fill="currentColor" fillOpacity=".18" />
+      <path d="M58 30h14" />
+    </g>
+  ),
+  default: <circle cx="64" cy="64" r="34" fill="currentColor" fillOpacity=".2" />,
+};
+
+interface ProductTileProps {
+  /** Index into VOLTAGE_TILES to pick the background colour. */
+  idx?: number;
+  /** Size in CSS px or a CSS length string. */
+  size?: number | string;
+  /** Optional product image URL. If missing we render the generic icon. */
+  imageUrl?: string | null;
+  /** Optional sticker label rendered top-left. */
+  tag?: string | null;
+  /** Optional category key for picking the placeholder icon. */
+  category?: string;
+  /** Wrapper rotation in degrees. */
+  rotate?: number;
+}
+
+export function ProductTile({
+  idx = 0,
+  size = 220,
+  imageUrl,
+  tag,
+  category,
+  rotate = 0,
+}: ProductTileProps) {
+  const tile = VOLTAGE_TILES[idx % VOLTAGE_TILES.length];
+  const sizeCSS = typeof size === "number" ? `${size}px` : size;
+  return (
+    <div
+      className="stripes"
+      style={{
+        width: sizeCSS,
+        height: sizeCSS,
+        background: tile,
+        borderRadius: "var(--radius)",
+        position: "relative",
+        display: "grid",
+        placeItems: "center",
+        overflow: "hidden",
+        transform: rotate ? `rotate(${rotate}deg)` : "none",
+        transition: "transform .3s ease",
+      }}
+    >
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt=""
+          fill
+          unoptimized
+          style={{ objectFit: "cover" }}
+        />
+      ) : (
+        <svg viewBox="0 0 128 128" style={{ width: "64%", height: "64%", color: "var(--ink)" }}>
+          {ICON_BY_CATEGORY[category || "default"] || ICON_BY_CATEGORY.default}
+        </svg>
+      )}
+      {tag && (
+        <div style={{ position: "absolute", top: 10, left: 10, transform: "rotate(-4deg)" }}>
+          <Pill color="var(--accent)" style={{ borderColor: "var(--ink)" }}>
+            {tag}
+          </Pill>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================ */
+/*  ProductCard — image + brand + name + rating + price              */
+/* ================================================================ */
+
+interface ProductCardProps {
+  product: ProductList;
+  idx?: number;
+  // formatted localized name; prefer this over product.name (multilang JSON)
+  displayName?: string;
+  // optional category key for the placeholder icon when no image
+  category?: string;
+}
+
+export function ProductCard({ product, idx = 0, displayName, category }: ProductCardProps) {
+  const router = useRouter();
+  const price = product.price ? Number(product.price) : 0;
+  const wasRaw = product.compare_at_price;
+  const was = wasRaw ? Number(wasRaw) : null;
+  const rating = product.average_rating != null ? Number(product.average_rating) : 0;
+  const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
+  const imgSrc = product.image || null;
+  const slug = product.slug;
+
+  const tag =
+    was && price && was > price
+      ? `–${Math.round(((was - price) / was) * 100)}%`
+      : null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => slug && router.push(`/products/${slug}`)}
+      className="pc-card"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        background: "var(--card)",
+        border: "1.5px solid var(--line)",
+        borderRadius: "var(--radius)",
+        padding: 16,
+        textAlign: "left",
+        cursor: "pointer",
+        transition: "transform .2s ease, border-color .2s ease",
+        height: "100%",
+      }}
+    >
+      <div style={{ position: "relative", aspectRatio: "1 / 1" }}>
+        <ProductTile
+          idx={idx}
+          size="100%"
+          imageUrl={imgSrc}
+          tag={tag}
+          category={category}
+        />
+      </div>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ fontWeight: 600, fontSize: 15, lineHeight: 1.3 }}>
+          {displayName || ""}
+        </div>
+        {reviewCount > 0 && (
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: "auto" }}>
+            <Stars value={rating} size={12} />
+            <span style={{ fontSize: 12, opacity: 0.6 }}>({reviewCount})</span>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8, alignItems: "baseline", marginTop: 4 }}>
+          <span className="display" style={{ fontSize: 22 }}>
+            {price.toFixed(0)}₾
+          </span>
+          {was && was > price && (
+            <span style={{ fontSize: 13, textDecoration: "line-through", opacity: 0.5 }}>
+              {was.toFixed(0)}₾
+            </span>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/* ================================================================ */
+/*  SectionHeader — kicker + title + action link                     */
+/* ================================================================ */
+
+interface SectionHeaderProps {
+  kicker?: string;
+  title: string;
+  action?: string;
+  onAction?: () => void;
+}
+
+export function SectionHeader({ kicker, title, action, onAction }: SectionHeaderProps) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        marginBottom: 32,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          flexWrap: "wrap",
+          gap: 16,
+        }}
+      >
+        <div>
+          {kicker && (
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                opacity: 0.6,
+                marginBottom: 8,
+              }}
+            >
+              {kicker}
+            </div>
+          )}
+          <h2 className="display" style={{ fontSize: "clamp(36px, 4vw, 56px)", margin: 0 }}>
+            {title}
+          </h2>
+        </div>
+        {action && onAction && (
+          <button
+            type="button"
+            onClick={onAction}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 14,
+              fontWeight: 600,
+              background: "transparent",
+              border: 0,
+              color: "var(--ink)",
+              cursor: "pointer",
+            }}
+          >
+            {action}
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================ */
+/*  Marquee — looping band of pills across full bleed                */
+/* ================================================================ */
+
+export function Marquee({ items, accent = false }: { items: string[]; accent?: boolean }) {
+  const tripled = [...items, ...items, ...items];
+  return (
+    <div
+      style={{
+        background: accent ? "var(--accent)" : "var(--ink)",
+        color: accent ? "var(--accent-ink)" : "var(--bg)",
+        borderTop: "1.5px solid var(--ink)",
+        borderBottom: "1.5px solid var(--ink)",
+        overflow: "hidden",
+        padding: "16px 0",
+      }}
+    >
+      <div
+        className="marquee-track"
+        style={{
+          display: "flex",
+          gap: 48,
+          whiteSpace: "nowrap",
+          width: "max-content",
+        }}
+      >
+        {tripled.map((it, i) => (
+          <span
+            key={i}
+            style={{
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+            }}
+          >
+            {it} · ⚡
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}

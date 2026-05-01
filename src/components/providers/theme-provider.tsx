@@ -213,11 +213,23 @@ export function StoreConfigProvider({ children }: StoreConfigProviderProps) {
   const envConfig = getStoreConfig();
   const tenant = useTenant();
   const [themeLoaded, setThemeLoaded] = useState(false);
+  // The shop's configured `store_name` on `EcommerceSettings`. This is
+  // what the tenant typed in `/settings/ecommerce` ("Echodesk LLC",
+  // "Refurb", etc.) — and it's what the customer should see in the
+  // header / footer / page titles. It's NOT the same as
+  // `tenant.storeName`, which comes from middleware and resolves to
+  // the schema name ("groot") for tenants who haven't set a custom
+  // store name in the tenant table. The theme endpoint exposes the
+  // shop name; we plumb it in here so every consumer of
+  // `useStoreConfig()` (header, footer, title tags) gets the right one.
+  const [shopName, setShopName] = useState<string | null>(null);
 
   // Get API URL from tenant context (multi-tenant) or fall back to env var
   const apiUrl = tenant.apiUrl || process.env.NEXT_PUBLIC_API_URL || "https://demo.api.echodesk.ge";
 
-  // Merge tenant config with env config - tenant takes precedence
+  // Merge tenant config with env config - shop_name from theme API takes
+  // precedence so the configured display name wins over the tenant
+  // schema name.
   const config: StoreConfig = {
     tenant: {
       id: tenant.tenantId || envConfig.tenant.id,
@@ -227,7 +239,7 @@ export function StoreConfigProvider({ children }: StoreConfigProviderProps) {
       url: tenant.apiUrl || envConfig.api.url,
     },
     store: {
-      name: tenant.storeName || envConfig.store.name,
+      name: shopName || tenant.storeName || envConfig.store.name,
       description: envConfig.store.description, // TODO: Add to tenant config
       logo: tenant.storeLogo || envConfig.store.logo,
     },
@@ -261,6 +273,13 @@ export function StoreConfigProvider({ children }: StoreConfigProviderProps) {
 
       if (theme) {
         applyTheme(theme);
+        // Capture the shop's configured display name so the header
+        // shows e.g. "Echodesk LLC" instead of the tenant schema name
+        // "groot". The theme endpoint is already fetched here on every
+        // mount, so this piggybacks without an extra round-trip.
+        if (theme.store_name) {
+          setShopName(theme.store_name);
+        }
       } else {
         // Fallback to static config
         const root = document.documentElement;
