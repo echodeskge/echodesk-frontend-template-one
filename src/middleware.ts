@@ -105,14 +105,30 @@ function shouldSkipTenantResolution(hostname: string): boolean {
   return false;
 }
 
+/**
+ * Match the user agent of any bot we want to grant unconditional public
+ * access to (link-preview scrapers, search crawlers, ad-quality bots).
+ * These never have a session cookie, never need auth gates, and we want
+ * to make sure none of the auth/redirect logic ever returns a 4xx for
+ * them — Facebook in particular shows "could be a robots.txt block" on
+ * any non-200 and the support overhead isn't worth it.
+ */
+const BOT_UA_RE = /(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|TelegramBot|WhatsApp|Pinterest|redditbot|Applebot|Googlebot|AdsBot-Google|Mediapartners-Google|Storebot-Google|Bingbot|DuckDuckBot|YandexBot|Baiduspider)/i;
+
+function isBot(req: NextRequest): boolean {
+  const ua = req.headers.get("user-agent") || "";
+  return BOT_UA_RE.test(ua);
+}
+
 export default auth(async (req) => {
   const { pathname } = req.nextUrl;
   const hostname = req.headers.get("host") || "";
   const isAuthenticated = !!req.auth;
+  const bot = isBot(req);
 
   // For development/preview, skip tenant resolution and use env vars
   if (shouldSkipTenantResolution(hostname)) {
-    return handleAuthRoutes(req, pathname, isAuthenticated);
+    return handleAuthRoutes(req, pathname, isAuthenticated, bot);
   }
 
   // Resolve tenant from hostname
@@ -130,7 +146,7 @@ export default auth(async (req) => {
   }
 
   // Create response with tenant headers
-  const response = handleAuthRoutes(req, pathname, isAuthenticated);
+  const response = handleAuthRoutes(req, pathname, isAuthenticated, bot);
 
   // Set tenant configuration headers for server components to read
   const headers = new Headers(response.headers);
@@ -164,8 +180,15 @@ export default auth(async (req) => {
 function handleAuthRoutes(
   req: NextRequest & { auth?: any },
   pathname: string,
-  isAuthenticated: boolean
+  isAuthenticated: boolean,
+  bot: boolean = false
 ): NextResponse {
+  // Bots never authenticate. Send them straight to the rendered page so
+  // they can scrape OG tags / JSON-LD. They wouldn't redirect from the
+  // protected-route gate either (no session cookie), but skipping the
+  // logic guarantees a clean 200 response with no extra cookie churn.
+  if (bot) return NextResponse.next();
+
   // Check if trying to access protected routes without authentication
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)

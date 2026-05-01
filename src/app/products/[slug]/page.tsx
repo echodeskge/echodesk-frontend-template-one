@@ -215,6 +215,21 @@ export default async function ProductDetailPage({
         <StructuredData data={productSchema} />
         <StructuredData data={breadcrumbSchema} />
 
+        {/* LCP preload — kicks off the hero image fetch in parallel
+            with HTML parsing so the largest contentful paint lands ~one
+            roundtrip earlier. Skipped when the product has no image. */}
+        {productImage && (
+          <link
+            rel="preload"
+            as="image"
+            href={productImage}
+            // High priority hint for browsers that support it (Chrome,
+            // Edge). No-op on Safari/Firefox, harmless either way.
+            // @ts-expect-error - fetchpriority not in React's typings
+            fetchpriority="high"
+          />
+        )}
+
         {/* Client Component for interactivity */}
         <ProductDetailClient
           product={product}

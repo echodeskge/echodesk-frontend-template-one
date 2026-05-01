@@ -206,6 +206,54 @@ export async function fetchAllProductSlugs(): Promise<string[]> {
 }
 
 /**
+ * Sitemap entry for one product — slug + image + lastmod. Walks the
+ * paginated /products endpoint until exhausted so the sitemap is
+ * complete instead of just the first page (the previous helper bug).
+ */
+export interface SitemapProductEntry {
+  slug: string;
+  image: string | null;
+  lastmod: string | null;
+  /** Localized name (the multilang JSON or string from the API). */
+  name: string | null;
+}
+
+export async function fetchAllProductsForSitemap(): Promise<SitemapProductEntry[]> {
+  const all: SitemapProductEntry[] = [];
+  try {
+    let page = 1;
+    // Cap at 100 pages so a misbehaving backend can't loop forever
+    // here. At a typical page size of 24, that's 2400 products — well
+    // above what fits in a single sitemap.xml file (50k limit) and
+    // beyond what a single tenant carries today.
+    while (page <= 100) {
+      const data = await fetchProducts({ page }, 600);
+      const items = data.results || [];
+      for (const p of items) {
+        all.push({
+          slug: p.slug,
+          image: p.image || null,
+          lastmod: p.updated_at || p.created_at || null,
+          name:
+            typeof p.name === "string"
+              ? p.name
+              : p.name && typeof p.name === "object"
+                ? (p.name as Record<string, string>).en ||
+                  Object.values(p.name as Record<string, string>)[0] ||
+                  null
+                : null,
+        });
+      }
+      if (!data.next) break;
+      page += 1;
+    }
+  } catch (error) {
+    console.error("Error fetching products for sitemap:", error);
+  }
+  return all;
+}
+
+/**
  * Fetch homepage sections (server-side)
  */
 export type { HomepageSection } from "@/types/homepage";
