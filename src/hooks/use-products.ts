@@ -79,6 +79,7 @@ export function useFeaturedProducts(limit?: number) {
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
+        undefined, // attr
         true, // isFeatured
         undefined, // language
         undefined, // maxPrice
@@ -108,6 +109,7 @@ export function useProductsOnSale(limit?: number) {
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
+        undefined, // attr
         undefined, // isFeatured
         undefined, // language
         undefined, // maxPrice
@@ -151,6 +153,7 @@ export function useProductBySlug(slug: string | null, language?: string) {
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
+        undefined, // attr
         undefined, // isFeatured
         language, // language
         undefined, // maxPrice

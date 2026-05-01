@@ -32,10 +32,15 @@ export function SearchAutocomplete() {
 
     setIsLoading(true);
     try {
+      // The regenerated client moved `pageSize` to position 14 and added
+      // `search` at position 15, so the previous 14-arg call (which
+      // passed `searchQuery` into `pageSize`) now type-errors. Pass an
+      // explicit undefined for `page` so 5 lands in `pageSize` and
+      // `searchQuery` lands in `search`.
       const data = await ecommerceClientProductsList(
         undefined, undefined, undefined, undefined, undefined,
         undefined, undefined, undefined, undefined, undefined,
-        undefined, undefined, 5, searchQuery
+        undefined, undefined, undefined, 5, searchQuery
       );
       const products = data.results || [];
       setResults(products);

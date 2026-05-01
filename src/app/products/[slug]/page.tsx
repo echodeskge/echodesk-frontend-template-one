@@ -165,11 +165,17 @@ export default async function ProductDetailPage({
       image: productImage,
       sku: product.sku || undefined,
       brand: config.store.name,
-      ...(product.average_rating && product.review_count
+      // The regenerated client schema now exposes `average_rating` and
+      // `review_count` as strings (DRF DecimalField / IntegerField default
+      // string output), but `generateProductSchema` wants numbers. Coerce
+      // here instead of widening the schema helper's contract.
+      ...(product.average_rating &&
+      product.review_count &&
+      Number(product.review_count) > 0
         ? {
             aggregateRating: {
-              ratingValue: product.average_rating,
-              reviewCount: product.review_count,
+              ratingValue: parseFloat(String(product.average_rating)),
+              reviewCount: parseInt(String(product.review_count), 10),
               bestRating: 5,
               worstRating: 1,
             },
