@@ -28,6 +28,8 @@ import { formatPrice } from "@/lib/store-config";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getStoreTheme } from "@/api/generated/api";
 import { useQuery } from "@tanstack/react-query";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageCartPage } from "@/templates/voltage/pages/cart";
 import {
   Minus,
   Plus,
@@ -41,6 +43,7 @@ export default function CartPage() {
   const config = useStoreConfig();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { t, getLocalizedValue } = useLanguage();
+  const { template } = useStorefrontTemplate();
   const [promoCode, setPromoCode] = useState("");
 
   const { data: cart, isLoading: isCartLoading } = useCart();
@@ -90,6 +93,16 @@ export default function CartPage() {
     }
     return null;
   };
+
+  // Voltage tenants get the bold cart layout. Classic continues with
+  // the existing shadcn body. All hooks above already ran.
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageCartPage />
+      </StoreLayout>
+    );
+  }
 
   if (isLoading) {
     return (

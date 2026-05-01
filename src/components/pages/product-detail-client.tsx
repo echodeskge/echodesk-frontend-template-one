@@ -50,6 +50,8 @@ import type {
   ProductList,
   ProductVariant,
 } from "@/api/generated/interfaces";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageProductPage } from "@/templates/voltage/pages/product";
 
 interface ProductDetailClientProps {
   product: ProductDetail;
@@ -77,6 +79,7 @@ export function ProductDetailClient({
   const config = useStoreConfig();
   const { t, getLocalizedValue } = useLanguage();
   const { isAuthenticated } = useAuth();
+  const { template } = useStorefrontTemplate();
   const [quantity, setQuantity] = useState(1);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
@@ -288,6 +291,14 @@ export function ProductDetailClient({
   );
 
   const discountPercentage = product.discount_percentage || 0;
+
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageProductPage product={product} />
+      </StoreLayout>
+    );
+  }
 
   return (
     <StoreLayout>

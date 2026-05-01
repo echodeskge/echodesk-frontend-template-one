@@ -30,6 +30,8 @@ import { useFilterableAttributes } from "@/hooks/use-attributes";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/language-context";
 import type { PaginatedProductListList } from "@/api/generated/interfaces";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageListingPage } from "@/templates/voltage/pages/listing";
 
 interface ProductsPageClientProps {
   initialData: PaginatedProductListList;
@@ -51,6 +53,7 @@ export function ProductsPageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, getLocalizedValue } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState([0, 1000]);
@@ -248,6 +251,17 @@ export function ProductsPageClient({
       </Button>
     </div>
   );
+
+  // Voltage tenants get the bold listing layout. Classic continues with
+  // the existing shadcn body below. All hooks above run on every render
+  // (rules of hooks) — the branch happens here, after they've settled.
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageListingPage />
+      </StoreLayout>
+    );
+  }
 
   return (
     <StoreLayout>
