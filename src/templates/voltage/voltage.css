@@ -567,6 +567,22 @@
   .chip-hover { transition: background-color var(--t-base) var(--ease-out), color var(--t-base) var(--ease-out), transform var(--t-fast) var(--ease-out); }
   .chip-hover:hover { transform: translateY(-1px); }
 
+  /* Mega menu slide-in */
+  @keyframes megaSlide {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+
+  /* Mega panel: collapse to single column on tablets/mobiles */
+  @media (max-width: 900px) {
+    [data-template="voltage"] .mega-panel {
+      grid-template-columns: 1fr !important;
+    }
+    [data-template="voltage"] .mega-right {
+      display: none !important;
+    }
+  }
+
   /* Reduced motion gate */
   @media (prefers-reduced-motion: reduce) {
 [data-template="voltage"] *, [data-template="voltage"] *::before, [data-template="voltage"] *::after {

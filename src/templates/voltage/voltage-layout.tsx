@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ShoppingCart, Heart, User, Search, Menu, Truck, ShieldCheck, Sun, Moon } from "lucide-react";
@@ -11,6 +11,8 @@ import { useCartItems } from "@/hooks/use-cart";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useLanguage } from "@/contexts/language-context";
 import { useTranslate } from "./use-translate";
+import { MegaMenu } from "./mega-menu";
+import { SearchModal } from "./search-modal";
 
 import "./voltage.css";
 
@@ -115,6 +117,8 @@ function VoltageHeader() {
   const cartItems = cartData?.results ?? [];
   const cartCount = cartItems.reduce((a: number, c: { quantity?: number }) => a + (c.quantity || 0), 0);
   const favCount = favoritesData?.results?.length ?? 0;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
     const active = pathname === href;
@@ -220,7 +224,8 @@ function VoltageHeader() {
           <button
             type="button"
             aria-label="All categories"
-            className="inline-flex items-center gap-2 h-10 px-4 font-bold text-sm flex-shrink-0"
+            onClick={() => setMenuOpen(true)}
+            className="inline-flex items-center gap-2 h-10 px-4 font-bold text-sm flex-shrink-0 cursor-pointer"
             style={{
               background: "var(--ink)",
               color: "var(--bg)",
@@ -255,7 +260,8 @@ function VoltageHeader() {
             <button
               type="button"
               aria-label="Search"
-              className="hidden md:inline-flex items-center gap-2 px-3.5 py-2 text-[13px] whitespace-nowrap"
+              onClick={() => setSearchOpen(true)}
+              className="hidden md:inline-flex items-center gap-2 px-3.5 py-2 text-[13px] whitespace-nowrap cursor-pointer"
               style={{
                 background: "var(--muted)",
                 border: "1.5px solid var(--line)",
@@ -265,6 +271,13 @@ function VoltageHeader() {
             >
               <Search className="h-4 w-4" /> {t("Search", "Search")}
             </button>
+            <IconButton
+              aria-label="Search"
+              className="md:hidden"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="h-5 w-5" />
+            </IconButton>
             <IconButton
               aria-label="Wishlist"
               className="hidden md:inline-flex"
@@ -291,6 +304,8 @@ function VoltageHeader() {
           </div>
         </div>
       </header>
+      {menuOpen && <MegaMenu onClose={() => setMenuOpen(false)} />}
+      {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
     </>
   );
 }
