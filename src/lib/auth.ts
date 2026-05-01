@@ -226,6 +226,13 @@ const config: NextAuthConfig = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Multi-tenant storefront — every tenant lives on a different host
+  // (sub-domain on .ecommerce.echodesk.ge AND custom domains like
+  // refurb.ge). Without trustHost, NextAuth uses the AUTH_URL env var
+  // for the callback / redirect host, which means users on refurb.ge
+  // get bounced to ecommerce.echodesk.ge mid-login. trustHost: true
+  // makes NextAuth use the request's actual `host` header.
+  trustHost: true,
 };
 
 async function refreshAccessToken(token: any) {

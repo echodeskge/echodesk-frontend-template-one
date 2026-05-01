@@ -78,7 +78,19 @@ interface TenantProviderProps {
  * ```
  */
 export function TenantProvider({ config, children }: TenantProviderProps) {
-  // Set the API URL for axios on client-side mount
+  // Set the API URL for axios *during render*, not in useEffect — on
+  // custom domains (refurb.ge etc.) there's no way to derive the API
+  // URL from hostname, so axios needs the resolved value before any
+  // useQuery hook fires its queryFn. useEffect runs *after* effects
+  // in deeper components (React fires effects bottom-up), so doing it
+  // there meant the first queries on /products fired against the
+  // env-var demo API URL and returned an empty list.
+  if (typeof window !== "undefined" && config.apiUrl) {
+    setTenantApiUrl(config.apiUrl);
+  }
+
+  // Keep the effect too so subsequent config changes still propagate
+  // (e.g. tenant switching during dev/preview without a full reload).
   useEffect(() => {
     if (config.apiUrl) {
       setTenantApiUrl(config.apiUrl);
