@@ -309,14 +309,17 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
   const rating = product.average_rating != null ? Number(product.average_rating) : 0;
   const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
   // The list serializer currently jams multiple uploaded URLs into the
-  // single `image` URLField separated by ", ". Defend by splitting +
-  // taking the first valid http(s) URL — when the backend is fixed this
-  // will continue to work since a single URL is just a one-element list.
-  const imgSrc =
-    (product.image || "")
-      .split(",")
-      .map((s) => s.trim())
-      .find((s) => s.startsWith("http://") || s.startsWith("https://")) || null;
+  // single `image` URLField separated by ", ". Split + keep all valid
+  // http(s) URLs so the hover-swap can show the second image when one
+  // was uploaded. When the backend is fixed to return one URL, the
+  // array just has a single element and the hover falls back to the
+  // same image with a different bg-tile colour.
+  const imgUrls = (product.image || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.startsWith("http://") || s.startsWith("https://"));
+  const imgSrc = imgUrls[0] || null;
+  const altImgSrc = imgUrls[1] || imgUrls[0] || null;
   const slug = product.slug;
   const altIdx = idx + 1;
 
@@ -389,7 +392,7 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
           <ProductTile
             idx={altIdx}
             size="100%"
-            imageUrl={imgSrc}
+            imageUrl={altImgSrc}
             category={category}
             rotate={-3}
           />
