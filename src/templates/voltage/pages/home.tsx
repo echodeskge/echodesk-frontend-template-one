@@ -135,72 +135,72 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                 <Check className="h-4 w-4" /> {t("home.feature1", "30-day returns")}
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <Check className="h-4 w-4" /> {t("home.feature2", "Same-day Tbilisi")}
+                <Check className="h-4 w-4" /> {t("home.feature2", "87 countries")}
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <Check className="h-4 w-4" /> {t("home.feature3", "1-month warranty")}
+                <Check className="h-4 w-4" /> {t("home.feature3", "4.9 / 41k reviews")}
               </span>
             </div>
           </div>
-          {/* Hero floating product tiles */}
+          {/* Hero floating product tiles. Always rendered — when the
+              tenant has no featured products yet, the ProductTile falls
+              back to the line-art icon for the given category, which
+              matches the design's abstract sticker look. */}
           <div className="hero-stack" style={{ position: "relative", height: 540 }}>
-            {featured[0] && (
-              <div
-                className="hero-tile-1"
-                style={{
-                  position: "absolute",
-                  top: 20,
-                  right: 0,
-                  width: 360,
-                  height: 360,
-                  transform: "rotate(6deg)",
-                }}
-              >
-                <ProductTile
-                  idx={0}
-                  size={360}
-                  imageUrl={featured[0].image || null}
-                />
-              </div>
-            )}
-            {featured[1] && (
-              <div
-                className="hero-tile-2"
-                style={{
-                  position: "absolute",
-                  bottom: 30,
-                  left: 20,
-                  width: 220,
-                  height: 220,
-                  transform: "rotate(-8deg)",
-                }}
-              >
-                <ProductTile
-                  idx={4}
-                  size={220}
-                  imageUrl={featured[1].image || null}
-                />
-              </div>
-            )}
-            {featured[2] && (
-              <div
-                className="hero-tile-3"
-                style={{
-                  position: "absolute",
-                  top: 100,
-                  left: 220,
-                  width: 160,
-                  height: 160,
-                  transform: "rotate(12deg)",
-                }}
-              >
-                <ProductTile
-                  idx={2}
-                  size={160}
-                  imageUrl={featured[2].image || null}
-                />
-              </div>
-            )}
+            <div
+              className="hero-tile-1"
+              style={{
+                position: "absolute",
+                top: 20,
+                right: 0,
+                width: 360,
+                height: 360,
+                transform: "rotate(6deg)",
+              }}
+            >
+              <ProductTile
+                idx={0}
+                size={360}
+                imageUrl={featured[0]?.image || null}
+                category="audio"
+              />
+            </div>
+            <div
+              className="hero-tile-2"
+              style={{
+                position: "absolute",
+                bottom: 30,
+                left: 20,
+                width: 220,
+                height: 220,
+                transform: "rotate(-8deg)",
+              }}
+            >
+              <ProductTile
+                idx={4}
+                size={220}
+                imageUrl={featured[1]?.image || null}
+                category="laptops"
+              />
+            </div>
+            <div
+              className="hero-tile-3"
+              style={{
+                position: "absolute",
+                top: 100,
+                left: 220,
+                width: 160,
+                height: 160,
+                transform: "rotate(12deg)",
+              }}
+            >
+              <ProductTile
+                idx={2}
+                size={160}
+                imageUrl={featured[2]?.image || null}
+                category="phones"
+              />
+            </div>
             <div
               data-hero-badge
               style={{
@@ -219,32 +219,32 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
             >
               {t("home.heroBadge", "NEW · APR 2026")}
             </div>
-            {featured[0] && (
-              <div
-                className="hero-pricetag"
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  right: 40,
-                  padding: "12px 16px",
-                  background: "var(--card)",
-                  border: "1.5px solid var(--ink)",
-                  borderRadius: 16,
-                  transform: "rotate(4deg)",
-                  maxWidth: 200,
-                }}
-              >
-                <div className="mono" style={{ fontSize: 11, opacity: 0.6 }}>
-                  {t("home.priceFrom", "FROM")}
-                </div>
-                <div className="display" style={{ fontSize: 28 }}>
-                  {Number(featured[0].price).toFixed(0)}₾
-                </div>
-                <div style={{ fontSize: 11 }}>
-                  {featuredProducts.length}+ {t("home.productsCount", "products")}
-                </div>
+            <div
+              className="hero-pricetag"
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 40,
+                padding: "12px 16px",
+                background: "var(--card)",
+                border: "1.5px solid var(--ink)",
+                borderRadius: 16,
+                transform: "rotate(4deg)",
+                maxWidth: 200,
+              }}
+            >
+              <div className="mono" style={{ fontSize: 11, opacity: 0.6 }}>
+                {t("home.priceFrom", "FROM")}
               </div>
-            )}
+              <div className="display" style={{ fontSize: 28 }}>
+                {featured[0] ? `${Number(featured[0].price).toFixed(0)}₾` : "—"}
+              </div>
+              <div style={{ fontSize: 11 }}>
+                {featuredProducts.length > 0
+                  ? `${featuredProducts.length}+ ${t("home.productsCount", "products")}`
+                  : t("home.heroPriceTagFallback", "Free same-day delivery")}
+              </div>
+            </div>
           </div>
         </div>
       </section>
