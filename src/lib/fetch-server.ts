@@ -320,6 +320,13 @@ export interface StorefrontConfig {
    * as an initial value so the header doesn't flash the schema name
    * ("groot") for ~200ms before the client-side fetch resolves. */
   storeName: string | null;
+  /** Active chat widget token (`wgt_live_…`) for the tenant. Non-null
+   * means the tenant has the embeddable chat enabled in
+   * /settings/social-integrations on the admin — the storefront drops
+   * in <script src="…/widget.js?t=TOKEN"> on every page so visitors
+   * see the chat bubble automatically without the tenant pasting any
+   * snippet. */
+  chatWidgetToken: string | null;
 }
 
 const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
@@ -332,13 +339,15 @@ const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
     fontPair: "bricolage-inter",
   },
   storeName: null,
+  chatWidgetToken: null,
 };
 
 export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
   try {
     const response = await serverFetch<{
-      storefront?: Partial<Omit<StorefrontConfig, "storeName">>;
+      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken">>;
       store_name?: string;
+      chat_widget?: { token?: string | null };
     }>("/api/ecommerce/client/theme/", {
       next: { revalidate: 300, tags: ["storefront-config"] },
     });
@@ -350,6 +359,7 @@ export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
         ...(sf?.voltage ?? {}),
       },
       storeName: response.store_name ?? null,
+      chatWidgetToken: response.chat_widget?.token ?? null,
     };
   } catch (error) {
     console.error("Error fetching storefront config:", error);

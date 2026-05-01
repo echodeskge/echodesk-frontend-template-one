@@ -176,6 +176,18 @@ export default async function RootLayout({
             />
           </>
         )}
+        {/* EchoDesk chat widget — auto-injected when the tenant has the
+            embeddable chat enabled in admin (Social Integrations →
+            Widget). Uses the standard widget.js bootstrap on
+            echodesk.ge which reads the token off its own script src.
+            Never blocks paint (`async`); the bootstrap is try/catched
+            throughout so a broken tenant config can't break the page. */}
+        {storefront.chatWidgetToken && (
+          <script
+            async
+            src={`https://echodesk.ge/widget.js?t=${encodeURIComponent(storefront.chatWidgetToken)}`}
+          />
+        )}
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <TenantProvider config={tenantConfig}>
