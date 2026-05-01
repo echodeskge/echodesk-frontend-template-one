@@ -11,11 +11,15 @@
  * not the prototype's hard-coded `PRODUCTS` constant.
  */
 
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Heart, Plus, Zap } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import type { ProductList } from "@/api/generated/interfaces";
+import { useBackendWishlist } from "@/hooks/use-favorites";
+import { useAddToCart, useCart } from "@/hooks/use-cart";
+import { useAuth } from "@/contexts/auth-context";
 
 // Tile colour palette — six accent-mixed pastel backgrounds the
 // prototype used per category card. Resolved against the active
@@ -306,62 +310,174 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
   const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
   const imgSrc = product.image || null;
   const slug = product.slug;
+  const altIdx = idx + 1;
+
+  const { isInWishlist, toggleWishlist } = useBackendWishlist();
+  const fav = isInWishlist(product.id);
+  const addToCart = useAddToCart();
+  const { data: cart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const favRef = useRef<HTMLButtonElement | null>(null);
 
   const tag =
     was && price && was > price
       ? `–${Math.round(((was - price) / was) * 100)}%`
       : null;
 
+  const goToProduct = () => {
+    if (slug) router.push(`/products/${slug}`);
+  };
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      router.push(`/login?callbackUrl=${encodeURIComponent("/products/" + slug)}`);
+      return;
+    }
+    if (!cart) return;
+    addToCart.mutate({
+      cart: cart.id,
+      product: product.id,
+      quantity: 1,
+    });
+  };
+
+  const handleFav = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleWishlist(product.id);
+    const el = favRef.current;
+    if (el) {
+      el.classList.remove("pulse");
+      void el.offsetWidth;
+      el.classList.add("pulse");
+    }
+  };
+
   return (
-    <button
-      type="button"
-      onClick={() => slug && router.push(`/products/${slug}`)}
-      className="pc-card"
+    <div
+      ref={cardRef}
+      className="product-card"
+      onClick={goToProduct}
       style={{
+        cursor: "pointer",
+        position: "relative",
         display: "flex",
         flexDirection: "column",
-        gap: 12,
-        background: "var(--card)",
-        border: "1.5px solid var(--line)",
-        borderRadius: "var(--radius)",
-        padding: 16,
-        textAlign: "left",
-        cursor: "pointer",
-        transition: "transform .2s ease, border-color .2s ease",
-        height: "100%",
+        gap: 10,
       }}
     >
-      <div style={{ position: "relative", aspectRatio: "1 / 1" }}>
-        <ProductTile
-          idx={idx}
-          size="100%"
-          imageUrl={imgSrc}
-          tag={tag}
-          category={category}
-        />
-      </div>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-        <div style={{ fontWeight: 600, fontSize: 15, lineHeight: 1.3 }}>
-          {displayName || ""}
+      <div className="pc-image" style={{ position: "relative", aspectRatio: "1 / 1" }}>
+        <div className="pc-tile" style={{ position: "relative", inset: 0 }}>
+          <ProductTile
+            idx={idx}
+            size="100%"
+            imageUrl={imgSrc}
+            tag={tag}
+            category={category}
+          />
         </div>
-        {reviewCount > 0 && (
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: "auto" }}>
-            <Stars value={rating} size={12} />
-            <span style={{ fontSize: 12, opacity: 0.6 }}>({reviewCount})</span>
+        <div className="pc-tile alt" aria-hidden="true">
+          <ProductTile
+            idx={altIdx}
+            size="100%"
+            imageUrl={null}
+            category={category}
+            rotate={-3}
+          />
+        </div>
+        <button
+          ref={favRef}
+          type="button"
+          className={`pc-fav${fav ? " is-fav" : ""}`}
+          onClick={handleFav}
+          aria-label="Favorite"
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 999,
+            background: fav ? "var(--accent)" : "var(--card)",
+            border: "1.5px solid var(--ink)",
+            display: "grid",
+            placeItems: "center",
+            color: "var(--ink)",
+            cursor: "pointer",
+          }}
+        >
+          <Heart
+            className="h-[18px] w-[18px]"
+            strokeWidth={fav ? 0 : 1.8}
+            fill={fav ? "currentColor" : "none"}
+          />
+        </button>
+        <div className="pc-cta">
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={addToCart.isPending}
+            aria-label="Add to cart"
+            style={{
+              flex: 1,
+              height: 40,
+              borderRadius: 999,
+              padding: "0 16px",
+              background: "var(--ink)",
+              color: "var(--bg)",
+              border: "1.5px solid var(--ink)",
+              fontWeight: 600,
+              fontSize: 13,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              cursor: addToCart.isPending ? "wait" : "pointer",
+              opacity: addToCart.isPending ? 0.7 : 1,
+            }}
+          >
+            <Plus className="h-4 w-4" /> Add to cart
+          </button>
+        </div>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 8,
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            style={{
+              fontWeight: 600,
+              fontSize: 15,
+              marginTop: 2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {displayName || ""}
           </div>
-        )}
-        <div style={{ display: "flex", gap: 8, alignItems: "baseline", marginTop: 4 }}>
-          <span className="display" style={{ fontSize: 22 }}>
+          {reviewCount > 0 && (
+            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+              <Stars value={rating} size={12} />
+              <span style={{ fontSize: 11, opacity: 0.6 }}>({reviewCount})</span>
+            </div>
+          )}
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
+          <div className="display" style={{ fontSize: 20 }}>
             {price.toFixed(0)}₾
-          </span>
+          </div>
           {was && was > price && (
-            <span style={{ fontSize: 13, textDecoration: "line-through", opacity: 0.5 }}>
+            <div style={{ fontSize: 11, textDecoration: "line-through", opacity: 0.5 }}>
               {was.toFixed(0)}₾
-            </span>
+            </div>
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 

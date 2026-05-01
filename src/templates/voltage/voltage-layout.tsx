@@ -323,6 +323,10 @@ function IconButton({
 /* ------------------------------------------------------------------ */
 
 function VoltageFooter({ storeName }: { storeName: string }) {
+  // Prototype renders the brand as one giant stroked word at the top of
+  // the footer: yellow fill (var(--accent)) + 2px outline in the page
+  // background colour. Use the configured store name uppercased.
+  const giantBrand = `${storeName.toUpperCase()}.`;
   return (
     <footer
       className="mt-auto"
@@ -332,7 +336,24 @@ function VoltageFooter({ storeName }: { storeName: string }) {
       }}
     >
       <div className="mx-auto px-4 py-12" style={{ maxWidth: 1440 }}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div
+          className="display display-shrink"
+          style={{
+            fontSize: "clamp(60px, 12vw, 200px)",
+            lineHeight: 0.85,
+            color: "var(--accent)",
+            WebkitTextStroke: "2px var(--bg)",
+            userSelect: "none",
+            marginBottom: 32,
+            wordBreak: "break-word",
+          }}
+        >
+          {giantBrand}
+        </div>
+        <div
+          className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8"
+          style={{ borderTop: "1.5px solid color-mix(in oklch, var(--bg) 20%, transparent)" }}
+        >
           <div>
             <div className="display text-2xl font-bold mb-3">{storeName}.</div>
             <p className="text-sm opacity-70">
