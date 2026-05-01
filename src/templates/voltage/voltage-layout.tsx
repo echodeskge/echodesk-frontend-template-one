@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { useTranslate } from "./use-translate";
 import { MegaMenu } from "./mega-menu";
 import { SearchModal } from "./search-modal";
+import { VoltageCookieConsent } from "./cookie-consent";
 
 import "./voltage.css";
 
@@ -57,6 +58,7 @@ export function VoltageLayout({ children }: VoltageLayoutProps) {
         {children}
       </main>
       <VoltageFooter storeName={config.store?.name || "Storefront"} />
+      <VoltageCookieConsent />
     </div>
   );
 }

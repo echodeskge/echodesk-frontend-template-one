@@ -3,15 +3,23 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/language-context";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
 
 export function CookieConsent() {
   const [show, setShow] = useState(false);
   const { t } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   useEffect(() => {
     const consent = localStorage.getItem("cookie_consent");
     if (!consent) setShow(true);
   }, []);
+
+  // Voltage tenants get the bold ported banner from
+  // `templates/voltage/cookie-consent.tsx`, rendered inside the
+  // VoltageLayout so it picks up the right tokens. Bail out here so
+  // we don't render two banners on top of each other.
+  if (template === "voltage") return null;
 
   if (!show) return null;
 

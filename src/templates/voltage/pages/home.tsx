@@ -34,12 +34,13 @@ interface VoltageHomePageProps {
 
 // Static testimonials for the "Real reviews" section. We don't have a
 // reviews-by-store API yet — these are placeholders the tenant can
-// later swap in via a homepage_section block.
+// later swap in via a homepage_section block. Local names + Tbilisi
+// since the storefront is Georgia-first today.
 const TESTIMONIALS = [
-  { who: "Maya R.", city: "Berlin", text: "Looks brand new and saved me 160₾. Shipped in two days flat.", rating: 5 },
-  { who: "Ade O.", city: "Lagos", text: "Customer support actually replied within an hour. Real humans. Wild.", rating: 5 },
-  { who: "Jonas L.", city: "Stockholm", text: "Got an A-grade laptop that genuinely felt brand new. The 1-month warranty sealed it.", rating: 4 },
-  { who: "Priya S.", city: "Mumbai", text: "Packaging is gorgeous and recyclable. Honestly considered keeping the box.", rating: 5 },
+  { who: "Nino K.", city: "Tbilisi", text: "Looks brand new and saved me 160₾. Shipped same day across town.", rating: 5 },
+  { who: "Giorgi M.", city: "Tbilisi", text: "Customer support actually replied within an hour. Real humans. Wild.", rating: 5 },
+  { who: "Tamuna B.", city: "Tbilisi", text: "Got an A-grade laptop that genuinely felt brand new. The 1-month warranty sealed it.", rating: 4 },
+  { who: "Davit S.", city: "Tbilisi", text: "Packaging is gorgeous and recyclable. Honestly considered keeping the box.", rating: 5 },
 ];
 
 export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePageProps) {
