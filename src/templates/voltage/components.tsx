@@ -318,16 +318,36 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
   const was = wasRaw ? Number(wasRaw) : null;
   const rating = product.average_rating != null ? Number(product.average_rating) : 0;
   const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
-  // The list serializer currently jams multiple uploaded URLs into the
-  // single `image` URLField separated by ", ". Split + keep all valid
-  // http(s) URLs so the hover-swap can show the second image when one
-  // was uploaded. When the backend is fixed to return one URL, the
-  // array just has a single element and the hover falls back to the
-  // same image with a different bg-tile colour.
-  const imgUrls = (product.image || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.startsWith("http://") || s.startsWith("https://"));
+  // Prefer the merged `images[]` from the list serializer (each entry
+  // is a {id, image, sort_order, ...}). Fall back to splitting the
+  // legacy comma-separated `image` URLField for older API responses.
+  // Either way we end up with an ordered URL list and use entry [0]
+  // for the still and [1] for the hover-swap.
+  const splitLegacy = (raw: string | null | undefined): string[] =>
+    (raw || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.startsWith("http://") || s.startsWith("https://"));
+  const productImages = (
+    product as ProductList & { images?: Array<{ image?: string | null; sort_order?: number | null; id?: number }> }
+  ).images;
+  const sortedRows = Array.isArray(productImages)
+    ? [...productImages].sort((a, b) => {
+        const ao = a.sort_order ?? 0;
+        const bo = b.sort_order ?? 0;
+        if (ao !== bo) return ao - bo;
+        return (a.id ?? 0) - (b.id ?? 0);
+      })
+    : [];
+  const imgUrls: string[] = [];
+  for (const url of splitLegacy(product.image)) {
+    if (!imgUrls.includes(url)) imgUrls.push(url);
+  }
+  for (const row of sortedRows) {
+    for (const url of splitLegacy(row.image)) {
+      if (!imgUrls.includes(url)) imgUrls.push(url);
+    }
+  }
   const imgSrc = imgUrls[0] || null;
   const altImgSrc = imgUrls[1] || imgUrls[0] || null;
   const slug = product.slug;
