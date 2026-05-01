@@ -13,7 +13,7 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import type { ProductList } from "@/api/generated/interfaces";
 
@@ -473,9 +473,18 @@ export function Marquee({ items, accent = false }: { items: string[]; accent?: b
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 12,
             }}
           >
-            {it} · ⚡
+            <span>{it}</span>
+            <Zap
+              className="h-4 w-4"
+              fill="currentColor"
+              strokeWidth={0}
+              aria-hidden="true"
+            />
           </span>
         ))}
       </div>
