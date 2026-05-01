@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useCartItems } from "@/hooks/use-cart";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useLanguage } from "@/contexts/language-context";
+import { useTranslate } from "./use-translate";
 
 import "./voltage.css";
 
@@ -107,7 +108,8 @@ function VoltageHeader() {
   const { isAuthenticated } = useAuth();
   const { data: cartData } = useCartItems();
   const { data: favoritesData } = useFavorites();
-  const { currentLanguage: lang, setLanguage: setLang, t } = useLanguage();
+  const t = useTranslate();
+  const { currentLanguage: lang, setLanguage: setLang } = useLanguage();
   const { voltage } = useStorefrontTemplate();
   const config = useStoreConfig();
   const cartItems = cartData?.results ?? [];
@@ -245,9 +247,9 @@ function VoltageHeader() {
             </span>
           </Link>
           <nav className="hidden lg:flex items-center gap-1 justify-center flex-1">
-            <NavLink href="/products">{t("nav.shop") || "Shop"}</NavLink>
-            <NavLink href="/sale">{t("nav.sale") || "Sale"}</NavLink>
-            <NavLink href="/new-arrivals">{t("nav.newArrivals") || "New"}</NavLink>
+            <NavLink href="/products">{t("nav.shop", "Shop")}</NavLink>
+            <NavLink href="/sale">{t("nav.sale", "Sale")}</NavLink>
+            <NavLink href="/new-arrivals">{t("nav.newArrivals", "New")}</NavLink>
           </nav>
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
@@ -261,7 +263,7 @@ function VoltageHeader() {
                 color: "var(--ink-soft)",
               }}
             >
-              <Search className="h-4 w-4" /> {t("Search") || "Search"}
+              <Search className="h-4 w-4" /> {t("Search", "Search")}
             </button>
             <IconButton
               aria-label="Wishlist"

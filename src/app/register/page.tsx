@@ -19,6 +19,8 @@ import { Separator } from "@/components/ui/separator";
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageAuthPage } from "@/templates/voltage/pages/auth";
 import { Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +31,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register, verifyEmailCode } = useAuth();
   const { t } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   const [step, setStep] = useState<Step>("register");
   const [verificationToken, setVerificationToken] = useState("");
@@ -101,6 +104,16 @@ export default function RegisterPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Voltage tenants get the bold split-screen auth page. The register
+  // mode is just the same component initialised in `register` mode.
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageAuthPage initialMode="register" />
+      </StoreLayout>
+    );
+  }
 
   if (step === "verify") {
     return (

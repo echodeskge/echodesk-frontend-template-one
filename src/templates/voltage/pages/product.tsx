@@ -16,6 +16,7 @@ import Image from "next/image";
 import { Heart, Plus, Minus, ArrowRight, Truck, ShieldCheck, RefreshCw } from "lucide-react";
 import type { ProductDetail } from "@/api/generated/interfaces";
 import { useLanguage } from "@/contexts/language-context";
+import { useTranslate } from "../use-translate";
 import { useAddToCart, useCart } from "@/hooks/use-cart";
 import { Btn, Pill, Stars } from "../components";
 
@@ -25,7 +26,8 @@ interface VoltageProductPageProps {
 
 export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const router = useRouter();
-  const { t, getLocalizedValue } = useLanguage();
+  const t = useTranslate();
+  const { getLocalizedValue } = useLanguage();
   const addToCart = useAddToCart();
   const { data: cart } = useCart();
   const [imgIdx, setImgIdx] = useState(0);
@@ -57,11 +59,11 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
       <div style={{ maxWidth: 1440, margin: "0 auto", padding: "24px 24px 0" }}>
         <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6 }}>
           <Link href="/" style={{ color: "inherit" }}>
-            {t("nav.home") || "Home"}
+            {t("nav.home", "Home")}
           </Link>{" "}
           /{" "}
           <Link href="/products" style={{ color: "inherit" }}>
-            {t("nav.shop") || "Shop"}
+            {t("nav.shop", "Shop")}
           </Link>{" "}
           / <strong>{name}</strong>
         </div>
@@ -111,7 +113,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                 }}
               >
                 <Pill style={{ background: "var(--accent)", fontSize: 14, padding: "8px 16px" }}>
-                  {t("product.save") || "SAVE"} {(was - price).toFixed(0)}₾
+                  {t("product.save", "SAVE")} {(was - price).toFixed(0)}₾
                 </Pill>
               </div>
             )}
@@ -250,10 +252,10 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
               style={{ flex: 1 }}
             >
               {!product.is_in_stock
-                ? t("product.outOfStock") || "Out of stock"
+                ? t("product.outOfStock", "Out of stock")
                 : addToCart.isPending
-                ? t("product.adding") || "Adding…"
-                : t("product.addToCart") || "Add to cart"}
+                ? t("product.adding", "Adding…")
+                : t("product.addToCart", "Add to cart")}
             </Btn>
             <button
               type="button"
@@ -281,9 +283,9 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
             }}
           >
             {[
-              { icon: <Truck className="h-4 w-4" />, label: t("product.fastDelivery") || "Same-day Tbilisi" },
-              { icon: <ShieldCheck className="h-4 w-4" />, label: t("product.warranty") || "1-month warranty" },
-              { icon: <RefreshCw className="h-4 w-4" />, label: t("product.returns") || "30-day returns" },
+              { icon: <Truck className="h-4 w-4" />, label: t("product.fastDelivery", "Same-day Tbilisi") },
+              { icon: <ShieldCheck className="h-4 w-4" />, label: t("product.warranty", "1-month warranty") },
+              { icon: <RefreshCw className="h-4 w-4" />, label: t("product.returns", "30-day returns") },
             ].map((row, i) => (
               <div
                 key={i}
@@ -330,10 +332,10 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                   }}
                 >
                   {id === "specs"
-                    ? t("product.specs") || "Specs"
+                    ? t("product.specs", "Specs")
                     : id === "description"
-                    ? t("product.description") || "Description"
-                    : t("product.reviews") || "Reviews"}
+                    ? t("product.description", "Description")
+                    : t("product.reviews", "Reviews")}
                 </button>
               ))}
             </div>
@@ -362,7 +364,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                 ))}
                 {(!product.attribute_values || product.attribute_values.length === 0) && (
                   <p style={{ fontSize: 14, opacity: 0.6 }}>
-                    {t("product.noSpecs") || "No specs available."}
+                    {t("product.noSpecs", "No specs available.")}
                   </p>
                 )}
               </div>
@@ -376,14 +378,14 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                   whiteSpace: "pre-wrap",
                 }}
               >
-                {description || t("product.noDescription") || "No description provided."}
+                {description || t("product.noDescription", "No description provided.")}
               </div>
             )}
             {tab === "reviews" && (
               <div style={{ fontSize: 14, opacity: 0.85 }}>
                 {reviewCount === 0
-                  ? t("product.noReviews") || "No reviews yet."
-                  : `${reviewCount} ${t("product.reviewsCount") || "reviews"} · ${rating.toFixed(1)} ★`}
+                  ? t("product.noReviews", "No reviews yet.")
+                  : `${reviewCount} ${t("product.reviewsCount", "reviews")} · ${rating.toFixed(1)} ★`}
               </div>
             )}
           </div>

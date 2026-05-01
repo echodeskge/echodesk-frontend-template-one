@@ -12,6 +12,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useProducts, useItemLists } from "@/hooks/use-products";
 import { useLanguage } from "@/contexts/language-context";
+import { useTranslate } from "../use-translate";
 import { ProductCard } from "../components";
 
 export function VoltageListingPage() {
@@ -19,7 +20,8 @@ export function VoltageListingPage() {
   const itemLists = itemListsData?.results || [];
   const params = useSearchParams();
   const router = useRouter();
-  const { t, getLocalizedValue } = useLanguage();
+  const t = useTranslate();
+  const { getLocalizedValue } = useLanguage();
 
   const itemListId = params.get("item_list");
   const tag = params.get("tag");
@@ -61,10 +63,10 @@ export function VoltageListingPage() {
   const title = activeCategory
     ? activeCategory.title
     : tag === "sale"
-    ? t("products.onSale") || "On sale"
+    ? t("products.onSale", "On sale")
     : tag === "new"
-    ? t("products.newArrivals") || "New arrivals"
-    : t("products.all") || "All products";
+    ? t("products.newArrivals", "New arrivals")
+    : t("products.all", "All products");
 
   return (
     <div className="page-enter">
@@ -80,7 +82,7 @@ export function VoltageListingPage() {
         <div style={{ maxWidth: 1440, margin: "0 auto", padding: "32px 24px" }}>
           <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, marginBottom: 8 }}>
             <Link href="/" style={{ color: "inherit" }}>
-              {t("nav.home") || "Home"}
+              {t("nav.home", "Home")}
             </Link>{" "}
             / <strong>{title}</strong>
           </div>
@@ -97,7 +99,7 @@ export function VoltageListingPage() {
               {title}.
             </h1>
             <div style={{ fontSize: 14, fontWeight: 600 }}>
-              {products.length} {t("products.count") || "products"}
+              {products.length} {t("products.count", "products")}
             </div>
           </div>
         </div>
@@ -137,13 +139,13 @@ export function VoltageListingPage() {
               marginBottom: 12,
             }}
           >
-            {t("products.category") || "Category"}
+            {t("products.category", "Category")}
           </div>
           <div style={{ display: "grid", gap: 4 }}>
             <FilterRow
               active={!itemListId}
               onClick={() => router.push("/products")}
-              label={t("products.all") || "All"}
+              label={t("products.all", "All")}
             />
             {itemLists.map((c) => (
               <FilterRow
@@ -171,7 +173,7 @@ export function VoltageListingPage() {
                 marginBottom: 12,
               }}
             >
-              {t("products.maxPrice") || "Max price"}
+              {t("products.maxPrice", "Max price")}
             </div>
             <input
               type="range"
@@ -201,11 +203,11 @@ export function VoltageListingPage() {
             }}
           >
             <div style={{ fontSize: 14, opacity: 0.6 }}>
-              {t("products.showing") || "Showing"} {products.length}
+              {t("products.showing", "Showing")} {products.length}
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <span style={{ fontSize: 13, opacity: 0.6 }}>
-                {t("products.sort") || "Sort"}:
+                {t("products.sort", "Sort")}:
               </span>
               <select
                 value={sort}
@@ -219,10 +221,10 @@ export function VoltageListingPage() {
                   fontSize: 13,
                 }}
               >
-                <option value="featured">{t("products.sortFeatured") || "Featured"}</option>
-                <option value="low">{t("products.sortLow") || "Price: low → high"}</option>
-                <option value="high">{t("products.sortHigh") || "Price: high → low"}</option>
-                <option value="rating">{t("products.sortRating") || "Top rated"}</option>
+                <option value="featured">{t("products.sortFeatured", "Featured")}</option>
+                <option value="low">{t("products.sortLow", "Price: low → high")}</option>
+                <option value="high">{t("products.sortHigh", "Price: high → low")}</option>
+                <option value="rating">{t("products.sortRating", "Top rated")}</option>
               </select>
             </div>
           </div>
@@ -259,7 +261,7 @@ export function VoltageListingPage() {
               }}
             >
               <div className="display" style={{ fontSize: 32 }}>
-                {t("products.noResults") || "No products match your filters."}
+                {t("products.noResults", "No products match your filters.")}
               </div>
             </div>
           ) : (

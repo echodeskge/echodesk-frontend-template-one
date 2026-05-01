@@ -14,6 +14,8 @@ import { useLanguage } from "@/contexts/language-context";
 import { useOrders } from "@/hooks/use-orders";
 import { formatPrice } from "@/lib/store-config";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageAccountPage } from "@/templates/voltage/pages/account";
 import {
   User,
   Package,
@@ -38,6 +40,7 @@ export default function AccountPage() {
   const config = useStoreConfig();
   const router = useRouter();
   const { t } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   const translateStatus = (status: string) => {
     const key = STATUS_KEYS[status.toLowerCase()];
@@ -72,6 +75,16 @@ export default function AccountPage() {
         return "bg-gray-500";
     }
   };
+
+  // Voltage tenants get the bold account dashboard. Classic continues
+  // with the existing card-based body. All hooks above already ran.
+  if (template === "voltage" && isAuthenticated) {
+    return (
+      <StoreLayout>
+        <VoltageAccountPage />
+      </StoreLayout>
+    );
+  }
 
   if (isAuthLoading) {
     return (

@@ -15,6 +15,7 @@ import { ArrowRight, Check, Zap, Package } from "lucide-react";
 import type { ProductList } from "@/api/generated/interfaces";
 import type { ItemList } from "@/lib/fetch-server";
 import { useLanguage } from "@/contexts/language-context";
+import { useTranslate } from "../use-translate";
 import {
   Btn,
   Marquee,
@@ -43,7 +44,8 @@ const TESTIMONIALS = [
 
 export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePageProps) {
   const router = useRouter();
-  const { t, getLocalizedValue } = useLanguage();
+  const t = useTranslate();
+  const { getLocalizedValue } = useLanguage();
   const featured = featuredProducts.slice(0, 4);
   const popular = featuredProducts.slice(0, 8);
 
@@ -81,13 +83,13 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
         >
           <div className="hero-in" style={{ position: "relative", zIndex: 2 }}>
             <Pill style={{ background: "var(--accent)" }}>
-              <Zap className="h-3 w-3" /> {t("home.heroKicker") || "Spring '26"}
+              <Zap className="h-3 w-3" /> {t("home.heroKicker", "Spring '26")}
             </Pill>
             <h1
               className="display display-shrink"
               style={{ fontSize: "clamp(64px, 9vw, 144px)", margin: "20px 0" }}
             >
-              {t("home.heroLine1") || "Gear that"}{" "}
+              {t("home.heroLine1", "Gear that")}{" "}
               <span
                 className="hero-highlight"
                 style={{
@@ -97,14 +99,13 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                   display: "inline-block",
                 }}
               >
-                {t("home.heroAccent") || "actually"}
+                {t("home.heroAccent", "actually")}
               </span>
               <br />
-              {t("home.heroLine2") || "feels good."}
+              {t("home.heroLine2", "feels good.")}
             </h1>
             <p style={{ fontSize: 18, maxWidth: 480, opacity: 0.75, lineHeight: 1.5 }}>
-              {t("home.heroSubcopy") ||
-                "Honest electronics. Same-day delivery in Tbilisi, one-month warranty on everything, and humans on the other end of every email."}
+              {t("home.heroSubcopy", "Honest electronics. Same-day delivery in Tbilisi, one-month warranty on everything, and humans on the other end of every email.")}
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 32, flexWrap: "wrap" }}>
               <Btn
@@ -113,10 +114,10 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                 iconRight={<ArrowRight className="h-5 w-5" />}
                 onClick={() => router.push("/products")}
               >
-                {t("home.shopAll") || "Shop everything"}
+                {t("home.shopAll", "Shop everything")}
               </Btn>
               <Btn variant="outline" size="lg" onClick={() => router.push("/new-arrivals")}>
-                {t("home.whatsNew") || "What's new"}
+                {t("home.whatsNew", "What's new")}
               </Btn>
             </div>
             <div
@@ -131,13 +132,13 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
               }}
             >
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <Check className="h-4 w-4" /> {t("home.feature1") || "30-day returns"}
+                <Check className="h-4 w-4" /> {t("home.feature1", "30-day returns")}
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <Check className="h-4 w-4" /> {t("home.feature2") || "Same-day Tbilisi"}
+                <Check className="h-4 w-4" /> {t("home.feature2", "Same-day Tbilisi")}
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <Check className="h-4 w-4" /> {t("home.feature3") || "1-month warranty"}
+                <Check className="h-4 w-4" /> {t("home.feature3", "1-month warranty")}
               </span>
             </div>
           </div>
@@ -216,7 +217,7 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                 zIndex: 3,
               }}
             >
-              {t("home.heroBadge") || "NEW · APR 2026"}
+              {t("home.heroBadge", "NEW · APR 2026")}
             </div>
             {featured[0] && (
               <div
@@ -234,13 +235,13 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                 }}
               >
                 <div className="mono" style={{ fontSize: 11, opacity: 0.6 }}>
-                  {t("home.priceFrom") || "FROM"}
+                  {t("home.priceFrom", "FROM")}
                 </div>
                 <div className="display" style={{ fontSize: 28 }}>
                   {Number(featured[0].price).toFixed(0)}₾
                 </div>
                 <div style={{ fontSize: 11 }}>
-                  {featuredProducts.length}+ {t("home.productsCount") || "products"}
+                  {featuredProducts.length}+ {t("home.productsCount", "products")}
                 </div>
               </div>
             )}
@@ -252,11 +253,11 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
       <Marquee
         accent
         items={[
-          t("home.marquee1") || "SAME-DAY IN TBILISI",
-          t("home.marquee2") || "1-MONTH WARRANTY",
-          t("home.marquee3") || "30-DAY RETURNS",
-          t("home.marquee4") || "CARBON-NEUTRAL DELIVERY",
-          t("home.marquee5") || "4.9 STAR RATING",
+          t("home.marquee1", "SAME-DAY IN TBILISI"),
+          t("home.marquee2", "1-MONTH WARRANTY"),
+          t("home.marquee3", "30-DAY RETURNS"),
+          t("home.marquee4", "CARBON-NEUTRAL DELIVERY"),
+          t("home.marquee5", "4.9 STAR RATING"),
         ]}
       />
 
@@ -267,9 +268,9 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
           style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 24px" }}
         >
           <SectionHeader
-            kicker={t("home.categoriesKicker") || "Categories"}
-            title={t("home.categoriesTitle") || "Find your thing."}
-            action={t("home.viewAll") || "View all"}
+            kicker={t("home.categoriesKicker", "Categories")}
+            title={t("home.categoriesTitle", "Find your thing.")}
+            action={t("home.viewAll", "View all")}
             onAction={() => router.push("/categories")}
           />
           <div
@@ -333,7 +334,7 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
           >
             <div>
               <Pill style={{ background: "var(--accent)", color: "var(--accent-ink)" }}>
-                {t("home.featuredKicker") || "Featured drop"}
+                {t("home.featuredKicker", "Featured drop")}
               </Pill>
               <h3
                 className="display"
@@ -347,7 +348,7 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                 iconRight={<ArrowRight className="h-5 w-5" />}
                 onClick={() => router.push(`/products/${featured[0].slug}`)}
               >
-                {t("home.shopFor") || "Shop for"}{" "}
+                {t("home.shopFor", "Shop for")}{" "}
                 {Number(featured[0].price).toFixed(0)}₾
               </Btn>
             </div>
@@ -385,7 +386,7 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                       %
                     </div>
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>
-                      {t("home.thisWeek") || "THIS WEEK"}
+                      {t("home.thisWeek", "THIS WEEK")}
                     </div>
                   </div>
                 </div>
@@ -402,9 +403,9 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
           style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 24px" }}
         >
           <SectionHeader
-            kicker={t("home.bestsellersKicker") || "Hot right now"}
-            title={t("home.bestsellersTitle") || "Best sellers."}
-            action={t("home.viewAll") || "View all"}
+            kicker={t("home.bestsellersKicker", "Hot right now")}
+            title={t("home.bestsellersTitle", "Best sellers.")}
+            action={t("home.viewAll", "View all")}
             onAction={() => router.push("/products")}
           />
           <div
@@ -457,15 +458,14 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
               }}
             >
               <Pill style={{ background: "var(--bg)" }}>
-                {t("home.editorsPick") || "Editor's pick"}
+                {t("home.editorsPick", "Editor's pick")}
               </Pill>
               <div>
                 <h3
                   className="display"
                   style={{ fontSize: "clamp(36px, 4vw, 60px)", maxWidth: 520 }}
                 >
-                  {t("home.editorsPickTitle") ||
-                    "The desk setup that made our designer weep (in a good way)."}
+                  {t("home.editorsPickTitle", "The desk setup that made our designer weep (in a good way).")}
                 </h3>
                 <Btn
                   variant="ink"
@@ -474,7 +474,7 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                   onClick={() => router.push("/products")}
                   style={{ marginTop: 16 }}
                 >
-                  {t("home.shopTheLook") || "Shop the look"}
+                  {t("home.shopTheLook", "Shop the look")}
                 </Btn>
               </div>
             </div>
@@ -494,10 +494,10 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
                 –30%
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, marginTop: 8, marginBottom: 16 }}>
-                {t("home.bundleCopy") || "Bundle a phone with audio. Save big."}
+                {t("home.bundleCopy", "Bundle a phone with audio. Save big.")}
               </div>
               <Btn variant="ink" size="sm" onClick={() => router.push("/sale")}>
-                {t("home.seeBundles") || "See bundles"}
+                {t("home.seeBundles", "See bundles")}
               </Btn>
             </div>
             <div
@@ -511,13 +511,13 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
             >
               <Package className="h-7 w-7" />
               <div className="display" style={{ fontSize: 32, marginTop: 12 }}>
-                {t("home.tradeIn") || "Trade in."}
+                {t("home.tradeIn", "Trade in.")}
               </div>
               <div style={{ fontSize: 14, opacity: 0.7, marginTop: 8 }}>
-                {t("home.tradeInCopy") || "Get up to 400₾ credit toward a new device."}
+                {t("home.tradeInCopy", "Get up to 400₾ credit toward a new device.")}
               </div>
               <Btn variant="primary" size="sm" style={{ marginTop: 16 }}>
-                {t("home.getQuote") || "Get a quote"}
+                {t("home.getQuote", "Get a quote")}
               </Btn>
             </div>
           </div>
@@ -530,8 +530,8 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
         style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 24px" }}
       >
         <SectionHeader
-          kicker={t("home.reviewsKicker") || "What people say"}
-          title={t("home.reviewsTitle") || "Real reviews. Real humans."}
+          kicker={t("home.reviewsKicker", "What people say")}
+          title={t("home.reviewsTitle", "Real reviews. Real humans.")}
         />
         <div
           data-resp="row-slider"
@@ -586,10 +586,10 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
           }}
         >
           {[
-            ["41,000+", t("home.statHappy") || "happy customers"],
-            ["87", t("home.statCountries") || "countries shipped"],
-            ["4.9 / 5", t("home.statRating") || "average rating"],
-            ["< 1h", t("home.statSupport") || "support response"],
+            ["41,000+", t("home.statHappy", "happy customers")],
+            ["87", t("home.statCountries", "countries shipped")],
+            ["4.9 / 5", t("home.statRating", "average rating")],
+            ["< 1h", t("home.statSupport", "support response")],
           ].map(([n, l]) => (
             <div key={l} style={{ background: "var(--bg)", padding: 32 }}>
               <div className="display" style={{ fontSize: "clamp(32px, 4vw, 56px)" }}>

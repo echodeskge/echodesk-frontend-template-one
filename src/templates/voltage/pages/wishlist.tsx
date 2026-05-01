@@ -7,12 +7,14 @@ import { useRouter } from "next/navigation";
 import { Heart, ArrowRight } from "lucide-react";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useLanguage } from "@/contexts/language-context";
+import { useTranslate } from "../use-translate";
 import { Btn, ProductCard } from "../components";
 import type { ProductList } from "@/api/generated/interfaces";
 
 export function VoltageWishlistPage() {
   const router = useRouter();
-  const { t, getLocalizedValue } = useLanguage();
+  const t = useTranslate();
+  const { getLocalizedValue } = useLanguage();
   const { data, isLoading } = useFavorites();
   // Backend serializer attaches the full product object even though
   // the generated `FavoriteProduct.product` is typed as `string`. The
@@ -32,9 +34,9 @@ export function VoltageWishlistPage() {
       <section style={{ maxWidth: 1440, margin: "0 auto", padding: "32px 24px" }}>
         <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 8 }}>
           <Link href="/" style={{ color: "inherit" }}>
-            {t("nav.home") || "Home"}
+            {t("nav.home", "Home")}
           </Link>{" "}
-          / <strong>{t("wishlist.title") || "Wishlist"}</strong>
+          / <strong>{t("wishlist.title", "Wishlist")}</strong>
         </div>
         <div
           style={{
@@ -47,16 +49,16 @@ export function VoltageWishlistPage() {
           }}
         >
           <h1 className="display" style={{ fontSize: "clamp(48px, 7vw, 88px)", margin: 0 }}>
-            {t("wishlist.heading") || "Wishlist."}
+            {t("wishlist.heading", "Wishlist.")}
           </h1>
           <div style={{ fontSize: 14, opacity: 0.6 }}>
-            {items.length} {t("wishlist.saved") || "saved"}
+            {items.length} {t("wishlist.saved", "saved")}
           </div>
         </div>
 
         {isLoading ? (
           <div style={{ padding: 80, textAlign: "center", opacity: 0.6 }}>
-            {t("wishlist.loading") || "Loading…"}
+            {t("wishlist.loading", "Loading…")}
           </div>
         ) : items.length === 0 ? (
           <div
@@ -69,10 +71,10 @@ export function VoltageWishlistPage() {
           >
             <Heart className="h-12 w-12 mx-auto" />
             <div className="display" style={{ fontSize: 36, marginTop: 16 }}>
-              {t("wishlist.empty") || "Nothing saved yet."}
+              {t("wishlist.empty", "Nothing saved yet.")}
             </div>
             <div style={{ opacity: 0.6, marginTop: 8 }}>
-              {t("wishlist.emptyHint") || "Tap the heart on anything you like."}
+              {t("wishlist.emptyHint", "Tap the heart on anything you like.")}
             </div>
             <Btn
               variant="primary"
@@ -81,7 +83,7 @@ export function VoltageWishlistPage() {
               style={{ marginTop: 24 }}
               onClick={() => router.push("/products")}
             >
-              {t("wishlist.browse") || "Browse products"}
+              {t("wishlist.browse", "Browse products")}
             </Btn>
           </div>
         ) : (

@@ -12,11 +12,13 @@ import { useRouter } from "next/navigation";
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import { useCartItems, useUpdateCartItem, useRemoveFromCart } from "@/hooks/use-cart";
 import { useLanguage } from "@/contexts/language-context";
+import { useTranslate } from "../use-translate";
 import { Btn } from "../components";
 
 export function VoltageCartPage() {
   const router = useRouter();
-  const { t, getLocalizedValue } = useLanguage();
+  const t = useTranslate();
+  const { getLocalizedValue } = useLanguage();
   const { data: cartData, isLoading } = useCartItems();
   const updateItem = useUpdateCartItem();
   const removeItem = useRemoveFromCart();
@@ -46,17 +48,17 @@ export function VoltageCartPage() {
       <section style={{ maxWidth: 1440, margin: "0 auto", padding: "32px 24px" }}>
         <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 8 }}>
           <Link href="/" style={{ color: "inherit" }}>
-            {t("nav.home") || "Home"}
+            {t("nav.home", "Home")}
           </Link>{" "}
-          / <strong>{t("cart.title") || "Cart"}</strong>
+          / <strong>{t("cart.title", "Cart")}</strong>
         </div>
         <h1 className="display" style={{ fontSize: "clamp(48px, 7vw, 96px)", margin: "8px 0 32px" }}>
-          {t("cart.heading") || "Your bag."}
+          {t("cart.heading", "Your bag.")}
         </h1>
 
         {isLoading ? (
           <div style={{ padding: 80, textAlign: "center", opacity: 0.6 }}>
-            {t("cart.loading") || "Loading…"}
+            {t("cart.loading", "Loading…")}
           </div>
         ) : items.length === 0 ? (
           <div
@@ -69,10 +71,10 @@ export function VoltageCartPage() {
           >
             <ShoppingCart className="h-12 w-12 mx-auto" />
             <div className="display" style={{ fontSize: 36, marginTop: 16 }}>
-              {t("cart.empty") || "Your bag is empty."}
+              {t("cart.empty", "Your bag is empty.")}
             </div>
             <div style={{ opacity: 0.6, marginTop: 8 }}>
-              {t("cart.emptyHint") || "Let's fix that."}
+              {t("cart.emptyHint", "Let's fix that.")}
             </div>
             <Btn
               variant="primary"
@@ -81,7 +83,7 @@ export function VoltageCartPage() {
               style={{ marginTop: 24 }}
               onClick={() => router.push("/products")}
             >
-              {t("cart.startShopping") || "Start shopping"}
+              {t("cart.startShopping", "Start shopping")}
             </Btn>
           </div>
         ) : (
@@ -190,7 +192,7 @@ export function VoltageCartPage() {
                             cursor: "pointer",
                           }}
                         >
-                          <Trash2 className="h-3.5 w-3.5" /> {t("cart.remove") || "Remove"}
+                          <Trash2 className="h-3.5 w-3.5" /> {t("cart.remove", "Remove")}
                         </button>
                       </div>
                     </div>
@@ -200,7 +202,7 @@ export function VoltageCartPage() {
                       </div>
                       {(it.quantity || 0) > 1 && (
                         <div style={{ fontSize: 11, opacity: 0.5 }}>
-                          {Number(it.price_at_add).toFixed(0)}₾ {t("cart.each") || "each"}
+                          {Number(it.price_at_add).toFixed(0)}₾ {t("cart.each", "each")}
                         </div>
                       )}
                     </div>
@@ -222,15 +224,15 @@ export function VoltageCartPage() {
               }}
             >
               <div className="display" style={{ fontSize: 32, marginBottom: 24 }}>
-                {t("cart.summary") || "Summary"}
+                {t("cart.summary", "Summary")}
               </div>
               <div style={{ display: "grid", gap: 12, fontSize: 14 }}>
-                <SummaryRow label={t("cart.subtotal") || "Subtotal"} value={`${subtotal.toFixed(0)}₾`} />
+                <SummaryRow label={t("cart.subtotal", "Subtotal")} value={`${subtotal.toFixed(0)}₾`} />
                 <SummaryRow
-                  label={t("cart.shipping") || "Shipping"}
-                  value={ship === 0 ? (t("cart.free") || "FREE") : `${ship}₾`}
+                  label={t("cart.shipping", "Shipping")}
+                  value={ship === 0 ? (t("cart.free", "FREE")) : `${ship}₾`}
                 />
-                <SummaryRow label={t("cart.tax") || "Tax"} value={`${tax}₾`} />
+                <SummaryRow label={t("cart.tax", "Tax")} value={`${tax}₾`} />
                 <div
                   style={{
                     height: 1.5,
@@ -240,7 +242,7 @@ export function VoltageCartPage() {
                 />
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontSize: 16, fontWeight: 700 }}>
-                    {t("cart.total") || "Total"}
+                    {t("cart.total", "Total")}
                   </span>
                   <span className="display" style={{ fontSize: 28 }}>
                     {total.toFixed(0)}₾
@@ -254,7 +256,7 @@ export function VoltageCartPage() {
                 style={{ marginTop: 24, width: "100%" }}
                 onClick={() => router.push("/checkout")}
               >
-                {t("cart.checkout") || "Checkout"}
+                {t("cart.checkout", "Checkout")}
               </Btn>
               <div
                 style={{
@@ -264,8 +266,7 @@ export function VoltageCartPage() {
                   textAlign: "center",
                 }}
               >
-                {t("cart.fineprint") ||
-                  "Free shipping on orders over 100₾ · 30-day returns · 1-month warranty"}
+                {t("cart.fineprint", "Free shipping on orders over 100₾ · 30-day returns · 1-month warranty")}
               </div>
             </aside>
           </div>

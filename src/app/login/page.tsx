@@ -14,6 +14,8 @@ import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageAuthPage } from "@/templates/voltage/pages/auth";
 
 function LoginForm() {
   const config = useStoreConfig();
@@ -23,6 +25,7 @@ function LoginForm() {
   const safeCallback = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/account";
   const { login, isLoading } = useAuth();
   const { t } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   const [formData, setFormData] = useState({
     identifier: "",
@@ -52,6 +55,17 @@ function LoginForm() {
       setIsSubmitting(false);
     }
   };
+
+  // Voltage tenants get the bold split-screen auth page. Classic
+  // continues with the existing centred card body. All hooks above
+  // already ran (rules-of-hooks compliant).
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageAuthPage initialMode="login" />
+      </StoreLayout>
+    );
+  }
 
   return (
     <StoreLayout>
