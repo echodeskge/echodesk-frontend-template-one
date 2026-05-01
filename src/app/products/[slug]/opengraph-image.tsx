@@ -92,29 +92,6 @@ export default async function ProductOpengraphImage({
   const was = wasRaw ? `${Number(wasRaw).toFixed(0)} GEL` : null;
   const imageUrl = splitImage(product.image);
 
-  // Pre-fetch + base64-encode the product image. Satori's built-in
-  // <img src=external-url> path silently fails on some hosts (CORS,
-  // redirects, slow origins), which left the left-half panel rendering
-  // blank instead of the product photo. Inlining as a data URL is
-  // bullet-proof: we control the fetch, set a sensible timeout, and
-  // pass guaranteed-fresh bytes into the image renderer.
-  let imageDataUrl: string | null = null;
-  if (imageUrl) {
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 4000);
-      const res = await fetch(imageUrl, { signal: ctrl.signal });
-      clearTimeout(timer);
-      if (res.ok) {
-        const buf = Buffer.from(await res.arrayBuffer());
-        const mime = res.headers.get("content-type") || "image/webp";
-        imageDataUrl = `data:${mime};base64,${buf.toString("base64")}`;
-      }
-    } catch {
-      /* fall through to the placeholder letter */
-    }
-  }
-
   return new ImageResponse(
     (
       <div
@@ -141,9 +118,9 @@ export default async function ProductOpengraphImage({
             overflow: "hidden",
           }}
         >
-          {imageDataUrl ? (
+          {imageUrl ? (
             <img
-              src={imageDataUrl}
+              src={imageUrl}
               alt={name}
               width={600}
               height={630}
