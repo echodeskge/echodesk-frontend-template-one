@@ -1698,8 +1698,11 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Shipping Method Summary */}
-                  {selectedShippingMethod && (
+                  {/* Shipping Method Summary — covers both the static
+                      ShippingMethod path and the Quickshipper live-quote
+                      path so the customer always sees what they're paying
+                      for shipping in the Review step. */}
+                  {(selectedShippingMethod || selectedQuickshipperOption) && (
                     <>
                       <Separator />
                       <div>
@@ -1719,9 +1722,13 @@ export default function CheckoutPage() {
                         <div className="mt-2 rounded-md bg-muted/50 p-3">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium">
-                              {getLocalizedValue(
-                                selectedShippingMethod.name as Record<string, string>
-                              )}
+                              {selectedShippingMethod
+                                ? getLocalizedValue(
+                                    selectedShippingMethod.name as Record<string, string>,
+                                  )
+                                : selectedQuickshipperOption?.provider_name ||
+                                  t("checkout.courierDelivery") ||
+                                  "Courier delivery"}
                             </p>
                             <p className="text-sm font-medium">
                               {shippingCost === 0
@@ -1729,13 +1736,14 @@ export default function CheckoutPage() {
                                 : formatPrice(
                                     shippingCost,
                                     config.locale.currency,
-                                    config.locale.locale
+                                    config.locale.locale,
                                   )}
                             </p>
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {selectedShippingMethod.estimated_days}{" "}
-                            {t("checkout.estimatedDays") || "days"}
+                            {selectedShippingMethod
+                              ? `${selectedShippingMethod.estimated_days} ${t("checkout.estimatedDays") || "days"}`
+                              : selectedQuickshipperOption?.display_name || ""}
                           </p>
                         </div>
                       </div>
@@ -1970,11 +1978,18 @@ export default function CheckoutPage() {
                   </span>
                 </div>
 
-                {/* Shipping */}
-                {selectedShippingMethod && (
+                {/* Shipping — show whenever there's a cost or a chosen
+                    method (static or Quickshipper). Hiding it when only
+                    Quickshipper is in play left the customer staring at
+                    `subtotal != total` with no explanation. */}
+                {(selectedShippingMethod ||
+                  selectedQuickshipperOption ||
+                  shippingCost > 0) && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      {t("cart.shipping") || "Shipping"}
+                      {selectedQuickshipperOption?.provider_name
+                        ? `${t("cart.shipping") || "Shipping"} · ${selectedQuickshipperOption.provider_name}`
+                        : t("cart.shipping") || "Shipping"}
                     </span>
                     <span>
                       {shippingCost === 0
