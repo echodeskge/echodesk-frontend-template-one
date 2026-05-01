@@ -14,8 +14,18 @@ import { useProducts, useItemLists } from "@/hooks/use-products";
 import { useLanguage } from "@/contexts/language-context";
 import { useTranslate } from "../use-translate";
 import { ProductCard } from "../components";
+import type { PaginatedProductListList } from "@/api/generated/interfaces";
 
-export function VoltageListingPage() {
+interface VoltageListingPageProps {
+  /** Server-fetched products from the parent page's SSR pass. Used as
+   * a fallback so the page renders the catalogue on first paint even
+   * if the client-side `useProducts` query hasn't resolved yet (or
+   * the axios baseURL is racing with TenantProvider on custom
+   * domains). */
+  initialData?: PaginatedProductListList;
+}
+
+export function VoltageListingPage({ initialData }: VoltageListingPageProps = {}) {
   const { data: itemListsData } = useItemLists();
   const itemLists = itemListsData?.results || [];
   const params = useSearchParams();
@@ -41,10 +51,16 @@ export function VoltageListingPage() {
   // Real products query. The classic page applies extensive filters
   // through `useProducts`; we keep the same hook so server-side
   // pagination + caching still work, then sort client-side for the
-  // Voltage UI.
-  const { data: productsResponse, isLoading } = useProducts();
+  // Voltage UI. Falls back to `initialData` (server-fetched) on
+  // first paint so the page isn't empty while React Query resolves.
+  const { data: productsResponse, isLoading: isClientLoading } = useProducts();
+  const effectiveResponse = productsResponse ?? initialData;
+  // Only show the skeleton when we have neither the SSR fallback nor
+  // a resolved client query — otherwise the SSR products would flash
+  // away when the client query starts.
+  const isLoading = isClientLoading && !effectiveResponse;
   const products = useMemo(() => {
-    let list = (productsResponse?.results || []).slice();
+    let list = (effectiveResponse?.results || []).slice();
     if (search) {
       const q = search.toLowerCase();
       list = list.filter((p) => {
@@ -59,7 +75,7 @@ export function VoltageListingPage() {
     if (sort === "high") list.sort((a, b) => Number(b.price) - Number(a.price));
     if (sort === "rating") list.sort((a, b) => Number(b.average_rating || 0) - Number(a.average_rating || 0));
     return list;
-  }, [productsResponse, search, tag, maxPrice, sort, getLocalizedValue]);
+  }, [effectiveResponse, search, tag, maxPrice, sort, getLocalizedValue]);
 
   const localized = (val: unknown): string => {
     if (typeof val === "string") return val;

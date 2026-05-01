@@ -258,7 +258,7 @@ export function ProductsPageClient({
   if (template === "voltage") {
     return (
       <StoreLayout>
-        <VoltageListingPage />
+        <VoltageListingPage initialData={initialData} />
       </StoreLayout>
     );
   }
