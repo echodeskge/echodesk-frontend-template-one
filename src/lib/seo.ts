@@ -166,18 +166,33 @@ export async function generateProductMetadata({
   // valid image URL even if the product has no uploaded photo.
   const productOgImage = `${baseUrl}/products/${encodeURIComponent(slug)}/opengraph-image`;
 
+  // Open Graph + Twitter strongly prefer 110–160 char descriptions
+  // (FB Sharing Debugger flags anything longer; Twitter truncates at
+  // 200). The legacy field on EcommerceSettings.short_description
+  // sometimes contains a multi-paragraph dump, so trim it cleanly at
+  // a word boundary and append an ellipsis so the preview reads
+  // naturally instead of mid-sentence.
+  const truncate = (raw: string, max = 160): string => {
+    const single = raw.replace(/\s+/g, " ").trim();
+    if (single.length <= max) return single;
+    const cut = single.slice(0, max - 1);
+    const lastSpace = cut.lastIndexOf(" ");
+    return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
+  };
+  const shortDescription = truncate(description, 160);
+
   const keywords = [name, brand, category].filter(Boolean);
 
   return {
     title: name,
-    description: description.substring(0, 160),
+    description: shortDescription,
     keywords: keywords.join(", "),
     alternates: {
       canonical: url,
     },
     openGraph: {
       title: name,
-      description,
+      description: shortDescription,
       url,
       siteName: storeName,
       locale: tenantLocale === "ka" ? "ka_GE" : "en_US",
@@ -197,7 +212,7 @@ export async function generateProductMetadata({
     twitter: {
       card: "summary_large_image",
       title: name,
-      description,
+      description: shortDescription,
       images: [productOgImage],
       site: getTwitterHandle() || undefined,
       creator: getTwitterHandle() || undefined,

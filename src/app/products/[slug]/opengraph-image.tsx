@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { fetchProductBySlug } from "@/lib/fetch-server";
-import { getTenantStoreName } from "@/lib/tenant-url";
+import { getTenantBaseUrl, getTenantStoreName } from "@/lib/tenant-url";
 
 /**
  * Per-product Open Graph image generated at edge-time. When a product
@@ -50,9 +50,10 @@ export default async function ProductOpengraphImage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [product, storeName] = await Promise.all([
+  const [product, storeName, baseUrl] = await Promise.all([
     fetchProductBySlug(slug).catch(() => null),
     getTenantStoreName().catch(() => "Store"),
+    getTenantBaseUrl().catch(() => ""),
   ]);
 
   if (!product) {
@@ -90,7 +91,20 @@ export default async function ProductOpengraphImage({
   const price = product.price ? `${Number(product.price).toFixed(0)} GEL` : "";
   const wasRaw = product.compare_at_price;
   const was = wasRaw ? `${Number(wasRaw).toFixed(0)} GEL` : null;
-  const imageUrl = splitImage(product.image);
+  const rawImageUrl = splitImage(product.image);
+
+  // Pipe the product photo through Next's image optimizer
+  // (`/_next/image`) so Satori receives a JPEG from our own origin
+  // instead of a WebP from the DigitalOcean Spaces bucket. Satori's
+  // direct external-image fetch was silently failing (WebP decoder
+  // edge cases + cross-origin latency on the Spaces CDN), leaving
+  // the OG card with the placeholder gradient instead of the photo.
+  // The optimizer auto-converts to JPEG, applies sensible quality
+  // compression, and resolves the URL to a same-origin path.
+  const imageUrl =
+    rawImageUrl && baseUrl
+      ? `${baseUrl}/_next/image?url=${encodeURIComponent(rawImageUrl)}&w=1200&q=75`
+      : rawImageUrl;
 
   return new ImageResponse(
     (
