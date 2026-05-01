@@ -149,7 +149,16 @@
     "invalidPhone": "Please enter a valid phone number",
     "selectAddress": "Please select a delivery address",
     "selectPayment": "Please select a payment method",
-    "fillRequired": "Please fill in all required fields"
+    "fillRequired": "Please fill in all required fields",
+    "courierDelivery": "Courier delivery",
+    "quoteLoading": "Calculating courier price…",
+    "quoteFailed": "Couldn't get a courier price for this address.",
+    "quotePickAddress": "Pick a delivery address with a map pin to see the courier price.",
+    "quoteRequired": "Pick an address with a map pin so we can calculate the courier price.",
+    "pickCourier": "Pick a courier before placing the order.",
+    "dropPinRequired": "Drop a pin on the map so the courier knows where to deliver.",
+    "saving": "Saving…",
+    "retry": "Retry"
   },
   "orderConfirmation": {
     "thankYou": "Thank You!",
@@ -266,7 +275,14 @@
     "countryPlaceholder": "e.g., Georgia",
     "setAsDefault": "Set as default address",
     "deleteTitle": "Delete Address?",
-    "deleteDesc": "This action cannot be undone. This will permanently delete the address from your account."
+    "deleteDesc": "This action cannot be undone. This will permanently delete the address from your account.",
+    "mapPin": "Pin on map",
+    "mapPinHelper": "The courier needs an exact location to deliver to your door. Click the map to drop a pin, then drag to refine.",
+    "pinNeeded": "Pin needed",
+    "pinThisAddress": "Pin this address on the map",
+    "pinThisAddressHelper": "We need an exact location to give you a courier price. Click the map to drop a pin where the courier should deliver.",
+    "pinSaved": "Pin saved — calculating courier price…",
+    "savePin": "Save pin"
   },
   "footer": {
     "shop": "Shop",
