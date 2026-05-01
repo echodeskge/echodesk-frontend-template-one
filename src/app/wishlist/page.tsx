@@ -22,6 +22,8 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageWishlistPage } from "@/templates/voltage/pages/wishlist";
 
 export default function WishlistPage() {
   const config = useStoreConfig();
@@ -29,6 +31,7 @@ export default function WishlistPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { favorites, isLoading: isFavoritesLoading, toggleWishlist, isPending } = useBackendWishlist();
+  const { template } = useStorefrontTemplate();
   const { data: cart } = useCart();
   const addToCart = useAddToCart();
 
@@ -127,6 +130,16 @@ export default function WishlistPage() {
   };
 
   const isLoading = isAuthLoading || isFavoritesLoading;
+
+  // Voltage tenants get the bold wishlist layout. Classic continues
+  // with the existing body. All hooks above already ran.
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageWishlistPage />
+      </StoreLayout>
+    );
+  }
 
   if (isLoading) {
     return (
