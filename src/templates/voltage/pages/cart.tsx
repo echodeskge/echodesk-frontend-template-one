@@ -11,6 +11,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import { useCartItems, useUpdateCartItem, useRemoveFromCart } from "@/hooks/use-cart";
+import { useHydratedGuestCart, useGuestCartMutations } from "@/hooks/use-guest-cart";
+import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useTranslate } from "../use-translate";
 import { Btn } from "../components";
@@ -19,15 +21,36 @@ export function VoltageCartPage() {
   const router = useRouter();
   const t = useTranslate();
   const { getLocalizedValue } = useLanguage();
-  const { data: cartData, isLoading } = useCartItems();
+  const { isAuthenticated } = useAuth();
+  const { data: cartData, isLoading: backendLoading } = useCartItems();
   const updateItem = useUpdateCartItem();
   const removeItem = useRemoveFromCart();
+  const guestCart = useHydratedGuestCart();
+  const guestMutations = useGuestCartMutations();
 
-  const items = cartData?.results ?? [];
-  const subtotal = items.reduce(
-    (s, it) => s + Number(it.price_at_add || 0) * (it.quantity || 0),
-    0,
-  );
+  // Branch on auth state. The two branches normalise to the same shape
+  // so the rest of the component renders one tree.
+  const items = isAuthenticated
+    ? (cartData?.results ?? []).map((it) => ({
+        id: String(it.id),
+        product_id: it.product?.id ?? 0,
+        product_name: it.product?.name,
+        product_image: it.product?.image ?? null,
+        quantity: it.quantity || 0,
+        price: Number(it.price_at_add || 0),
+        subtotal: Number(it.price_at_add || 0) * (it.quantity || 0),
+      }))
+    : guestCart.items.map((it) => ({
+        id: it.id,
+        product_id: it.product_id,
+        product_name: it.name,
+        product_image: it.image,
+        quantity: it.quantity,
+        price: it.price,
+        subtotal: it.subtotal,
+      }));
+  const isLoading = isAuthenticated ? backendLoading : guestCart.isLoading;
+  const subtotal = items.reduce((s, it) => s + it.subtotal, 0);
   const ship = subtotal > 99 ? 0 : 9;
   const tax = Math.round(subtotal * 0.08);
   const total = subtotal + ship + tax;
@@ -38,9 +61,21 @@ export function VoltageCartPage() {
     return "";
   };
 
-  const updateQty = (id: number, qty: number) => {
+  const updateQty = (rowId: string, productId: number, qty: number) => {
     if (qty < 1) return;
-    updateItem.mutate({ id: String(id), data: { quantity: qty } });
+    if (isAuthenticated) {
+      updateItem.mutate({ id: rowId, data: { quantity: qty } });
+    } else {
+      guestMutations.setQuantity(productId, qty);
+    }
+  };
+
+  const removeRow = (rowId: string, productId: number) => {
+    if (isAuthenticated) {
+      removeItem.mutate(rowId);
+    } else {
+      guestMutations.removeItem(productId);
+    }
   };
 
   return (
@@ -98,9 +133,13 @@ export function VoltageCartPage() {
           >
             <div style={{ display: "grid", gap: 12 }}>
               {items.map((it) => {
-                const product = it.product;
-                const name = localized(product.name);
-                const subtotalRow = Number(it.price_at_add) * (it.quantity || 0);
+                const name = localized(it.product_name);
+                // Comma-separated workaround for the legacy admin upload
+                // format. Use the first valid http(s) URL.
+                const imgSrc = (it.product_image || "")
+                  .split(",")
+                  .map((s) => s.trim())
+                  .find((s) => s.startsWith("http://") || s.startsWith("https://")) || null;
                 return (
                   <div
                     key={it.id}
@@ -126,9 +165,9 @@ export function VoltageCartPage() {
                         overflow: "hidden",
                       }}
                     >
-                      {product.image && (
+                      {imgSrc && (
                         <Image
-                          src={product.image}
+                          src={imgSrc}
                           alt={name}
                           fill
                           unoptimized
@@ -152,7 +191,7 @@ export function VoltageCartPage() {
                         >
                           <button
                             type="button"
-                            onClick={() => updateQty(it.id, (it.quantity || 1) - 1)}
+                            onClick={() => updateQty(it.id, it.product_id, it.quantity - 1)}
                             style={{ width: 36, background: "transparent", border: 0, cursor: "pointer" }}
                             aria-label="Decrease"
                           >
@@ -170,7 +209,7 @@ export function VoltageCartPage() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => updateQty(it.id, (it.quantity || 0) + 1)}
+                            onClick={() => updateQty(it.id, it.product_id, it.quantity + 1)}
                             style={{ width: 36, background: "transparent", border: 0, cursor: "pointer" }}
                             aria-label="Increase"
                           >
@@ -179,7 +218,7 @@ export function VoltageCartPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeItem.mutate(String(it.id))}
+                          onClick={() => removeRow(it.id, it.product_id)}
                           style={{
                             background: "transparent",
                             border: 0,
@@ -198,11 +237,11 @@ export function VoltageCartPage() {
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div className="display" style={{ fontSize: 28 }}>
-                        {subtotalRow.toFixed(0)}₾
+                        {it.subtotal.toFixed(0)}₾
                       </div>
-                      {(it.quantity || 0) > 1 && (
+                      {it.quantity > 1 && (
                         <div style={{ fontSize: 11, opacity: 0.5 }}>
-                          {Number(it.price_at_add).toFixed(0)}₾ {t("cart.each", "each")}
+                          {it.price.toFixed(0)}₾ {t("cart.each", "each")}
                         </div>
                       )}
                     </div>

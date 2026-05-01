@@ -19,6 +19,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { ProductList } from "@/api/generated/interfaces";
 import { useBackendWishlist } from "@/hooks/use-favorites";
 import { useAddToCart, useCart } from "@/hooks/use-cart";
+import { useGuestCartMutations } from "@/hooks/use-guest-cart";
 import { useAuth } from "@/contexts/auth-context";
 
 // Tile colour palette — six accent-mixed pastel backgrounds the
@@ -326,6 +327,7 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
   const { isInWishlist, toggleWishlist } = useBackendWishlist();
   const fav = isInWishlist(product.id);
   const addToCart = useAddToCart();
+  const guestCart = useGuestCartMutations();
   const { data: cart } = useCart();
   const { isAuthenticated } = useAuth();
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -343,7 +345,9 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      router.push(`/login?callbackUrl=${encodeURIComponent("/products/" + slug)}`);
+      // Guest cart in localStorage — visitor can keep shopping and
+      // either complete a guest checkout or sign in later.
+      guestCart.addItem(product.id, 1);
       return;
     }
     if (!cart) return;

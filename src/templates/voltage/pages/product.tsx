@@ -18,7 +18,9 @@ import type { ProductDetail } from "@/api/generated/interfaces";
 import { useLanguage } from "@/contexts/language-context";
 import { useTranslate } from "../use-translate";
 import { useAddToCart, useCart } from "@/hooks/use-cart";
+import { useGuestCartMutations } from "@/hooks/use-guest-cart";
 import { useBackendWishlist } from "@/hooks/use-favorites";
+import { useAuth } from "@/contexts/auth-context";
 import { Btn, Pill, Stars } from "../components";
 
 interface VoltageProductPageProps {
@@ -31,6 +33,8 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const { getLocalizedValue } = useLanguage();
   const addToCart = useAddToCart();
   const { data: cart } = useCart();
+  const guestCart = useGuestCartMutations();
+  const { isAuthenticated } = useAuth();
   const { isInWishlist, toggleWishlist } = useBackendWishlist();
   const [imgIdx, setImgIdx] = useState(0);
   const [qty, setQty] = useState(1);
@@ -82,6 +86,10 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const heroImg = galleryUrls[imgIdx] || null;
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      guestCart.addItem(product.id, qty);
+      return;
+    }
     if (!cart?.id) return;
     addToCart.mutate({ cart: cart.id, product: product.id, quantity: qty });
   };

@@ -8,6 +8,7 @@ import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
 import { useCartItems } from "@/hooks/use-cart";
+import { useGuestCartCount } from "@/hooks/use-guest-cart";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useLanguage } from "@/contexts/language-context";
 import { useTranslate } from "./use-translate";
@@ -78,7 +79,9 @@ function VoltageHeader() {
   const { voltage } = useStorefrontTemplate();
   const config = useStoreConfig();
   const cartItems = cartData?.results ?? [];
-  const cartCount = cartItems.reduce((a: number, c: { quantity?: number }) => a + (c.quantity || 0), 0);
+  const authedCartCount = cartItems.reduce((a: number, c: { quantity?: number }) => a + (c.quantity || 0), 0);
+  const guestCartCount = useGuestCartCount();
+  const cartCount = isAuthenticated ? authedCartCount : guestCartCount;
   const favCount = favoritesData?.results?.length ?? 0;
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
