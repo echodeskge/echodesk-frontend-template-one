@@ -100,42 +100,15 @@ export default async function ProductOpengraphImage({
   const was = wasRaw ? `${Number(wasRaw).toFixed(0)} GEL` : null;
   const rawImageUrl = splitImage(product.image);
 
-  // Fetch the product photo through Next's image optimizer and inline
-  // the resulting JPEG as a data URL. Three things in one:
-  //   1. Same-origin URL (no cross-origin issues to the Spaces CDN).
-  //   2. Optimizer auto-converts WebP → JPEG (Satori-friendly format).
-  //   3. Inlining bypasses the Satori-internal fetch path that has
-  //      been silently failing on every social share — the renderer
-  //      gets the bytes directly and never has to make a network call.
-  // 5s timeout so a slow origin doesn't block the whole OG response.
-  let imageDataUrl: string | null = null;
-  if (rawImageUrl && baseUrl) {
-    const optimizedUrl = `${baseUrl}/_next/image?url=${encodeURIComponent(rawImageUrl)}&w=1200&q=75`;
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 5000);
-      const res = await fetch(optimizedUrl, { signal: ctrl.signal });
-      clearTimeout(timer);
-      if (res.ok) {
-        const buf = await res.arrayBuffer();
-        // btoa works on edge runtime; Buffer.toString('base64') doesn't.
-        const bin = new Uint8Array(buf);
-        let s = "";
-        const chunk = 0x8000;
-        for (let i = 0; i < bin.length; i += chunk) {
-          s += String.fromCharCode.apply(
-            null,
-            Array.from(bin.subarray(i, i + chunk)),
-          );
-        }
-        const b64 = btoa(s);
-        const mime = res.headers.get("content-type") || "image/jpeg";
-        imageDataUrl = `data:${mime};base64,${b64}`;
-      }
-    } catch {
-      /* fall through to placeholder */
-    }
-  }
+  // Pipe the product photo through Next's image optimizer
+  // (`/_next/image`) so Satori receives a JPEG from our own origin
+  // instead of a WebP from the DigitalOcean Spaces bucket. Same-origin
+  // URL avoids CORS / latency issues on the Spaces CDN; optimizer auto-
+  // converts WebP → JPEG which Satori handles reliably.
+  const imageUrl =
+    rawImageUrl && baseUrl
+      ? `${baseUrl}/_next/image?url=${encodeURIComponent(rawImageUrl)}&w=1200&q=75`
+      : rawImageUrl;
 
   return new ImageResponse(
     (
@@ -163,9 +136,9 @@ export default async function ProductOpengraphImage({
             overflow: "hidden",
           }}
         >
-          {imageDataUrl ? (
+          {imageUrl ? (
             <img
-              src={imageDataUrl}
+              src={imageUrl}
               alt={name}
               width={600}
               height={630}
