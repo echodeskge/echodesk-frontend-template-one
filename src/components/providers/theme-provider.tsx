@@ -98,6 +98,15 @@ const formatColor = (colorString: string): string | null => {
 const applyTheme = (theme: ThemeConfig) => {
   const root = document.documentElement;
 
+  // Voltage tenants have their own oklch token system in voltage.css
+  // and would clobber it if we wrote shadcn HSL tokens as inline
+  // styles here (inline styles win over any stylesheet rule, so the
+  // hero highlight, marquee, and accent dot would all lose their
+  // colour). Skip tokens that collide with Voltage's vocabulary; the
+  // classic shadcn surfaces don't exist on a Voltage storefront so
+  // this is a no-op there.
+  const isVoltage = root.dataset.template === "voltage";
+
   // Apply all color variables
   const colorMappings: Record<keyof ThemeColors, string> = {
     primary: '--primary',
@@ -113,7 +122,20 @@ const applyTheme = (theme: ThemeConfig) => {
     card_foreground: '--card-foreground',
   };
 
+  // Tokens Voltage owns — voltage.css defines them as oklch values
+  // gated on `[data-template="voltage"]` and per-`data-theme` preset.
+  // Writing the shadcn HSL triplets here would shadow those.
+  const voltageOwned = new Set([
+    '--accent',
+    '--background',
+    '--foreground',
+    '--muted',
+    '--card',
+    '--border',
+  ]);
+
   Object.entries(colorMappings).forEach(([key, cssVar]) => {
+    if (isVoltage && voltageOwned.has(cssVar)) return;
     const colorValue = theme.colors[key as keyof ThemeColors];
     if (colorValue) {
       const formattedColor = formatColor(colorValue);
@@ -123,8 +145,10 @@ const applyTheme = (theme: ThemeConfig) => {
     }
   });
 
-  // Apply border radius
-  if (theme.radius) {
+  // Apply border radius. Skip on Voltage — voltage.css picks --radius
+  // from the data-radius attribute (sharp / soft / rounded) and the
+  // shadcn '0.5rem' would clobber that.
+  if (theme.radius && !isVoltage) {
     root.style.setProperty('--radius', theme.radius);
   }
 
@@ -291,6 +315,7 @@ export function StoreConfigProvider({
       } else {
         // Fallback to static config
         const root = document.documentElement;
+        const isVoltage = root.dataset.template === "voltage";
 
         // Set primary color
         if (config.theme.primaryColor) {
@@ -308,8 +333,9 @@ export function StoreConfigProvider({
           }
         }
 
-        // Set accent color
-        if (config.theme.accentColor) {
+        // Set accent color — skip on Voltage (its --accent comes from
+        // voltage.css's data-theme preset).
+        if (config.theme.accentColor && !isVoltage) {
           const color = formatColor(config.theme.accentColor);
           if (color) {
             root.style.setProperty("--accent", color);
