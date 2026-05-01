@@ -334,6 +334,11 @@ export interface OrderCreate {
   notes?: string;
   promo_code?: string;
   shipping_method_id?: number;
+  quickshipper_provider_id?: number;
+  quickshipper_provider_fee_id?: string;
+  quickshipper_parcel_dimensions_id?: number;
+  quickshipper_price?: string;
+  quickshipper_provider_name?: string;
 }
 
 export interface OrderCreateRequest {
@@ -343,6 +348,11 @@ export interface OrderCreateRequest {
   notes?: string;
   promo_code?: string;
   shipping_method_id?: number;
+  quickshipper_provider_id?: number;
+  quickshipper_provider_fee_id?: string;
+  quickshipper_parcel_dimensions_id?: number;
+  quickshipper_price?: string;
+  quickshipper_provider_name?: string;
 }
 
 export interface OrderItem {
@@ -734,6 +744,11 @@ export interface PromoValidateResponse {
   discount_type?: string;
   discount_value?: string;
   message: string;
+}
+
+export interface QuickshipperQuoteRequestRequest {
+  cart_id: number;
+  delivery_address_id: number;
 }
 
 export interface ResendVerificationCodeRequestRequest {

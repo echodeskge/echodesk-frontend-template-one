@@ -1,0 +1,394 @@
+"use client";
+
+import { useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { ShoppingCart, Heart, User, Search, Menu, Truck, ShieldCheck, Sun, Moon } from "lucide-react";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { useStoreConfig } from "@/components/providers/theme-provider";
+import { useAuth } from "@/contexts/auth-context";
+import { useCartItems } from "@/hooks/use-cart";
+import { useFavorites } from "@/hooks/use-favorites";
+import { useLanguage } from "@/contexts/language-context";
+
+import "./voltage.css";
+
+interface VoltageLayoutProps {
+  children: React.ReactNode;
+}
+
+/**
+ * Voltage shell — bold electronics-storefront design ported from the
+ * prototype at /tmp/ecom-design/.../templates/echodesk/. Wraps every
+ * page body when the tenant has `storefront_template = 'voltage'`
+ * configured in /settings/ecommerce.
+ *
+ * In this PR (PR2 of 4) the shell is bare-bones: top utility bar,
+ * main header with nav + search + cart + account + wishlist, and a
+ * 4-column footer. The page bodies are still rendered by the classic
+ * components — they'll be ported page-by-page in PR3 and PR4.
+ *
+ * The `data-*` attributes on `<html>` drive every Voltage CSS rule:
+ * `data-template="voltage"` toggles the entire token system on, and
+ * the four sibling attributes pick which preset variant applies.
+ */
+export function VoltageLayout({ children }: VoltageLayoutProps) {
+  const config = useStoreConfig();
+  const { template, voltage } = useStorefrontTemplate();
+
+  // Sync the data-* attributes on <html> on every change. We cannot
+  // declare them in the SSR layout because the values come from a
+  // tenant-scoped fetch that resolves client-side after hydration.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.template = template;
+    root.dataset.theme = voltage.theme;
+    root.dataset.mode = voltage.mode;
+    root.dataset.density = voltage.density;
+    root.dataset.radius = voltage.radius;
+    root.dataset.fontpair = voltage.fontPair;
+    return () => {
+      // When the user navigates to a tenant on the classic template
+      // (rare but possible during dev / preview), strip our markers
+      // so the classic theme provider isn't fighting our variables.
+      delete root.dataset.template;
+      delete root.dataset.theme;
+      delete root.dataset.mode;
+      delete root.dataset.density;
+      delete root.dataset.radius;
+      delete root.dataset.fontpair;
+    };
+  }, [template, voltage.theme, voltage.mode, voltage.density, voltage.radius, voltage.fontPair]);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-[var(--bg)] text-[var(--ink)]">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-[var(--bg)] focus:text-[var(--ink)]"
+      >
+        Skip to main content
+      </a>
+      <VoltageFontsLink />
+      <VoltageHeader />
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
+      <VoltageFooter storeName={config.store?.name || "Storefront"} />
+    </div>
+  );
+}
+
+/**
+ * Loads the four Google Fonts families Voltage uses. Inserted as a
+ * normal `<link>` rather than `next/font` because Bricolage Grotesque
+ * needs the variable optical-size axis (`opsz`) which `next/font` 14.x
+ * doesn't surface, and we'd lose 80% of Voltage's character without
+ * variable Bricolage.
+ */
+function VoltageFontsLink() {
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-css-tags */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  HEADER                                                            */
+/* ------------------------------------------------------------------ */
+
+function VoltageHeader() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+  const { data: cartData } = useCartItems();
+  const { data: favoritesData } = useFavorites();
+  const { currentLanguage: lang, setLanguage: setLang, t } = useLanguage();
+  const { voltage } = useStorefrontTemplate();
+  const config = useStoreConfig();
+  const cartItems = cartData?.results ?? [];
+  const cartCount = cartItems.reduce((a: number, c: { quantity?: number }) => a + (c.quantity || 0), 0);
+  const favCount = favoritesData?.results?.length ?? 0;
+
+  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+    const active = pathname === href;
+    return (
+      <Link
+        href={href}
+        data-navlink
+        data-active={active}
+        className="px-3 py-2 text-sm font-semibold whitespace-nowrap rounded-full"
+        style={
+          active
+            ? { background: "var(--ink)", color: "var(--bg)" }
+            : { background: "transparent", color: "var(--ink)" }
+        }
+      >
+        {children}
+      </Link>
+    );
+  };
+
+  const toggleMode = () => {
+    // Mode flip is per-tenant only (admin) — the visitor-facing toggle
+    // here just shows the current state. Until v1 of the visitor-side
+    // theme studio ships (out-of-scope for this PR), this button is a
+    // no-op stub.
+  };
+
+  return (
+    <>
+      {/* Top utility bar */}
+      <div
+        data-utility-bar
+        className="border-b"
+        style={{
+          background: "var(--ink)",
+          color: "var(--bg)",
+          borderColor: "var(--ink)",
+        }}
+      >
+        <div
+          className="mx-auto px-4 py-2 flex justify-between items-center text-xs font-medium"
+          style={{ maxWidth: 1440 }}
+        >
+          <div className="flex gap-3 items-center min-w-0">
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              <Truck className="h-3.5 w-3.5" /> Tbilisi same-day
+            </span>
+            <span className="opacity-40 hidden md:inline">·</span>
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap hidden md:inline-flex">
+              <ShieldCheck className="h-3.5 w-3.5" /> 1-month warranty
+            </span>
+          </div>
+          <div className="flex gap-1 items-center whitespace-nowrap">
+            <button
+              type="button"
+              onClick={toggleMode}
+              title="Tenant-controlled in admin"
+              className="p-1.5 inline-flex items-center"
+              style={{ background: "transparent", color: "inherit", border: 0 }}
+            >
+              {voltage.mode === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            </button>
+            <span className="opacity-30 px-1 hidden md:inline">·</span>
+            <div
+              className="hidden md:inline-flex gap-0 overflow-hidden"
+              style={{
+                border: "1px solid color-mix(in oklch, var(--bg) 30%, transparent)",
+                borderRadius: 999,
+              }}
+            >
+              {(["en", "ka", "ru"] as const).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setLang(l)}
+                  className="px-2.5 py-1 text-[11px] font-bold uppercase"
+                  style={{
+                    background: lang === l ? "var(--bg)" : "transparent",
+                    color: lang === l ? "var(--ink)" : "var(--bg)",
+                    border: 0,
+                  }}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main bar */}
+      <header
+        className="sticky top-0 z-50"
+        style={{
+          background: "var(--bg)",
+          borderBottom: "1.5px solid var(--ink)",
+        }}
+      >
+        <div
+          className="header-bar mx-auto px-4 py-3 flex gap-3 items-center justify-between"
+          style={{ maxWidth: 1440 }}
+        >
+          <button
+            type="button"
+            aria-label="All categories"
+            className="inline-flex items-center gap-2 h-10 px-4 font-bold text-sm flex-shrink-0"
+            style={{
+              background: "var(--ink)",
+              color: "var(--bg)",
+              border: "1.5px solid var(--ink)",
+              borderRadius: 999,
+            }}
+          >
+            <Menu className="h-4 w-4" />
+            <span className="hidden sm:inline">All</span>
+          </button>
+          <Link
+            href="/"
+            data-logo
+            className="inline-flex items-baseline gap-1 flex-shrink-0"
+          >
+            <span className="display text-[28px] tracking-tight font-bold">
+              {config.store?.name || "Refurb"}
+            </span>
+            <span
+              className="display text-[28px] tracking-tight font-bold"
+              style={{ color: "var(--accent)" }}
+            >
+              .
+            </span>
+          </Link>
+          <nav className="hidden lg:flex items-center gap-1 justify-center flex-1">
+            <NavLink href="/products">{t("nav.shop") || "Shop"}</NavLink>
+            <NavLink href="/sale">{t("nav.sale") || "Sale"}</NavLink>
+            <NavLink href="/new-arrivals">{t("nav.newArrivals") || "New"}</NavLink>
+          </nav>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              type="button"
+              aria-label="Search"
+              className="hidden md:inline-flex items-center gap-2 px-3.5 py-2 text-[13px] whitespace-nowrap"
+              style={{
+                background: "var(--muted)",
+                border: "1.5px solid var(--line)",
+                borderRadius: 999,
+                color: "var(--ink-soft)",
+              }}
+            >
+              <Search className="h-4 w-4" /> {t("Search") || "Search"}
+            </button>
+            <IconButton
+              aria-label="Wishlist"
+              className="hidden md:inline-flex"
+              badge={favCount || null}
+              onClick={() => router.push("/wishlist")}
+            >
+              <Heart className="h-5 w-5" />
+            </IconButton>
+            <IconButton
+              aria-label="Account"
+              className="hidden md:inline-flex"
+              onClick={() => router.push(isAuthenticated ? "/account" : "/login")}
+            >
+              <User className="h-5 w-5" />
+            </IconButton>
+            <IconButton
+              aria-label="Cart"
+              accent
+              badge={cartCount || null}
+              onClick={() => router.push("/cart")}
+            >
+              <ShoppingCart className="h-5 w-5" />
+            </IconButton>
+          </div>
+        </div>
+      </header>
+    </>
+  );
+}
+
+function IconButton({
+  children,
+  badge,
+  accent,
+  className = "",
+  onClick,
+  ...rest
+}: {
+  children: React.ReactNode;
+  badge?: number | null;
+  accent?: boolean;
+  className?: string;
+  onClick?: () => void;
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "className">) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative inline-flex items-center justify-center h-10 w-10 ${className}`}
+      style={{
+        background: accent ? "var(--accent)" : "transparent",
+        color: accent ? "var(--accent-ink)" : "var(--ink)",
+        border: accent ? "1.5px solid var(--ink)" : "1.5px solid transparent",
+        borderRadius: 999,
+      }}
+      {...rest}
+    >
+      {children}
+      {badge != null && badge > 0 && (
+        <span
+          className="cart-badge absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold leading-none"
+          style={{
+            background: "var(--ink)",
+            color: "var(--bg)",
+            borderRadius: 999,
+            border: "2px solid var(--bg)",
+          }}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  FOOTER                                                            */
+/* ------------------------------------------------------------------ */
+
+function VoltageFooter({ storeName }: { storeName: string }) {
+  return (
+    <footer
+      className="mt-auto"
+      style={{
+        background: "var(--ink)",
+        color: "var(--bg)",
+      }}
+    >
+      <div className="mx-auto px-4 py-12" style={{ maxWidth: 1440 }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div>
+            <div className="display text-2xl font-bold mb-3">{storeName}.</div>
+            <p className="text-sm opacity-70">
+              Honest electronics. Same-day delivery in Tbilisi, one-month warranty
+              on everything, and humans on the other end of every email.
+            </p>
+          </div>
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-3">Shop</div>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/products">All Products</Link></li>
+              <li><Link href="/sale">Sale</Link></li>
+              <li><Link href="/categories">Categories</Link></li>
+              <li><Link href="/new-arrivals">New Arrivals</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-3">Help</div>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/faq">FAQ</Link></li>
+              <li><Link href="/shipping">Shipping</Link></li>
+              <li><Link href="/returns">Returns</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-3">Legal</div>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/privacy">Privacy</Link></li>
+              <li><Link href="/terms">Terms</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-12 pt-6 text-xs opacity-50" style={{ borderTop: "1px solid color-mix(in oklch, var(--bg) 20%, transparent)" }}>
+          © {new Date().getFullYear()} {storeName}. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
+}

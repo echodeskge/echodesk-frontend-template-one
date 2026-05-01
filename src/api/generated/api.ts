@@ -50,6 +50,7 @@ import type {
   PromoValidateResponse,
   PaginatedShippingMethodList,
   ShippingMethod,
+  QuickshipperQuoteRequestRequest,
   StoreThemeResponse,
   ChangePasswordRequestRequest,
   ChangePasswordResponse,
@@ -657,6 +658,16 @@ export async function ecommerceClientShippingMethodsRetrieve(
 ): Promise<ShippingMethod> {
   const response = await axios.get(
     `/api/ecommerce/client/shipping-methods/${id}/`,
+  );
+  return response.data;
+}
+
+export async function ecommerceQuickshipperQuote(
+  data: QuickshipperQuoteRequestRequest,
+): Promise<any> {
+  const response = await axios.post(
+    `/api/ecommerce/client/shipping/quote/`,
+    data,
   );
   return response.data;
 }
