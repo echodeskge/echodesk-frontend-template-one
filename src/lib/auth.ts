@@ -2,38 +2,82 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import type { NextAuthConfig } from "next-auth";
 
-// Get API URL from request hostname or env var
-const getApiUrl = (request?: Request): string => {
-  // 1. Derive from request hostname (multi-tenant: groot.ecommerce.echodesk.ge → groot.api.echodesk.ge)
+// Cache resolve-domain results for the lifetime of the worker. The
+// hostname → api_url mapping rarely changes; a tiny in-process map
+// keeps the public resolver out of the hot login path.
+const _customDomainApiUrlCache = new Map<string, string>();
+
+const RESOLVE_BASE_URL =
+  process.env.NEXT_PUBLIC_RESOLVE_API || "https://api.echodesk.ge";
+
+async function resolveCustomDomainApiUrl(hostname: string): Promise<string | null> {
+  if (!hostname) return null;
+  const cached = _customDomainApiUrlCache.get(hostname);
+  if (cached) return cached;
+  try {
+    const res = await fetch(
+      `${RESOLVE_BASE_URL}/api/public/resolve-domain/?domain=${encodeURIComponent(hostname)}`,
+      { method: "GET", cache: "no-store" },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { api_url?: string };
+    if (data.api_url) {
+      _customDomainApiUrlCache.set(hostname, data.api_url);
+      return data.api_url;
+    }
+  } catch {
+    // network / CORS / abort — fall through to the env-var default
+  }
+  return null;
+}
+
+// Get API URL from request hostname or env var. Async because custom
+// domains have to be resolved through the public domain resolver
+// (the same one middleware uses) — there's no pattern to derive
+// `groot.api.echodesk.ge` from `refurb.ge` locally.
+async function getApiUrl(request?: Request): Promise<string> {
   if (request) {
     try {
       const url = new URL(request.url);
       const hostname = url.hostname;
       // Pattern: {schema}.ecommerce.echodesk.ge → {schema}.api.echodesk.ge
-      if (hostname.includes('.ecommerce.echodesk.ge')) {
-        const schema = hostname.split('.')[0];
+      if (hostname.includes(".ecommerce.echodesk.ge")) {
+        const schema = hostname.split(".")[0];
         return `https://${schema}.api.echodesk.ge`;
       }
-      // Referer header as backup
-      const referer = request.headers.get('referer');
+      // Referer header as backup (NextAuth signs you in via /api/auth/...
+      // so request.url's hostname is the host of the auth route, but the
+      // referer carries the actual storefront origin).
+      const referer = request.headers.get("referer");
       if (referer) {
         const refererUrl = new URL(referer);
-        if (refererUrl.hostname.includes('.ecommerce.echodesk.ge')) {
-          const schema = refererUrl.hostname.split('.')[0];
+        const refHost = refererUrl.hostname;
+        if (refHost.includes(".ecommerce.echodesk.ge")) {
+          const schema = refHost.split(".")[0];
           return `https://${schema}.api.echodesk.ge`;
         }
+        // Custom-domain referer (e.g. refurb.ge) — resolve through the
+        // public domain endpoint so login works on every tenant's own
+        // domain, not just *.ecommerce.echodesk.ge.
+        if (refHost && refHost !== "localhost" && !refHost.endsWith(".vercel.app")) {
+          const resolved = await resolveCustomDomainApiUrl(refHost);
+          if (resolved) return resolved;
+        }
+      }
+      // No referer? Try the request hostname itself as a custom domain.
+      if (hostname && hostname !== "localhost" && !hostname.endsWith(".vercel.app")) {
+        const resolved = await resolveCustomDomainApiUrl(hostname);
+        if (resolved) return resolved;
       }
     } catch {}
   }
 
-  // 2. Use environment variable
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
 
-  // 3. Fallback
   return "https://demo.api.echodesk.ge";
-};
+}
 
 // Extend the built-in session types
 declare module "next-auth" {
@@ -90,7 +134,7 @@ const config: NextAuthConfig = {
 
         try {
           // Call the backend login API — derive API URL from request hostname
-          const apiUrl = getApiUrl(request as Request | undefined);
+          const apiUrl = await getApiUrl(request as Request | undefined);
 
           const response = await fetch(`${apiUrl}/api/ecommerce/clients/login/`, {
             method: "POST",
@@ -186,7 +230,10 @@ const config: NextAuthConfig = {
 
 async function refreshAccessToken(token: any) {
   try {
-    const apiUrl = token.apiUrl || getApiUrl();
+    // `token.apiUrl` was captured at sign-in and pinned to the right
+    // tenant; only fall through to the resolver if for some reason
+    // the token was minted before that field existed (legacy session).
+    const apiUrl = token.apiUrl || (await getApiUrl());
     const response = await fetch(`${apiUrl}/api/ecommerce/clients/refresh-token/`, {
       method: "POST",
       headers: {
