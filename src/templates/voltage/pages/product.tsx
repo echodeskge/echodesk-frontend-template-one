@@ -46,8 +46,16 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const was = product.compare_at_price ? Number(product.compare_at_price) : null;
   const rating = product.average_rating != null ? Number(product.average_rating) : 0;
   const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
-  const images = product.images || [];
-  const heroImg = images[imgIdx]?.image || product.image || null;
+  // Some serialisers expose the primary in `product.image` AND repeat
+  // it inside `product.images`, others split (primary in `.image`,
+  // secondary uploads in `.images`). Walk both, dedupe by URL so the
+  // thumbnail strip renders correctly in either case.
+  const galleryUrls: string[] = [];
+  if (product.image) galleryUrls.push(product.image);
+  for (const img of product.images || []) {
+    if (img.image && !galleryUrls.includes(img.image)) galleryUrls.push(img.image);
+  }
+  const heroImg = galleryUrls[imgIdx] || null;
 
   const handleAddToCart = () => {
     if (!cart?.id) return;
@@ -118,18 +126,18 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
               </div>
             )}
           </div>
-          {images.length > 1 && (
+          {galleryUrls.length > 1 && (
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${Math.min(images.length, 4)}, 1fr)`,
+                gridTemplateColumns: `repeat(${Math.min(galleryUrls.length, 4)}, 1fr)`,
                 gap: 12,
                 marginTop: 16,
               }}
             >
-              {images.slice(0, 4).map((img, i) => (
+              {galleryUrls.slice(0, 4).map((url, i) => (
                 <button
-                  key={img.id}
+                  key={url}
                   type="button"
                   onClick={() => setImgIdx(i)}
                   style={{
@@ -144,7 +152,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                   }}
                 >
                   <Image
-                    src={img.image}
+                    src={url}
                     alt=""
                     fill
                     unoptimized

@@ -381,7 +381,7 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
           <ProductTile
             idx={altIdx}
             size="100%"
-            imageUrl={null}
+            imageUrl={imgSrc}
             category={category}
             rotate={-3}
           />
