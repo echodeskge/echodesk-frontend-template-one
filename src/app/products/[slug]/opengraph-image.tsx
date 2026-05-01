@@ -22,6 +22,12 @@ export const contentType = "image/png";
 // the next request after that window.
 export const revalidate = 300;
 
+// Force Node runtime so we have access to the full Buffer / fetch
+// stack — Satori's edge-runtime fetch was silently failing for the
+// product photo on every social share. Node runtime also gets us
+// proper TLS handling with the DigitalOcean Spaces CDN.
+export const runtime = "nodejs";
+
 const splitImage = (raw: string | null | undefined): string | null => {
   if (!raw) return null;
   return (
@@ -98,17 +104,34 @@ export default async function ProductOpengraphImage({
   const price = product.price ? `${Number(product.price).toFixed(0)} GEL` : "";
   const wasRaw = product.compare_at_price;
   const was = wasRaw ? `${Number(wasRaw).toFixed(0)} GEL` : null;
-  // The product photo is intentionally NOT fetched for the OG card —
-  // Satori's external-image fetch was unreliable across both the raw
-  // Spaces URL and the Next image optimizer URL, dragging response
-  // times to 1.5-2s and producing "Can't load image" errors on every
-  // social share. The card now renders the placeholder letter +
-  // product name + price — fast (<700ms cold start) and never
-  // dependent on a third-party CDN succeeding. baseUrl is kept in the
-  // outer Promise.all in case we wire image-rendering back later.
-  void splitImage;
+  const rawImageUrl = splitImage(product.image);
+
+  // Pre-fetch the product photo server-side and inline as a data URL.
+  // Running on Node runtime (see export const runtime above) so
+  // Buffer + native fetch are both reliable. Inlining bypasses the
+  // Satori-internal image fetch path that was silently failing for
+  // every WebP from the DigitalOcean Spaces CDN.
+  let imageDataUrl: string | null = null;
+  if (rawImageUrl) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      const res = await fetch(rawImageUrl, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (res.ok) {
+        const buf = Buffer.from(await res.arrayBuffer());
+        // Some social previewers struggle with image/webp inside a PNG
+        // OG card. Pretend the bytes are a JPEG — Satori auto-decodes
+        // the actual format from magic bytes regardless of the MIME
+        // claimed in the data URL.
+        const mime = res.headers.get("content-type") || "image/jpeg";
+        imageDataUrl = `data:${mime};base64,${buf.toString("base64")}`;
+      }
+    } catch {
+      /* fall through to placeholder letter */
+    }
+  }
   void baseUrl;
-  const imageUrl: string | null = null;
 
   return new ImageResponse(
     (
@@ -136,9 +159,9 @@ export default async function ProductOpengraphImage({
             overflow: "hidden",
           }}
         >
-          {imageUrl ? (
+          {imageDataUrl ? (
             <img
-              src={imageUrl}
+              src={imageDataUrl}
               alt={name}
               width={600}
               height={630}

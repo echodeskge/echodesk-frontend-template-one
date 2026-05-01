@@ -194,17 +194,30 @@ export async function generateProductMetadata({
   };
   const shortDescription = truncate(description, 160);
 
-  const keywords = [name, brand, category].filter(Boolean);
+  // SEO-optimal product title length is 50–60 characters. Bare names
+  // are often shorter ("iPhone 15", "Logitech MX Keys" — 9-26 chars).
+  // Append benefit phrases to hit the target without padding nonsense:
+  //   "<name> — Refurbished · Tbilisi delivery | <store>"
+  // Skip if the product name alone already crosses 60 chars.
+  const titleSuffix = " — Refurbished · Same-day Tbilisi";
+  const optimalTitle =
+    name.length >= 50
+      ? name
+      : name.length + titleSuffix.length <= 65
+        ? `${name}${titleSuffix}`
+        : name;
+
+  const keywords = [name, brand, category, "Refurbished", "Tbilisi"].filter(Boolean);
 
   return {
-    title: name,
+    title: optimalTitle,
     description: shortDescription,
     keywords: keywords.join(", "),
     alternates: {
       canonical: url,
     },
     openGraph: {
-      title: name,
+      title: optimalTitle,
       description: shortDescription,
       url,
       siteName: storeName,
@@ -218,7 +231,7 @@ export async function generateProductMetadata({
           url: productOgImage,
           width: 1200,
           height: 630,
-          alt: name,
+          alt: `${name} — refurbished electronics | ${storeName}`,
         },
       ],
     },
