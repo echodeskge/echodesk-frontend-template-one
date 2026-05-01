@@ -27,7 +27,9 @@ import {
   getStoreTheme,
   ecommerceClientPromoValidateCreate,
   ecommerceClientGuestCheckoutCreate,
+  ecommerceClientAddressesPartialUpdate,
 } from "@/api/generated/api";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ClientAddressRequest, Order } from "@/api/generated/interfaces";
 import { useQuery } from "@tanstack/react-query";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -113,6 +115,12 @@ export default function CheckoutPage() {
   // strings, so we serialize when saving).
   const [newAddressLat, setNewAddressLat] = useState<number | null>(null);
   const [newAddressLng, setNewAddressLng] = useState<number | null>(null);
+  // Pending lat/lng for the inline pin picker on a saved address that
+  // doesn't have coords yet. Cleared once the PATCH succeeds.
+  const [pendingPinLat, setPendingPinLat] = useState<number | null>(null);
+  const [pendingPinLng, setPendingPinLng] = useState<number | null>(null);
+  const [savingPin, setSavingPin] = useState(false);
+  const qc = useQueryClient();
 
   // Data fetching
   const { data: cart, isLoading: isCartLoading } = useCart();
@@ -189,6 +197,23 @@ export default function CheckoutPage() {
     !!selectedAddressId &&
     !!selectedAddressForQuote?.latitude &&
     !!selectedAddressForQuote?.longitude;
+  type QuickshipperOption = {
+    provider_id: number;
+    provider_name: string;
+    provider_code?: string | null;
+    provider_logo_url?: string | null;
+    provider_note?: string | null;
+    allow_cash_on_delivery?: boolean;
+    provider_fee_id: string | number;
+    parcel_dimensions_id?: number;
+    price: number;
+    currency: string;
+    display_name?: string | null;
+    min_weight?: number | null;
+    max_weight?: number | null;
+    estimated_minutes?: number | null;
+  };
+
   const {
     data: liveQuote,
     isLoading: isQuoteLoading,
@@ -206,6 +231,8 @@ export default function CheckoutPage() {
     currency: string;
     display_name?: string | null;
     distance_km?: number | null;
+    options?: QuickshipperOption[];
+    default_provider_fee_id?: string | number;
   }>({
     queryKey: ["quickshipper-quote", cart?.id, selectedAddressId],
     queryFn: async () => {
@@ -221,9 +248,44 @@ export default function CheckoutPage() {
     retry: false,
   });
 
-  // Shipping cost: live quote when Quickshipper is on, otherwise static method.
+  // Customer's chosen courier (provider_fee_id keys the selection because
+  // it's what uniquely identifies a (provider, weight-tier) pair).
+  const [selectedQuickshipperFeeId, setSelectedQuickshipperFeeId] =
+    useState<string | null>(null);
+
+  // Whenever a fresh quote arrives, default-select the cheapest. Keep the
+  // selection across re-renders unless the option list itself changes.
+  useEffect(() => {
+    if (!liveQuote) {
+      setSelectedQuickshipperFeeId(null);
+      return;
+    }
+    const options = liveQuote.options || [];
+    if (options.length === 0) {
+      setSelectedQuickshipperFeeId(null);
+      return;
+    }
+    setSelectedQuickshipperFeeId((prev) => {
+      // Keep prior selection only if it's still in the new option set.
+      if (prev && options.some((o) => String(o.provider_fee_id) === prev)) {
+        return prev;
+      }
+      const def = liveQuote.default_provider_fee_id ?? options[0].provider_fee_id;
+      return String(def);
+    });
+  }, [liveQuote]);
+
+  const selectedQuickshipperOption: QuickshipperOption | null =
+    (liveQuote?.options || []).find(
+      (o) => String(o.provider_fee_id) === selectedQuickshipperFeeId,
+    ) || null;
+
+  // Shipping cost: customer-chosen Quickshipper option when available,
+  // else the v1 single-quote price, else the static method.
   const shippingCost = quickshipperEnabled
-    ? liveQuote
+    ? selectedQuickshipperOption
+      ? selectedQuickshipperOption.price
+      : liveQuote
       ? liveQuote.price
       : 0
     : selectedShippingMethod
@@ -381,6 +443,33 @@ export default function CheckoutPage() {
       );
       return;
     }
+    if (
+      quickshipperEnabled &&
+      (liveQuote?.options || []).length > 0 &&
+      !selectedQuickshipperOption
+    ) {
+      toast.error(
+        t("checkout.pickCourier") ||
+          "Pick a courier before placing the order.",
+      );
+      return;
+    }
+
+    // Resolve the Quickshipper option the customer paid for so the backend
+    // booking task books exactly that one.
+    const qsChoice =
+      quickshipperEnabled
+        ? selectedQuickshipperOption ||
+          (liveQuote
+            ? {
+                provider_id: liveQuote.provider_id,
+                provider_fee_id: liveQuote.provider_fee_id,
+                provider_name: liveQuote.provider_name,
+                parcel_dimensions_id: liveQuote.parcel_dimensions_id,
+                price: liveQuote.price,
+              }
+            : null)
+        : null;
 
     try {
       const orderData = {
@@ -393,6 +482,17 @@ export default function CheckoutPage() {
           : {}),
         ...(promoApplied && promoCode ? { promo_code: promoCode } : {}),
         ...(paymentMethod === "card" && selectedCardId ? { card_id: selectedCardId } : {}),
+        ...(qsChoice && qsChoice.provider_id != null
+          ? {
+              quickshipper_provider_id: qsChoice.provider_id,
+              quickshipper_provider_fee_id: qsChoice.provider_fee_id != null
+                ? String(qsChoice.provider_fee_id)
+                : undefined,
+              quickshipper_parcel_dimensions_id: qsChoice.parcel_dimensions_id ?? undefined,
+              quickshipper_price: qsChoice.price?.toFixed(2),
+              quickshipper_provider_name: qsChoice.provider_name ?? undefined,
+            }
+          : {}),
       };
 
       // Generated return type is OrderCreate but the API actually returns a full Order
@@ -817,6 +917,12 @@ export default function CheckoutPage() {
                                     {t("addresses.default") || "Default"}
                                   </span>
                                 )}
+                                {quickshipperEnabled &&
+                                  (!address.latitude || !address.longitude) && (
+                                    <span className="rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:text-yellow-500">
+                                      {t("addresses.pinNeeded") || "Pin needed"}
+                                    </span>
+                                  )}
                               </div>
                               <p className="mt-1 text-sm text-muted-foreground">
                                 {address.address}
@@ -851,6 +957,89 @@ export default function CheckoutPage() {
                       </div>
                     )
                   )}
+
+                  {/* Inline pin picker for a saved address that has no
+                      lat/lng yet. Only relevant when Quickshipper is on.
+                      Saves via PATCH so the user doesn't have to re-enter the
+                      whole address form just to drop a pin. */}
+                  {quickshipperEnabled &&
+                    selectedAddressForQuote &&
+                    (!selectedAddressForQuote.latitude ||
+                      !selectedAddressForQuote.longitude) && (
+                      <div className="space-y-3 rounded-lg border border-yellow-500/30 bg-yellow-50/50 dark:bg-yellow-500/5 p-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">
+                            {t("addresses.pinThisAddress") ||
+                              "Pin this address on the map"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {t("addresses.pinThisAddressHelper") ||
+                              "We need an exact location to give you a courier price. Click the map to drop a pin where the courier should deliver."}
+                          </p>
+                        </div>
+                        <AddressMapPicker
+                          latitude={pendingPinLat}
+                          longitude={pendingPinLng}
+                          onChange={(lat, lng) => {
+                            setPendingPinLat(lat);
+                            setPendingPinLng(lng);
+                          }}
+                          heightPx={260}
+                        />
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={
+                              savingPin ||
+                              pendingPinLat == null ||
+                              pendingPinLng == null
+                            }
+                            onClick={async () => {
+                              if (
+                                pendingPinLat == null ||
+                                pendingPinLng == null ||
+                                !selectedAddressForQuote
+                              )
+                                return;
+                              setSavingPin(true);
+                              try {
+                                await ecommerceClientAddressesPartialUpdate(
+                                  String(selectedAddressForQuote.id),
+                                  {
+                                    latitude: pendingPinLat.toFixed(6),
+                                    longitude: pendingPinLng.toFixed(6),
+                                  },
+                                );
+                                await qc.invalidateQueries({ queryKey: ["addresses"] });
+                                setPendingPinLat(null);
+                                setPendingPinLng(null);
+                                toast.success(
+                                  t("addresses.pinSaved") ||
+                                    "Pin saved — calculating courier price…",
+                                );
+                              } catch (err) {
+                                const msg =
+                                  (err as { response?: { data?: { detail?: string } } })?.response
+                                    ?.data?.detail || (err as Error).message || "Failed to save";
+                                toast.error(msg);
+                              } finally {
+                                setSavingPin(false);
+                              }
+                            }}
+                          >
+                            {savingPin ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {t("checkout.saving") || "Saving…"}
+                              </>
+                            ) : (
+                              t("addresses.savePin") || "Save pin"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
                   {/* Add New Address Button */}
                   {!showAddressForm && addresses.length > 0 && (
@@ -1075,7 +1264,72 @@ export default function CheckoutPage() {
                             {t("checkout.retry") || "Retry"}
                           </Button>
                         </div>
+                      ) : liveQuote && (liveQuote.options || []).length > 0 ? (
+                        <RadioGroup
+                          value={selectedQuickshipperFeeId || ""}
+                          onValueChange={(val) => setSelectedQuickshipperFeeId(val)}
+                          className="space-y-2"
+                        >
+                          {(liveQuote.options || []).map((opt) => {
+                            const id = String(opt.provider_fee_id);
+                            const isSelected = selectedQuickshipperFeeId === id;
+                            const subtitle =
+                              opt.display_name ||
+                              (opt.estimated_minutes
+                                ? `${opt.estimated_minutes} min`
+                                : opt.provider_note ||
+                                  t("checkout.courierDelivery") ||
+                                  "Courier delivery");
+                            return (
+                              <div
+                                key={id}
+                                className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
+                                  isSelected
+                                    ? "border-primary bg-primary/5"
+                                    : "hover:border-muted-foreground/30"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <RadioGroupItem
+                                    value={id}
+                                    id={`qs-fee-${id}`}
+                                  />
+                                  {opt.provider_logo_url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={opt.provider_logo_url}
+                                      alt={opt.provider_name}
+                                      className="h-8 w-8 rounded object-contain bg-white"
+                                    />
+                                  ) : (
+                                    <Truck className="h-5 w-5" />
+                                  )}
+                                  <Label
+                                    htmlFor={`qs-fee-${id}`}
+                                    className="cursor-pointer"
+                                  >
+                                    <p className="font-medium">
+                                      {opt.provider_name || "Quickshipper"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {subtitle}
+                                    </p>
+                                  </Label>
+                                </div>
+                                <p className="font-medium">
+                                  {formatPrice(
+                                    opt.price,
+                                    opt.currency || config.locale.currency,
+                                    config.locale.locale,
+                                  )}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </RadioGroup>
                       ) : liveQuote ? (
+                        // Backward-compat: backend without `options[]` —
+                        // render the single price as a static row.
                         <div className="rounded-lg border border-primary bg-primary/5 p-4 flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             {liveQuote.provider_logo_url ? (
