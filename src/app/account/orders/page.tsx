@@ -32,6 +32,8 @@ import {
 import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageAccountPage } from "@/templates/voltage/pages/account";
 import { useOrders, useOrder } from "@/hooks/use-orders";
 import { formatPrice } from "@/lib/store-config";
 import { cn } from "@/lib/utils";
@@ -119,6 +121,7 @@ export default function OrdersPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { t, getLocalizedValue } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   const translateStatus = (status: string, map: Record<string, string>) => {
     const key = map[status.toLowerCase()];
@@ -222,6 +225,16 @@ export default function OrdersPage() {
       minute: "2-digit",
     });
   };
+
+  // Voltage tenants get the unified account dashboard with the
+  // Orders tab pre-selected. Classic continues with this page's body.
+  if (template === "voltage" && isAuthenticated) {
+    return (
+      <StoreLayout>
+        <VoltageAccountPage defaultTab="orders" />
+      </StoreLayout>
+    );
+  }
 
   if (isAuthLoading) {
     return (

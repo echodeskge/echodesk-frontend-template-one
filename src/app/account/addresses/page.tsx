@@ -38,6 +38,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageAccountPage } from "@/templates/voltage/pages/account";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ecommerceClientAddressesList,
@@ -67,6 +69,7 @@ export default function AddressesPage() {
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { t } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<ClientAddress | null>(
@@ -230,6 +233,16 @@ export default function AddressesPage() {
   };
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  // Voltage tenants get the unified account dashboard with Addresses
+  // tab pre-selected. Classic continues with this page's body.
+  if (template === "voltage" && isAuthenticated) {
+    return (
+      <StoreLayout>
+        <VoltageAccountPage defaultTab="addresses" />
+      </StoreLayout>
+    );
+  }
 
   if (isAuthLoading) {
     return (

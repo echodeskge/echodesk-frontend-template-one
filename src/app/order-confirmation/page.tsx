@@ -13,6 +13,8 @@ import { useStoreConfig } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { useOrder } from "@/hooks/use-orders";
 import { formatPrice } from "@/lib/store-config";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageOrderConfirmationPage } from "@/templates/voltage/pages/order-confirmation";
 import {
   CheckCircle,
   ShoppingBag,
@@ -30,6 +32,7 @@ function OrderConfirmationContent() {
   const orderId = searchParams.get("order_id");
   const config = useStoreConfig();
   const { t, getLocalizedValue } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   const { data: order, isLoading, isError } = useOrder(orderId);
 
@@ -49,6 +52,16 @@ function OrderConfirmationContent() {
 
   if (!orderId) {
     return null;
+  }
+
+  // Voltage tenants get the bold receipt page. Classic continues with
+  // this page's body. All hooks above already ran.
+  if (template === "voltage") {
+    return (
+      <StoreLayout>
+        <VoltageOrderConfirmationPage />
+      </StoreLayout>
+    );
   }
 
   if (isLoading) {

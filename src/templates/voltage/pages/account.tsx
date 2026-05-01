@@ -19,14 +19,14 @@ import { useTranslate } from "../use-translate";
 
 type TabId = "orders" | "profile" | "addresses";
 
-export function VoltageAccountPage() {
+export function VoltageAccountPage({ defaultTab = "orders" }: { defaultTab?: TabId }) {
   const t = useTranslate();
   const { getLocalizedValue } = useLanguage();
   const router = useRouter();
   const { user, logout } = useAuth();
   const { data: ordersData, isLoading: ordersLoading } = useOrders();
   const { data: addressesData } = useAddresses();
-  const [tab, setTab] = useState<TabId>("orders");
+  const [tab, setTab] = useState<TabId>(defaultTab);
 
   const orders = ordersData?.results || [];
   const addresses = addressesData?.results || [];
@@ -255,7 +255,7 @@ export function VoltageAccountPage() {
                       <div style={{ marginTop: 12 }}>
                         <button
                           type="button"
-                          onClick={() => router.push(`/order-confirmation?id=${o.id}`)}
+                          onClick={() => router.push(`/order-confirmation?order_id=${o.id}`)}
                           style={{
                             background: "transparent",
                             border: 0,

@@ -18,6 +18,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
+import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { VoltageAccountPage } from "@/templates/voltage/pages/account";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ecommerceClientProfileUpdateProfilePartialUpdate,
@@ -33,6 +35,7 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { t } = useLanguage();
+  const { template } = useStorefrontTemplate();
 
   const [profileForm, setProfileForm] = useState({
     first_name: "",
@@ -141,6 +144,17 @@ export default function ProfilePage() {
       new_password: passwordForm.new_password,
     });
   };
+
+  // Voltage tenants get the unified account dashboard pre-selected on
+  // the Profile tab. The classic profile body still renders for
+  // tenants on the classic template.
+  if (template === "voltage" && isAuthenticated) {
+    return (
+      <StoreLayout>
+        <VoltageAccountPage defaultTab="profile" />
+      </StoreLayout>
+    );
+  }
 
   if (isAuthLoading) {
     return (
