@@ -9,7 +9,7 @@
  * `useProductBySlug` — no prototype constants.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -18,6 +18,7 @@ import type { ProductDetail } from "@/api/generated/interfaces";
 import { useLanguage } from "@/contexts/language-context";
 import { useTranslate } from "../use-translate";
 import { useAddToCart, useCart } from "@/hooks/use-cart";
+import { useBackendWishlist } from "@/hooks/use-favorites";
 import { Btn, Pill, Stars } from "../components";
 
 interface VoltageProductPageProps {
@@ -30,9 +31,12 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const { getLocalizedValue } = useLanguage();
   const addToCart = useAddToCart();
   const { data: cart } = useCart();
+  const { isInWishlist, toggleWishlist } = useBackendWishlist();
   const [imgIdx, setImgIdx] = useState(0);
   const [qty, setQty] = useState(1);
-  const [tab, setTab] = useState<"specs" | "description" | "reviews">("specs");
+  const [tab, setTab] = useState<"description" | "specs" | "reviews">("description");
+  const fav = isInWishlist(product.id);
+  const favRef = useRef<HTMLButtonElement | null>(null);
 
   const localized = (val: unknown): string => {
     if (typeof val === "string") return val;
@@ -46,13 +50,24 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const was = product.compare_at_price ? Number(product.compare_at_price) : null;
   const rating = product.average_rating != null ? Number(product.average_rating) : 0;
   const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
-  // Gallery order: `product.image` (the primary, set in admin) goes
-  // first as the hero, then the rest of `product.images` sorted by
-  // sort_order ascending (id as tiebreaker). De-duped by URL so a
-  // backend that repeats the primary inside the array doesn't render
-  // it twice.
+  // Gallery URL extraction. The backend's current upload flow writes
+  // multiple comma-space-separated image URLs into the single
+  // `Product.image` URLField (and leaves `images` empty). That's a
+  // backend bug, but until it's fixed we have to parse the string here
+  // — split on comma, trim, only keep entries that look like URLs.
+  // When the backend is fixed to populate `images: [{image, ...}]`
+  // properly, this will continue to work because we union both sources
+  // and dedupe.
+  const splitImageString = (raw: string): string[] =>
+    raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.startsWith("http://") || s.startsWith("https://"));
+
   const galleryUrls: string[] = [];
-  if (product.image) galleryUrls.push(product.image);
+  for (const url of splitImageString(product.image || "")) {
+    if (!galleryUrls.includes(url)) galleryUrls.push(url);
+  }
   const sortedImages = [...(product.images || [])].sort((a, b) => {
     const ao = a.sort_order ?? 0;
     const bo = b.sort_order ?? 0;
@@ -60,7 +75,9 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
     return a.id - b.id;
   });
   for (const img of sortedImages) {
-    if (img.image && !galleryUrls.includes(img.image)) galleryUrls.push(img.image);
+    for (const url of splitImageString(img.image || "")) {
+      if (!galleryUrls.includes(url)) galleryUrls.push(url);
+    }
   }
   const heroImg = galleryUrls[imgIdx] || null;
 
@@ -279,18 +296,26 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                 : t("product.addToCart", "Add to cart")}
             </Btn>
             <button
+              ref={favRef}
               type="button"
+              onClick={() => toggleWishlist(product.id)}
               style={{
                 width: 56,
                 height: 56,
-                background: "transparent",
+                background: fav ? "var(--accent)" : "transparent",
+                color: fav ? "var(--accent-ink)" : "var(--ink)",
                 border: "1.5px solid var(--ink)",
                 borderRadius: 999,
                 cursor: "pointer",
+                transition: "background-color .2s ease, color .2s ease",
               }}
-              aria-label="Add to wishlist"
+              aria-label={fav ? "Remove from wishlist" : "Add to wishlist"}
             >
-              <Heart className="h-5 w-5 inline-block" />
+              <Heart
+                className="h-5 w-5 inline-block"
+                strokeWidth={fav ? 0 : 2}
+                fill={fav ? "currentColor" : "none"}
+              />
             </button>
           </div>
 

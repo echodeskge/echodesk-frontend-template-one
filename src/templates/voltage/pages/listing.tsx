@@ -24,7 +24,15 @@ export function VoltageListingPage() {
   const { getLocalizedValue } = useLanguage();
 
   const itemListId = params.get("item_list");
-  const tag = params.get("tag");
+  // Accept both Voltage's `?tag=sale|new` URL convention and the
+  // classic `/products?on_sale=true` / `?ordering=-created_at` variants
+  // that the legacy `/sale` and `/new-arrivals` redirect routes still
+  // produce. Visitors landing on either should see the same filtered
+  // listing.
+  const tagParam = params.get("tag");
+  const onSale = params.get("on_sale") === "true";
+  const ordering = params.get("ordering") || "";
+  const tag = tagParam ?? (onSale ? "sale" : ordering === "-created_at" ? "new" : null);
   const search = params.get("search") || "";
 
   const [sort, setSort] = useState<string>("featured");

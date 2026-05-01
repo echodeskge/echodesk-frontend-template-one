@@ -308,7 +308,15 @@ export function ProductCard({ product, idx = 0, displayName, category }: Product
   const was = wasRaw ? Number(wasRaw) : null;
   const rating = product.average_rating != null ? Number(product.average_rating) : 0;
   const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
-  const imgSrc = product.image || null;
+  // The list serializer currently jams multiple uploaded URLs into the
+  // single `image` URLField separated by ", ". Defend by splitting +
+  // taking the first valid http(s) URL — when the backend is fixed this
+  // will continue to work since a single URL is just a one-element list.
+  const imgSrc =
+    (product.image || "")
+      .split(",")
+      .map((s) => s.trim())
+      .find((s) => s.startsWith("http://") || s.startsWith("https://")) || null;
   const slug = product.slug;
   const altIdx = idx + 1;
 
