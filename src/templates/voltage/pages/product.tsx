@@ -46,15 +46,22 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const was = product.compare_at_price ? Number(product.compare_at_price) : null;
   const rating = product.average_rating != null ? Number(product.average_rating) : 0;
   const reviewCount = product.review_count != null ? Number(product.review_count) : 0;
-  // Some serialisers expose the primary in `product.image` AND repeat
-  // it inside `product.images`, others split (primary in `.image`,
-  // secondary uploads in `.images`). Walk both, dedupe by URL so the
-  // thumbnail strip renders correctly in either case.
+  // Build the gallery from the sorted `product.images` list (sorted by
+  // sort_order, then id as tiebreaker — first uploaded becomes the
+  // hero). Fall back to the singular `product.image` only when the
+  // images array is empty so the order on the admin matches the order
+  // visitors see.
+  const sortedImages = [...(product.images || [])].sort((a, b) => {
+    const ao = a.sort_order ?? 0;
+    const bo = b.sort_order ?? 0;
+    if (ao !== bo) return ao - bo;
+    return a.id - b.id;
+  });
   const galleryUrls: string[] = [];
-  if (product.image) galleryUrls.push(product.image);
-  for (const img of product.images || []) {
+  for (const img of sortedImages) {
     if (img.image && !galleryUrls.includes(img.image)) galleryUrls.push(img.image);
   }
+  if (galleryUrls.length === 0 && product.image) galleryUrls.push(product.image);
   const heroImg = galleryUrls[imgIdx] || null;
 
   const handleAddToCart = () => {
@@ -185,21 +192,27 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
               alignItems: "baseline",
               gap: 12,
               marginBottom: 32,
+              flexWrap: "wrap",
             }}
           >
             <span className="display" style={{ fontSize: 48 }}>
               {price.toFixed(0)}₾
             </span>
             {was && was > price && (
-              <span
-                style={{
-                  fontSize: 20,
-                  textDecoration: "line-through",
-                  opacity: 0.5,
-                }}
-              >
-                {was.toFixed(0)}₾
-              </span>
+              <>
+                <span
+                  style={{
+                    fontSize: 20,
+                    textDecoration: "line-through",
+                    opacity: 0.5,
+                  }}
+                >
+                  {was.toFixed(0)}₾
+                </span>
+                <Pill style={{ background: "var(--accent)", color: "var(--accent-ink)" }}>
+                  −{Math.round((1 - price / was) * 100)}%
+                </Pill>
+              </>
             )}
           </div>
 
