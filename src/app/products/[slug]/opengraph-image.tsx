@@ -98,17 +98,17 @@ export default async function ProductOpengraphImage({
   const price = product.price ? `${Number(product.price).toFixed(0)} GEL` : "";
   const wasRaw = product.compare_at_price;
   const was = wasRaw ? `${Number(wasRaw).toFixed(0)} GEL` : null;
-  const rawImageUrl = splitImage(product.image);
-
-  // Pipe the product photo through Next's image optimizer
-  // (`/_next/image`) so Satori receives a JPEG from our own origin
-  // instead of a WebP from the DigitalOcean Spaces bucket. Same-origin
-  // URL avoids CORS / latency issues on the Spaces CDN; optimizer auto-
-  // converts WebP → JPEG which Satori handles reliably.
-  const imageUrl =
-    rawImageUrl && baseUrl
-      ? `${baseUrl}/_next/image?url=${encodeURIComponent(rawImageUrl)}&w=1200&q=75`
-      : rawImageUrl;
+  // The product photo is intentionally NOT fetched for the OG card —
+  // Satori's external-image fetch was unreliable across both the raw
+  // Spaces URL and the Next image optimizer URL, dragging response
+  // times to 1.5-2s and producing "Can't load image" errors on every
+  // social share. The card now renders the placeholder letter +
+  // product name + price — fast (<700ms cold start) and never
+  // dependent on a third-party CDN succeeding. baseUrl is kept in the
+  // outer Promise.all in case we wire image-rendering back later.
+  void splitImage;
+  void baseUrl;
+  const imageUrl: string | null = null;
 
   return new ImageResponse(
     (
