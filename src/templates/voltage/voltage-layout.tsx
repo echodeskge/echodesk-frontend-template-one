@@ -184,7 +184,7 @@ function VoltageHeader() {
         }}
       >
         <div
-          className="header-bar mx-auto px-4 py-3 flex gap-3 items-center justify-between"
+          className="header-bar mx-auto px-3 sm:px-4 py-3 flex gap-1.5 sm:gap-3 items-center justify-between"
           style={{ maxWidth: 1440 }}
         >
           <button
@@ -205,14 +205,21 @@ function VoltageHeader() {
           <Link
             href="/"
             data-logo
-            className="inline-flex items-baseline gap-1 flex-shrink-0"
+            className="inline-flex items-baseline gap-1 flex-shrink-0 min-w-0"
           >
-            <span className="display text-[28px] tracking-tight font-bold">
+            <span
+              className="display tracking-tight font-bold truncate"
+              style={{ fontSize: "clamp(18px, 4.5vw, 28px)", lineHeight: 1 }}
+            >
               {config.store?.name || "Refurb"}
             </span>
             <span
-              className="display text-[28px] tracking-tight font-bold"
-              style={{ color: "var(--accent)" }}
+              className="display tracking-tight font-bold"
+              style={{
+                color: "var(--accent)",
+                fontSize: "clamp(18px, 4.5vw, 28px)",
+                lineHeight: 1,
+              }}
             >
               .
             </span>
