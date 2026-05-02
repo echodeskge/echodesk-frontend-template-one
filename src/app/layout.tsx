@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { StoreConfigProvider } from "@/components/providers/theme-provider";
@@ -24,6 +24,18 @@ const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
 });
+
+// Lock the viewport so visitors can't pinch-zoom on mobile. The
+// storefront is already optimised for small viewports (320px+) and
+// pinch-zoom on form inputs / sticky CTAs makes the layout feel
+// broken. `userScalable: false` + `maximumScale: 1` together prevent
+// both pinch-to-zoom AND iOS's auto-zoom-on-input-focus.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 // Dynamic metadata based on tenant headers (multi-tenant) with the
 // env-driven store config as a localhost-dev fallback. Each tenant

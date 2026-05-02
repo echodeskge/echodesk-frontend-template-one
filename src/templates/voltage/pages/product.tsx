@@ -123,6 +123,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   }, []);
 
   return (
+    <>
     <div className="page-enter">
       <div style={{ maxWidth: 1440, margin: "0 auto", padding: "24px 24px 0" }}>
         <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6 }}>
@@ -478,44 +479,47 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
           </div>
         </div>
       </section>
+    </div>
 
-      {/* Sticky mobile CTA — appears when the in-page Buy now button
-          scrolls out of viewport. Hidden on tablet/desktop and when
-          the in-page CTA is visible. The class toggle is the only
-          visual driver; CSS handles position+show/hide. */}
-      <div
-        className={
-          showStickyCta
-            ? "pdp-sticky-cta pdp-sticky-cta--visible"
-            : "pdp-sticky-cta"
-        }
-        aria-hidden={!showStickyCta}
-      >
-        <div className="pdp-sticky-inner">
-          <div className="pdp-sticky-price">
-            {Number(product.price).toFixed(0)}₾
-            {product.compare_at_price && (
-              <span className="pdp-sticky-was">
-                {Number(product.compare_at_price).toFixed(0)}₾
-              </span>
-            )}
-          </div>
-          <Btn
-            variant="ink"
-            size="md"
-            iconRight={<ArrowRight className="h-4 w-4" />}
-            onClick={handleAddToCart}
-            disabled={addToCart.isPending || !product.is_in_stock}
-            style={{ flex: 1 }}
-          >
-            {!product.is_in_stock
-              ? t("product.outOfStock", "Out of stock")
-              : !isAuthenticated
-              ? t("product.buyNow", "Buy now")
-              : t("product.addToCart", "Add to cart")}
-          </Btn>
+    {/* Sticky mobile CTA — rendered as a sibling of `.page-enter`
+        because that wrapper retains a `transform` after its entrance
+        animation, which creates a containing block for position:fixed
+        descendants. Sitting outside it lets the bar stick to the
+        viewport. Hidden on tablet/desktop and when the in-page CTA
+        is visible — CSS handles position+show/hide. */}
+    <div
+      className={
+        showStickyCta
+          ? "pdp-sticky-cta pdp-sticky-cta--visible"
+          : "pdp-sticky-cta"
+      }
+      aria-hidden={!showStickyCta}
+    >
+      <div className="pdp-sticky-inner">
+        <div className="pdp-sticky-price">
+          {Number(product.price).toFixed(0)}₾
+          {product.compare_at_price && (
+            <span className="pdp-sticky-was">
+              {Number(product.compare_at_price).toFixed(0)}₾
+            </span>
+          )}
         </div>
+        <Btn
+          variant="ink"
+          size="md"
+          iconRight={<ArrowRight className="h-4 w-4" />}
+          onClick={handleAddToCart}
+          disabled={addToCart.isPending || !product.is_in_stock}
+          style={{ flex: 1 }}
+        >
+          {!product.is_in_stock
+            ? t("product.outOfStock", "Out of stock")
+            : !isAuthenticated
+            ? t("product.buyNow", "Buy now")
+            : t("product.addToCart", "Add to cart")}
+        </Btn>
       </div>
     </div>
+    </>
   );
 }
