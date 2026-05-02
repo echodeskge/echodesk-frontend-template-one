@@ -36,6 +36,7 @@ export function VoltageAuthPage({ initialMode = "login" }: VoltageAuthPageProps)
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,13 +62,18 @@ export function VoltageAuthPage({ initialMode = "login" }: VoltageAuthPageProps)
           setSubmitting(false);
           return;
         }
+        if (!phone.trim()) {
+          toast.error(t("auth.fillPhone", "Please enter your phone number"));
+          setSubmitting(false);
+          return;
+        }
         await register({
           email,
           password,
           password_confirm: password,
           first_name: firstName,
           last_name: lastName,
-          phone_number: "",
+          phone_number: phone.trim(),
         });
         toast.success(t("auth.checkEmail", "Check your email for a verification code"));
         // After registration the customer needs to verify; the existing
@@ -211,25 +217,36 @@ export function VoltageAuthPage({ initialMode = "login" }: VoltageAuthPageProps)
 
             <div style={{ display: "grid", gap: 16 }}>
               {mode === "register" && (
-                <div
-                  data-resp="2-1"
-                  style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-                >
-                  <Field label={t("auth.firstName", "First name")}>
+                <>
+                  <div
+                    data-resp="2-1"
+                    style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+                  >
+                    <Field label={t("auth.firstName", "First name")}>
+                      <Input
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        autoComplete="given-name"
+                      />
+                    </Field>
+                    <Field label={t("auth.lastName", "Last name")}>
+                      <Input
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        autoComplete="family-name"
+                      />
+                    </Field>
+                  </div>
+                  <Field label={t("auth.phone", "Phone")}>
                     <Input
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      autoComplete="given-name"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      autoComplete="tel"
+                      placeholder="+995 555 123 456"
                     />
                   </Field>
-                  <Field label={t("auth.lastName", "Last name")}>
-                    <Input
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      autoComplete="family-name"
-                    />
-                  </Field>
-                </div>
+                </>
               )}
               <Field label={t("auth.email", "Email")}>
                 <Input
