@@ -290,8 +290,12 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
           {/* Two-row CTA — Add-to-cart sits in line with qty + heart
               (the dark/black secondary action); Buy now stretches
               full-width below in the brand accent so it stands out
-              as the primary "convert now" CTA. */}
-          <div ref={ctaSentinelRef} className="pdp-actions flex flex-wrap gap-2 sm:gap-3 items-stretch" style={{ marginBottom: 12 }}>
+              as the primary "convert now" CTA.
+              No flex-wrap: the row stays single-line on every
+              viewport. The CSS pass at <=380px shrinks qty + heart
+              and tightens Add-to-cart's padding so all three fit
+              on phones as small as 320px. */}
+          <div ref={ctaSentinelRef} className="pdp-actions flex gap-2 sm:gap-3 items-stretch" style={{ marginBottom: 12 }}>
             <div
               className="pdp-qty"
               style={{
