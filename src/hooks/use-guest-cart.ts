@@ -74,12 +74,20 @@ const removeItemId = (items: GuestCartItem[], productId: number): GuestCartItem[
  * Subscribe to localStorage changes (across tabs + same tab via the
  * custom event we dispatch on writes). Forces consumers to re-render
  * when the guest cart updates.
+ *
+ * Returns a tuple `[items, hasHydrated]`. `hasHydrated` flips to true
+ * after the first localStorage read; consumers that branch on
+ * "is the cart empty?" must wait for it, otherwise the empty initial
+ * render triggers a redirect to /cart before the actual cart contents
+ * load (the recursive-refresh bug on /checkout).
  */
-function useGuestCartItems(): GuestCartItem[] {
+function useGuestCartItems(): { items: GuestCartItem[]; hasHydrated: boolean } {
   const [items, setItems] = useState<GuestCartItem[]>([]);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
     setItems(readGuestCart());
+    setHasHydrated(true);
     const onChange = () => setItems(readGuestCart());
     const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) onChange();
@@ -92,7 +100,7 @@ function useGuestCartItems(): GuestCartItem[] {
     };
   }, []);
 
-  return items;
+  return { items, hasHydrated };
 }
 
 /**
@@ -118,7 +126,7 @@ export interface GuestCartHydrated {
 }
 
 export function useHydratedGuestCart(): GuestCartHydrated {
-  const lines = useGuestCartItems();
+  const { items: lines, hasHydrated } = useGuestCartItems();
 
   const queries = useQuery({
     queryKey: ["guest-cart-products", lines.map((l) => l.product_id).sort().join(",")],
@@ -151,12 +159,14 @@ export function useHydratedGuestCart(): GuestCartHydrated {
       };
     });
     return {
-      isLoading: queries.isLoading,
+      // Pre-hydration the cart contents are unknown — keep `isLoading`
+      // true so consumers don't false-trigger the empty-cart redirect.
+      isLoading: !hasHydrated || queries.isLoading,
       items,
       total_items: items.reduce((s, it) => s + it.quantity, 0),
       total: items.reduce((s, it) => s + it.subtotal, 0),
     };
-  }, [lines, queries.data, queries.isLoading]);
+  }, [lines, queries.data, queries.isLoading, hasHydrated]);
 }
 
 /**
@@ -208,6 +218,6 @@ export function useGuestCartMutations() {
  * accurate even before the product detail fetches resolve.
  */
 export function useGuestCartCount(): number {
-  const items = useGuestCartItems();
+  const { items } = useGuestCartItems();
   return items.reduce((s, it) => s + it.quantity, 0);
 }
