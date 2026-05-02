@@ -246,8 +246,10 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
             )}
           </div>
 
-          {/* Quantity + Add to cart */}
-          <div style={{ display: "flex", gap: 12, alignItems: "stretch", marginBottom: 24 }}>
+          {/* Quantity + Add to cart. flex-wrap lets the heart button
+              drop to the next line at <360px so the Buy now button
+              keeps a readable width on very small phones. */}
+          <div className="flex flex-wrap gap-2 sm:gap-3 items-stretch" style={{ marginBottom: 24 }}>
             <div
               style={{
                 display: "inline-flex",
@@ -334,14 +336,11 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
             </button>
           </div>
 
-          {/* Trust strip */}
+          {/* Trust strip — 3 columns on tablet/desktop, single column
+              on phones so the labels don't get cropped. */}
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 12,
-              marginBottom: 32,
-            }}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3"
+            style={{ marginBottom: 32 }}
           >
             {[
               { icon: <Truck className="h-4 w-4" />, label: t("product.fastDelivery", "Same-day Tbilisi") },
