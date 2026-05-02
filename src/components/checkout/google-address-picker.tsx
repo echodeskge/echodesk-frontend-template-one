@@ -47,6 +47,20 @@ type Props = {
   onAddressSelected?: (resolved: ResolvedAddress) => void;
   helperText?: string;
   heightPx?: number;
+  /** Controlled value for the autocomplete input. When provided,
+   * the picker becomes the only address text input — no need for a
+   * separate field beside the map. */
+  addressValue?: string;
+  /** Called whenever the user types into the autocomplete input
+   * (free typing, before any suggestion is picked). Use this to
+   * keep the parent's address state in sync so submitting the form
+   * captures whatever the visitor typed if they didn't pick a
+   * suggestion. */
+  onAddressInput?: (value: string) => void;
+  /** Optional custom placeholder for the autocomplete input. */
+  placeholder?: string;
+  /** Optional label rendered above the input. */
+  label?: string;
 };
 
 export function GoogleAddressPicker({
@@ -57,6 +71,10 @@ export function GoogleAddressPicker({
   onAddressSelected,
   helperText,
   heightPx = 320,
+  addressValue,
+  onAddressInput,
+  placeholder,
+  label,
 }: Props) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -72,9 +90,11 @@ export function GoogleAddressPicker({
   // retrigger every render.
   const onChangeRef = useRef(onChange);
   const onAddressRef = useRef(onAddressSelected);
+  const onAddressInputRef = useRef(onAddressInput);
   useEffect(() => {
     onChangeRef.current = onChange;
     onAddressRef.current = onAddressSelected;
+    onAddressInputRef.current = onAddressInput;
   });
 
   useEffect(() => {
@@ -202,8 +222,14 @@ export function GoogleAddressPicker({
               (marker as google.maps.Marker).setPosition({ lat, lng });
             }
             reportLatLng(lat, lng);
+            const resolved = parsePlaceResult(place);
+            // Push the formatted address back into the controlled
+            // state so the autocomplete input reflects the picked
+            // suggestion (instead of React snapping it back to the
+            // previous typed value).
+            onAddressInputRef.current?.(resolved.formatted || resolved.street);
             if (onAddressRef.current) {
-              onAddressRef.current(parsePlaceResult(place));
+              onAddressRef.current(resolved);
             }
           });
         }
@@ -260,17 +286,39 @@ export function GoogleAddressPicker({
         )}
       </div>
 
-      {/* Autocomplete input */}
+      {/* Autocomplete input — doubles as the address text field when
+          the parent passes an `addressValue` controlled value. The
+          Google Places Autocomplete library binds to this DOM input
+          internally; once the user picks a suggestion, the ref-sync
+          effect below pushes the formatted address back into the
+          controlled state via onAddressInput. */}
+      {label && (
+        <label
+          htmlFor="google-address-input"
+          style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.04em" }}
+        >
+          {label}
+        </label>
+      )}
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
+          id="google-address-input"
           ref={inputRef}
           type="text"
-          placeholder="Search address (Tbilisi, Rustaveli Ave 12)…"
+          placeholder={placeholder || "Search address (Tbilisi, Rustaveli Ave 12)…"}
           autoComplete="off"
+          {...(addressValue !== undefined
+            ? {
+                value: addressValue,
+                onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                  onAddressInput?.(e.target.value),
+              }
+            : {})}
           className="w-full pl-9 pr-3 py-2 rounded-md border bg-card text-[14px] outline-none focus:border-foreground"
           onFocus={(e) => (e.currentTarget.style.borderColor = "var(--ink, #1a1a2e)")}
           onBlur={(e) => (e.currentTarget.style.borderColor = "")}
+          style={{ height: 46 }}
         />
       </div>
 

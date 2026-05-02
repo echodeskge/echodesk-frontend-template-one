@@ -28,6 +28,14 @@ type Props = {
   onAddressSelected?: (resolved: ResolvedAddress) => void;
   helperText?: string;
   heightPx?: number;
+  /** Controlled value for the autocomplete input — when present,
+   * the picker becomes the only address-text input on the page. */
+  addressValue?: string;
+  /** Called as the user types or picks a suggestion. Use to keep
+   * the parent's address state in sync. */
+  onAddressInput?: (value: string) => void;
+  placeholder?: string;
+  label?: string;
 };
 
 export function SmartAddressPicker(props: Props) {
@@ -35,5 +43,20 @@ export function SmartAddressPicker(props: Props) {
   if (googleMapsApiKey) {
     return <GoogleAddressPicker apiKey={googleMapsApiKey} {...props} />;
   }
-  return <AddressMapPicker {...props} />;
+  // Leaflet doesn't have autocomplete — strip the Google-only props
+  // so it receives only the shared lat/lng + onChange surface.
+  const {
+    addressValue: _av,
+    onAddressInput: _oai,
+    placeholder: _ph,
+    label: _lb,
+    onAddressSelected: _oas,
+    ...leafletProps
+  } = props;
+  void _av;
+  void _oai;
+  void _ph;
+  void _lb;
+  void _oas;
+  return <AddressMapPicker {...leafletProps} />;
 }

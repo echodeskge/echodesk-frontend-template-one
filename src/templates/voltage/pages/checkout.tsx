@@ -766,13 +766,20 @@ export function VoltageCheckoutPage() {
                   </div>
                 ) : (
                   <>
-                    <Field
-                      label={t("addresses.address", "Address")}
-                      value={address}
-                      onChange={setAddress}
-                      placeholder={t("addresses.addressPlaceholder", "Street, building, apt")}
-                      required
-                    />
+                    {/* Address text input — when Google Maps is configured,
+                        the picker's autocomplete IS the address field, so
+                        we hide the manual one to avoid two separate inputs
+                        for the same value. Without Google, fall back to a
+                        plain Field. */}
+                    {!googleMapsApiKey && (
+                      <Field
+                        label={t("addresses.address", "Address")}
+                        value={address}
+                        onChange={setAddress}
+                        placeholder={t("addresses.addressPlaceholder", "Street, building, apt")}
+                        required
+                      />
+                    )}
                     <Field
                       label={t("addresses.city", "City")}
                       value={city}
@@ -782,17 +789,6 @@ export function VoltageCheckoutPage() {
                     />
                     {quickshipperEnabled && (
                       <div style={{ marginTop: 4 }}>
-                        <div
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 700,
-                            letterSpacing: "0.04em",
-                            marginBottom: 6,
-                          }}
-                        >
-                          {t("checkout.dropPin", "Drop a pin on the delivery point")}
-                          <span style={{ color: "var(--accent)", marginLeft: 4 }}>*</span>
-                        </div>
                         <SmartAddressPicker
                           latitude={pinLat}
                           longitude={pinLng}
@@ -801,12 +797,22 @@ export function VoltageCheckoutPage() {
                             setPinLng(lng);
                           }}
                           onAddressSelected={(resolved) => {
-                            // Auto-fill the address + city fields when
-                            // the visitor picks a Google Places
-                            // suggestion. They can still edit either.
-                            if (resolved.street) setAddress(resolved.street);
+                            // Picking a Google suggestion auto-fills the
+                            // city. The street goes into the autocomplete
+                            // input itself (controlled via addressValue).
                             if (resolved.city) setCity(resolved.city);
                           }}
+                          addressValue={googleMapsApiKey ? address : undefined}
+                          onAddressInput={googleMapsApiKey ? setAddress : undefined}
+                          label={
+                            googleMapsApiKey
+                              ? t("addresses.address", "Address") + " *"
+                              : t("checkout.dropPin", "Drop a pin on the delivery point")
+                          }
+                          placeholder={t(
+                            "addresses.addressPlaceholder",
+                            "Street, building, apt",
+                          )}
                           heightPx={280}
                           helperText={
                             pinLat == null
