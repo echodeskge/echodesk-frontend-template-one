@@ -235,6 +235,79 @@ html[data-template="voltage"][data-theme="rose"]    { --accent: oklch(0.68 0.21 
     .display-shrink { font-size: clamp(36px, 14vw, 60px) !important; }
   }
 
+  /* ---------- 380px tight layout: PDP + Checkout (from Claude Design pass) ---------- */
+  [data-template="voltage"] .pdp-sticky-cta { display: none; }
+  @media (max-width: 380px) {
+    [data-template="voltage"] .pad-mobile { padding: 20px 12px !important; }
+    [data-template="voltage"] .pad-mobile-sm { padding: 14px 12px !important; }
+    [data-template="voltage"] .display-shrink { font-size: clamp(32px, 14vw, 52px) !important; }
+
+    [data-template="voltage"] .pdp-actions { flex-wrap: wrap !important; gap: 10px !important; }
+    [data-template="voltage"] .pdp-actions > .pdp-qty {
+      height: 48px !important;
+      flex: 1 1 auto !important;
+    }
+    [data-template="voltage"] .pdp-actions > .pdp-qty button { width: 40px !important; }
+    [data-template="voltage"] .pdp-actions > .pdp-fav {
+      width: 48px !important;
+      height: 48px !important;
+      flex-shrink: 0 !important;
+    }
+    [data-template="voltage"] .pdp-actions > .pdp-cta {
+      flex: 1 1 100% !important;
+      order: 3 !important;
+    }
+    [data-template="voltage"] .pdp-price { flex-wrap: wrap !important; gap: 8px !important; }
+    [data-template="voltage"] .pdp-price > .display { font-size: 44px !important; }
+    [data-template="voltage"] .pdp-tabs { overflow-x: auto !important; flex-wrap: nowrap !important; }
+    [data-template="voltage"] .pdp-tabs::-webkit-scrollbar { display: none; }
+    [data-template="voltage"] .pdp-tabs > button { white-space: nowrap !important; flex-shrink: 0 !important; }
+    [data-template="voltage"] .pdp-trust { grid-template-columns: 1fr !important; }
+
+    /* Checkout — cards & summary tighter padding */
+    [data-template="voltage"] .checkout-root .ck-card { padding: 16px !important; }
+    [data-template="voltage"] .checkout-root .ck-stepper > button { padding: 10px 8px !important; }
+    [data-template="voltage"] .checkout-summary { gap: 12px !important; }
+  }
+
+  /* ---------- Sticky Buy now bar (PDP, mobile only) ----------
+     Shown when the in-page CTA scrolls out of viewport. The
+     `.pdp-sticky-cta--visible` class is toggled by an
+     IntersectionObserver in the product page. */
+  @media (max-width: 720px) {
+    [data-template="voltage"] .pdp-sticky-cta--visible {
+      display: block !important;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 60;
+      background: var(--bg);
+      border-top: 1.5px solid var(--ink);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    }
+    [data-template="voltage"] .pdp-sticky-cta--visible .pdp-sticky-inner {
+      max-width: 540px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    [data-template="voltage"] .pdp-sticky-cta--visible .pdp-sticky-price {
+      flex-shrink: 0;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    [data-template="voltage"] .pdp-sticky-cta--visible .pdp-sticky-was {
+      font-size: 13px;
+      opacity: 0.55;
+      text-decoration: line-through;
+      margin-left: 4px;
+    }
+  }
+
   /* Row-slider: turn product/category grids into horizontal scrollers on mobile */
   @media (max-width: 900px) {
     [data-resp="row-slider"],

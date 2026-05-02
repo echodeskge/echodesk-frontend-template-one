@@ -9,7 +9,7 @@
  * `useProductBySlug` — no prototype constants.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -41,6 +41,10 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   const [tab, setTab] = useState<"description" | "specs" | "reviews">("description");
   const fav = isInWishlist(product.id);
   const favRef = useRef<HTMLButtonElement | null>(null);
+  // Used to detect when the in-page CTA scrolls out of view so the
+  // sticky bottom bar can take over on small screens.
+  const ctaSentinelRef = useRef<HTMLDivElement | null>(null);
+  const [showStickyCta, setShowStickyCta] = useState(false);
 
   const localized = (val: unknown): string => {
     if (typeof val === "string") return val;
@@ -97,6 +101,26 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
     if (!cart?.id) return;
     addToCart.mutate({ cart: cart.id, product: product.id, quantity: qty });
   };
+
+  // Sticky-CTA observer — when the in-page Buy now button scrolls
+  // out of view on small screens, surface a fixed-bottom bar with
+  // the same CTA so the visitor never has to scroll back up.
+  useEffect(() => {
+    const sentinel = ctaSentinelRef.current;
+    if (!sentinel) return;
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        // Show the sticky bar whenever the in-page CTA isn't visible.
+        setShowStickyCta(!entry.isIntersecting);
+      },
+      { rootMargin: "0px 0px -20px 0px", threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="page-enter">
@@ -249,8 +273,9 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
           {/* Quantity + Add to cart. flex-wrap lets the heart button
               drop to the next line at <360px so the Buy now button
               keeps a readable width on very small phones. */}
-          <div className="flex flex-wrap gap-2 sm:gap-3 items-stretch" style={{ marginBottom: 24 }}>
+          <div ref={ctaSentinelRef} className="pdp-actions flex flex-wrap gap-2 sm:gap-3 items-stretch" style={{ marginBottom: 24 }}>
             <div
+              className="pdp-qty"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -302,6 +327,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
               iconRight={<ArrowRight className="h-5 w-5" />}
               onClick={handleAddToCart}
               disabled={addToCart.isPending || !product.is_in_stock}
+              className="pdp-cta"
               style={{ flex: 1 }}
             >
               {!product.is_in_stock
@@ -316,6 +342,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
               ref={favRef}
               type="button"
               onClick={() => toggleWishlist(product.id)}
+              className="pdp-fav"
               style={{
                 width: 56,
                 height: 56,
@@ -339,7 +366,7 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
           {/* Trust strip — 3 columns on tablet/desktop, single column
               on phones so the labels don't get cropped. */}
           <div
-            className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3"
+            className="pdp-trust grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3"
             style={{ marginBottom: 32 }}
           >
             {[
@@ -451,6 +478,44 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
           </div>
         </div>
       </section>
+
+      {/* Sticky mobile CTA — appears when the in-page Buy now button
+          scrolls out of viewport. Hidden on tablet/desktop and when
+          the in-page CTA is visible. The class toggle is the only
+          visual driver; CSS handles position+show/hide. */}
+      <div
+        className={
+          showStickyCta
+            ? "pdp-sticky-cta pdp-sticky-cta--visible"
+            : "pdp-sticky-cta"
+        }
+        aria-hidden={!showStickyCta}
+      >
+        <div className="pdp-sticky-inner">
+          <div className="pdp-sticky-price">
+            {Number(product.price).toFixed(0)}₾
+            {product.compare_at_price && (
+              <span className="pdp-sticky-was">
+                {Number(product.compare_at_price).toFixed(0)}₾
+              </span>
+            )}
+          </div>
+          <Btn
+            variant="ink"
+            size="md"
+            iconRight={<ArrowRight className="h-4 w-4" />}
+            onClick={handleAddToCart}
+            disabled={addToCart.isPending || !product.is_in_stock}
+            style={{ flex: 1 }}
+          >
+            {!product.is_in_stock
+              ? t("product.outOfStock", "Out of stock")
+              : !isAuthenticated
+              ? t("product.buyNow", "Buy now")
+              : t("product.addToCart", "Add to cart")}
+          </Btn>
+        </div>
+      </div>
     </div>
   );
 }
