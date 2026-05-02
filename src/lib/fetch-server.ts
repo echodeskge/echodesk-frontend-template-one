@@ -382,6 +382,17 @@ export interface StorefrontConfig {
    * suffix that turns the bootstrap script into an actual conversion. */
   googleAdsConversionId: string | null;
   googleAdsPurchaseLabel: string | null;
+  /** Pickup option — non-null when the tenant has enabled "Pickup at
+   * store" and configured a pickup address. Storefront uses this to
+   * show the "Pickup at store" choice in checkout step 1 and render
+   * the pickup details to the customer. */
+  pickup: {
+    address: string;
+    city: string;
+    phone: string;
+    contactName: string;
+    extraInstructions: string;
+  } | null;
 }
 
 const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
@@ -397,22 +408,32 @@ const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
   chatWidgetToken: null,
   googleAdsConversionId: null,
   googleAdsPurchaseLabel: null,
+  pickup: null,
 };
 
 export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
   try {
     const response = await serverFetch<{
-      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel">>;
+      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel" | "pickup">>;
       store_name?: string;
       chat_widget?: { token?: string | null };
       analytics?: {
         google_ads_conversion_id?: string | null;
         google_ads_purchase_label?: string | null;
       };
+      pickup?: {
+        enabled?: boolean;
+        address?: string;
+        city?: string;
+        phone?: string;
+        contact_name?: string;
+        extra_instructions?: string;
+      };
     }>("/api/ecommerce/client/theme/", {
       next: { revalidate: 300, tags: ["storefront-config"] },
     });
     const sf = response.storefront;
+    const pickup = response.pickup;
     return {
       template: sf?.template ?? "classic",
       voltage: {
@@ -423,6 +444,15 @@ export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
       chatWidgetToken: response.chat_widget?.token ?? null,
       googleAdsConversionId: response.analytics?.google_ads_conversion_id || null,
       googleAdsPurchaseLabel: response.analytics?.google_ads_purchase_label || null,
+      pickup: pickup?.enabled
+        ? {
+            address: pickup.address || "",
+            city: pickup.city || "",
+            phone: pickup.phone || "",
+            contactName: pickup.contact_name || "",
+            extraInstructions: pickup.extra_instructions || "",
+          }
+        : null,
     };
   } catch (error) {
     console.error("Error fetching storefront config:", error);

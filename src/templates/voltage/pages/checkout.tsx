@@ -53,6 +53,7 @@ import { toast } from "sonner";
 import { Btn, Pill } from "../components";
 import { useTranslate } from "../use-translate";
 import { AddressMapPicker } from "@/components/checkout/address-map-picker";
+import { useStorefrontConfig } from "@/contexts/storefront-config-context";
 
 interface NormalizedItem {
   id: string;
@@ -138,10 +139,20 @@ export function VoltageCheckoutPage() {
   );
   const paymentConfig = (themeData as { payment?: { enable_card_payment?: boolean; enable_cash_on_delivery?: boolean } } | undefined)?.payment;
   const showCard = paymentConfig?.enable_card_payment ?? true;
-  const showCod = paymentConfig?.enable_cash_on_delivery ?? true;
+  const showCodTenant = paymentConfig?.enable_cash_on_delivery ?? true;
+
+  // Pickup config from server-decided storefront config (set by the
+  // SSR pass on the layout). Non-null = tenant offers pickup.
+  const { pickup: pickupConfig } = useStorefrontConfig();
 
   // Step state
   const [step, setStep] = useState<Step>(1);
+
+  // Delivery method — courier vs pickup. Default to courier when the
+  // tenant has Quickshipper, pickup when only pickup is configured.
+  const [deliveryMethod, setDeliveryMethod] = useState<"courier" | "pickup">(
+    quickshipperEnabled ? "courier" : pickupConfig ? "pickup" : "courier",
+  );
 
   // Step 1 state
   const [first, setFirst] = useState("");
@@ -159,9 +170,18 @@ export function VoltageCheckoutPage() {
   // Step 2 state
   const [selectedFeeId, setSelectedFeeId] = useState<string | null>(null);
 
-  // Step 3 state
+  // Step 3 state — payment options gated on delivery method.
+  // Cash is allowed only on pickup; courier orders must be card.
+  const showCod = deliveryMethod === "pickup" && showCodTenant;
   const initialPay: "cod" | "card" = showCod ? "cod" : showCard ? "card" : "cod";
   const [pay, setPay] = useState<"cod" | "card">(initialPay);
+  // If the visitor switches delivery method and their currently-selected
+  // payment is no longer allowed, snap to the first allowed option.
+  useEffect(() => {
+    if (deliveryMethod === "courier" && pay === "cod") {
+      setPay("card");
+    }
+  }, [deliveryMethod, pay]);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -236,9 +256,12 @@ export function VoltageCheckoutPage() {
     : selectedSavedAddress?.city || "";
 
   // ---------- Step 2 — Quickshipper quote ----------
+  // Pickup orders skip the courier quote entirely — there's no
+  // courier to price and shipping is free.
 
   const quoteEnabled =
     step >= 2 &&
+    deliveryMethod === "courier" &&
     quickshipperEnabled &&
     items.length > 0 &&
     typeof effectiveLat === "number" &&
@@ -314,20 +337,26 @@ export function VoltageCheckoutPage() {
       (o) => String(o.provider_fee_id) === selectedFeeId,
     ) || null;
 
-  const shippingCost = selectedOption ? selectedOption.price : 0;
+  const shippingCost = deliveryMethod === "pickup"
+    ? 0
+    : (selectedOption ? selectedOption.price : 0);
   const total = subtotal + shippingCost;
 
   // ---------- step gating ----------
 
   const step1Valid = (() => {
     if (items.length === 0) return false;
+    // Pickup needs only contact info (guest only); no address, no map.
+    if (deliveryMethod === "pickup") {
+      if (!isAuthenticated && (!first || !last || !email)) return false;
+      return true;
+    }
     if (!quickshipperEnabled) {
-      // Without Quickshipper we still need a deliverable address text;
-      // the price will be 0 / merchant-set after the order.
+      // Courier without Quickshipper: still need a deliverable address text.
       if (isAuthenticated && addressId && !useNewAddress) return true;
       return !!first && !!last && !!email && !!address && !!city;
     }
-    // Quickshipper requires lat/lng.
+    // Quickshipper courier requires lat/lng.
     if (typeof effectiveLat !== "number" || typeof effectiveLng !== "number") return false;
     if (!effectiveStreet || !effectiveCity) return false;
     if (!isAuthenticated) {
@@ -336,7 +365,10 @@ export function VoltageCheckoutPage() {
     return true;
   })();
 
-  const step2Valid = !quickshipperEnabled || (!!quote && !!selectedOption);
+  // Pickup needs no shipping decision — step 2 auto-validates.
+  const step2Valid = deliveryMethod === "pickup"
+    ? true
+    : !quickshipperEnabled || (!!quote && !!selectedOption);
 
   // ---------- handlers ----------
 
@@ -347,9 +379,10 @@ export function VoltageCheckoutPage() {
       );
       return;
     }
-    // Auth + new-address path: persist the new address before quoting,
-    // since /shipping/quote/ needs a saved-address row.
-    if (isAuthenticated && useNewAddress) {
+    // Auth + new-address path on courier delivery: persist the new
+    // address before quoting, since /shipping/quote/ needs a saved-address
+    // row. Pickup orders don't need a saved address.
+    if (deliveryMethod === "courier" && isAuthenticated && useNewAddress) {
       try {
         const result = await createAddress.mutateAsync({
           label: "Delivery",
@@ -368,7 +401,9 @@ export function VoltageCheckoutPage() {
         return;
       }
     }
-    setStep(2);
+    // Pickup skips step 2 (no courier to pick) and jumps straight to
+    // payment.
+    setStep(deliveryMethod === "pickup" ? 3 : 2);
   };
 
   const goToStep3 = () => {
@@ -384,16 +419,26 @@ export function VoltageCheckoutPage() {
     setSubmitting(true);
     try {
       if (isAuthenticated) {
-        if (!cart?.id || !addressId) {
+        if (!cart?.id) {
+          toast.error(t("checkout.cartMissing", "Your cart is empty."));
+          return;
+        }
+        // Pickup orders still need a delivery_address_id on the auth
+        // flow because the Order model requires it. Reuse the
+        // tenant's pickup address by sending no address — the
+        // backend stamps delivery_method='pickup' so the booking
+        // task ignores the address entirely.
+        if (deliveryMethod === "courier" && !addressId) {
           toast.error(t("checkout.selectAddress", "Please select a delivery address."));
           return;
         }
         await createOrder.mutateAsync({
           cart_id: cart.id,
-          delivery_address_id: addressId,
+          delivery_address_id: addressId || addresses[0]?.id || 0,
           payment_method: pay === "card" ? "card" : "cash_on_delivery",
           notes,
-          ...(selectedOption && {
+          delivery_method: deliveryMethod,
+          ...(deliveryMethod === "courier" && selectedOption && {
             quickshipper_provider_id: selectedOption.provider_id,
             quickshipper_provider_fee_id: String(selectedOption.provider_fee_id),
             quickshipper_provider_name: selectedOption.provider_name,
@@ -410,22 +455,33 @@ export function VoltageCheckoutPage() {
         toast.error(t("checkout.invalidEmail", "Please enter a valid email."));
         return;
       }
+      // Pickup orders use the store's pickup address as the delivery
+      // address (the order needs *some* address but the courier won't
+      // use it). Courier orders use what the visitor entered.
+      const addressBlock = deliveryMethod === "pickup"
+        ? {
+            address: pickupConfig?.address || "Store pickup",
+            city: pickupConfig?.city || "",
+            label: "Pickup",
+          }
+        : {
+            address,
+            city,
+            label: "Delivery",
+            ...(pinLat != null && { latitude: pinLat.toFixed(6) }),
+            ...(pinLng != null && { longitude: pinLng.toFixed(6) }),
+          };
       const result = (await ecommerceClientGuestCheckoutCreate({
         email,
         first_name: first,
         last_name: last,
         phone: phone || "",
-        address: {
-          address,
-          city,
-          label: "Delivery",
-          ...(pinLat != null && { latitude: pinLat.toFixed(6) }),
-          ...(pinLng != null && { longitude: pinLng.toFixed(6) }),
-        },
+        address: addressBlock,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
         payment_method: pay === "card" ? "card" : "cash_on_delivery",
         notes: notes || undefined,
-        ...(selectedOption && {
+        delivery_method: deliveryMethod,
+        ...(deliveryMethod === "courier" && selectedOption && {
           quickshipper_provider_id: selectedOption.provider_id,
           quickshipper_provider_fee_id: String(selectedOption.provider_fee_id),
           quickshipper_provider_name: selectedOption.provider_name,
@@ -516,6 +572,34 @@ export function VoltageCheckoutPage() {
 
           {step === 1 && (
             <>
+              {/* Delivery method picker — only renders when both
+                  options exist. If only courier (no pickup configured)
+                  or only pickup, the choice is implicit. */}
+              {pickupConfig && quickshipperEnabled && (
+                <Card
+                  title={t("checkout.howToReceive", "How would you like to receive it?")}
+                  icon={<Truck className="h-4 w-4" />}
+                >
+                  <div style={{ display: "grid", gap: 10 }}>
+                    <PayOption
+                      checked={deliveryMethod === "courier"}
+                      onClick={() => setDeliveryMethod("courier")}
+                      label={t("checkout.courier", "Courier delivery")}
+                      hint={t(
+                        "checkout.courierHint",
+                        "Same-day Tbilisi · price calculated next step",
+                      )}
+                    />
+                    <PayOption
+                      checked={deliveryMethod === "pickup"}
+                      onClick={() => setDeliveryMethod("pickup")}
+                      label={t("checkout.pickup", "Pickup at store — Free")}
+                      hint={`${pickupConfig.address}, ${pickupConfig.city}`}
+                    />
+                  </div>
+                </Card>
+              )}
+
               {!isAuthenticated && (
                 <Card title={t("checkout.contact", "Contact")}>
                   <Row>
@@ -550,6 +634,39 @@ export function VoltageCheckoutPage() {
                 </Card>
               )}
 
+              {deliveryMethod === "pickup" && pickupConfig && (
+                <Card
+                  title={t("checkout.pickupAddress", "Pickup at")}
+                  icon={<Truck className="h-4 w-4" />}
+                >
+                  <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+                    {pickupConfig.contactName && (
+                      <div style={{ fontWeight: 700 }}>{pickupConfig.contactName}</div>
+                    )}
+                    <div>{pickupConfig.address}</div>
+                    <div>{pickupConfig.city}</div>
+                    {pickupConfig.phone && (
+                      <div style={{ opacity: 0.7, marginTop: 4 }}>
+                        {t("checkout.phone", "Phone")}: {pickupConfig.phone}
+                      </div>
+                    )}
+                    {pickupConfig.extraInstructions && (
+                      <div
+                        style={{
+                          opacity: 0.7,
+                          marginTop: 8,
+                          fontSize: 12,
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {pickupConfig.extraInstructions}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
+
+              {deliveryMethod === "courier" && (
               <Card
                 title={t("checkout.deliveryAddress", "Delivery address")}
                 icon={<Truck className="h-4 w-4" />}
@@ -690,6 +807,7 @@ export function VoltageCheckoutPage() {
                   </>
                 )}
               </Card>
+              )}
 
               <Btn
                 variant="ink"
@@ -705,7 +823,9 @@ export function VoltageCheckoutPage() {
                 disabled={!step1Valid || createAddress.isPending}
                 style={{ alignSelf: "flex-start" }}
               >
-                {t("checkout.continueToShipping", "Continue to shipping")}
+                {deliveryMethod === "pickup"
+                  ? t("checkout.continueToPayment", "Continue to payment")
+                  : t("checkout.continueToShipping", "Continue to shipping")}
               </Btn>
             </>
           )}
@@ -926,7 +1046,7 @@ export function VoltageCheckoutPage() {
                   variant="ghost"
                   size="lg"
                   icon={<ArrowLeft className="h-5 w-5" />}
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(deliveryMethod === "pickup" ? 1 : 2)}
                 >
                   {t("checkout.back", "Back")}
                 </Btn>
@@ -1034,11 +1154,17 @@ export function VoltageCheckoutPage() {
               value={`${subtotal.toFixed(0)}₾`}
             />
             <SummaryRow
-              label={t("cart.shipping", "Shipping")}
+              label={
+                deliveryMethod === "pickup"
+                  ? t("checkout.pickup", "Pickup at store")
+                  : t("cart.shipping", "Shipping")
+              }
               value={
-                selectedOption
-                  ? `${shippingCost.toFixed(0)}₾`
-                  : t("checkout.shippingPending", "Pick a courier")
+                deliveryMethod === "pickup"
+                  ? t("cart.free", "FREE")
+                  : selectedOption
+                    ? `${shippingCost.toFixed(0)}₾`
+                    : t("checkout.shippingPending", "Pick a courier")
               }
             />
           </div>
