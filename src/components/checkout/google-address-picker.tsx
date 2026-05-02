@@ -266,6 +266,88 @@ export function GoogleAddressPicker({
     }
   }, [latitude, longitude, ready]);
 
+  // Auto-pin on typing pause / browser autofill. When the visitor
+  // stops typing for 700ms (or the browser pastes a full address
+  // via autofill), silently fetch the top Places prediction and
+  // drop the pin without requiring an explicit dropdown click.
+  // The visible Autocomplete dropdown still works for explicit
+  // picks; this is just a fallback so the map stays in sync.
+  const lastAutoPinnedRef = useRef<string>("");
+  useEffect(() => {
+    if (!ready) return;
+    if (!addressValue || addressValue.trim().length < 5) return;
+    if (addressValue === lastAutoPinnedRef.current) return;
+    const trimmed = addressValue.trim();
+    const handle = window.setTimeout(() => {
+      try {
+        const service = new google.maps.places.AutocompleteService();
+        service.getPlacePredictions(
+          { input: trimmed },
+          (predictions, status) => {
+            if (
+              status !== google.maps.places.PlacesServiceStatus.OK ||
+              !predictions ||
+              predictions.length === 0
+            ) {
+              return;
+            }
+            const top = predictions[0];
+            if (!top.place_id) return;
+            // Skip if the visitor already explicitly picked this
+            // suggestion via the dropdown — avoids double-firing.
+            if (lastAutoPinnedRef.current === trimmed) return;
+            lastAutoPinnedRef.current = trimmed;
+            const map = mapInstanceRef.current;
+            if (!map) return;
+            const placesService = new google.maps.places.PlacesService(map);
+            placesService.getDetails(
+              {
+                placeId: top.place_id,
+                fields: [
+                  "geometry",
+                  "address_components",
+                  "formatted_address",
+                  "name",
+                ],
+              },
+              (place, detailStatus) => {
+                if (
+                  detailStatus !== google.maps.places.PlacesServiceStatus.OK ||
+                  !place ||
+                  !place.geometry?.location
+                ) {
+                  return;
+                }
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                map.panTo({ lat, lng });
+                map.setZoom(16);
+                const marker = markerRef.current;
+                if (marker) {
+                  if ("position" in marker) {
+                    (marker.position as unknown) = { lat, lng };
+                  } else if ("setPosition" in marker) {
+                    (marker as google.maps.Marker).setPosition({ lat, lng });
+                  }
+                }
+                onChangeRef.current(lat, lng);
+                const resolved = parsePlaceResult(place);
+                onAddressRef.current?.(resolved);
+                // Don't re-write the input value — the visitor was
+                // typing freely and the dropdown still serves as the
+                // explicit pick path. Just update lastAutoPinnedRef
+                // so we don't auto-pin to the same prediction twice.
+              },
+            );
+          },
+        );
+      } catch {
+        /* swallow — autocomplete failure is non-blocking */
+      }
+    }, 700);
+    return () => window.clearTimeout(handle);
+  }, [addressValue, ready]);
+
   const hasPin =
     typeof latitude === "number" && typeof longitude === "number";
 
