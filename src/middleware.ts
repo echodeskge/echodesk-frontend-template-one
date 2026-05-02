@@ -2,8 +2,11 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Routes that require authentication
-const protectedRoutes = ["/account", "/account/addresses", "/account/orders", "/checkout"];
+// Routes that require authentication. /checkout is intentionally NOT
+// in this list — guest checkout is supported and the page itself
+// branches on isAuthenticated to call the guest-checkout endpoint
+// instead of the cart-based one.
+const protectedRoutes = ["/account", "/account/addresses", "/account/orders"];
 
 // Routes that should redirect to home if already authenticated
 const authRoutes = ["/login", "/register"];
