@@ -89,17 +89,33 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
   }
   const heroImg = galleryUrls[imgIdx] || null;
 
+  // Add the item to the cart without navigating away — typical
+  // browse-then-keep-shopping flow. Authenticated visitors get a
+  // backend cart row, guests get a localStorage line.
   const handleAddToCart = () => {
     if (!isAuthenticated) {
-      // Guests jump straight to /checkout — fewer clicks to a sale.
-      // The cart UI is a step they don't need; the checkout's order
-      // summary already shows the item.
+      guestCart.addItem(product.id, qty);
+      return;
+    }
+    if (!cart?.id) return;
+    addToCart.mutate({ cart: cart.id, product: product.id, quantity: qty });
+  };
+
+  // Buy now — same add-to-cart action then jump straight to
+  // /checkout. The conversion CTA: fewer clicks to a sale.
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
       guestCart.addItem(product.id, qty);
       router.push("/checkout");
       return;
     }
     if (!cart?.id) return;
-    addToCart.mutate({ cart: cart.id, product: product.id, quantity: qty });
+    addToCart.mutate(
+      { cart: cart.id, product: product.id, quantity: qty },
+      {
+        onSuccess: () => router.push("/checkout"),
+      },
+    );
   };
 
   // Sticky-CTA observer — when the in-page Buy now button scrolls
@@ -271,10 +287,11 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
             )}
           </div>
 
-          {/* Quantity + Add to cart. flex-wrap lets the heart button
-              drop to the next line at <360px so the Buy now button
-              keeps a readable width on very small phones. */}
-          <div ref={ctaSentinelRef} className="pdp-actions flex flex-wrap gap-2 sm:gap-3 items-stretch" style={{ marginBottom: 24 }}>
+          {/* Two-row CTA — Add-to-cart sits in line with qty + heart
+              (the dark/black secondary action); Buy now stretches
+              full-width below in the brand accent so it stands out
+              as the primary "convert now" CTA. */}
+          <div ref={ctaSentinelRef} className="pdp-actions flex flex-wrap gap-2 sm:gap-3 items-stretch" style={{ marginBottom: 12 }}>
             <div
               className="pdp-qty"
               style={{
@@ -325,7 +342,6 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
             <Btn
               variant="ink"
               size="lg"
-              iconRight={<ArrowRight className="h-5 w-5" />}
               onClick={handleAddToCart}
               disabled={addToCart.isPending || !product.is_in_stock}
               className="pdp-cta"
@@ -335,8 +351,6 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                 ? t("product.outOfStock", "Out of stock")
                 : addToCart.isPending
                 ? t("product.adding", "Adding…")
-                : !isAuthenticated
-                ? t("product.buyNow", "Buy now")
                 : t("product.addToCart", "Add to cart")}
             </Btn>
             <button
@@ -363,6 +377,23 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
               />
             </button>
           </div>
+
+          {/* Primary CTA — full-width Buy now in the brand accent.
+              Adds to cart + jumps straight to /checkout. The dark
+              "Add to cart" above is for visitors who want to keep
+              browsing; this is the conversion shortcut. */}
+          <Btn
+            variant="primary"
+            size="lg"
+            iconRight={<ArrowRight className="h-5 w-5" />}
+            onClick={handleBuyNow}
+            disabled={addToCart.isPending || !product.is_in_stock}
+            style={{ width: "100%", marginBottom: 24 }}
+          >
+            {!product.is_in_stock
+              ? t("product.outOfStock", "Out of stock")
+              : t("product.buyNow", "Buy now")}
+          </Btn>
 
           {/* Trust strip — 3 columns on tablet/desktop, single column
               on phones so the labels don't get cropped. */}
@@ -505,18 +536,16 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
           )}
         </div>
         <Btn
-          variant="ink"
+          variant="primary"
           size="md"
           iconRight={<ArrowRight className="h-4 w-4" />}
-          onClick={handleAddToCart}
+          onClick={handleBuyNow}
           disabled={addToCart.isPending || !product.is_in_stock}
           style={{ flex: 1 }}
         >
           {!product.is_in_stock
             ? t("product.outOfStock", "Out of stock")
-            : !isAuthenticated
-            ? t("product.buyNow", "Buy now")
-            : t("product.addToCart", "Add to cart")}
+            : t("product.buyNow", "Buy now")}
         </Btn>
       </div>
     </div>
