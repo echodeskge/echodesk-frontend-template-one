@@ -171,8 +171,13 @@ export function VoltageCheckoutPage() {
   const [selectedFeeId, setSelectedFeeId] = useState<string | null>(null);
 
   // Step 3 state — payment options gated on delivery method.
-  // Cash is allowed only on pickup; courier orders must be card.
-  const showCod = deliveryMethod === "pickup" && showCodTenant;
+  // Pickup always allows cash (customer hands the cash over at the
+  // shop counter). Courier always forbids cash. The tenant-level
+  // `enable_cash_on_delivery` flag is now overridden by delivery
+  // method since the cash-on-courier scenario it used to gate is
+  // already rejected by the backend rule.
+  const showCod = deliveryMethod === "pickup";
+  void showCodTenant;
   const initialPay: "cod" | "card" = showCod ? "cod" : showCard ? "card" : "cod";
   const [pay, setPay] = useState<"cod" | "card">(initialPay);
   // If the visitor switches delivery method and their currently-selected
