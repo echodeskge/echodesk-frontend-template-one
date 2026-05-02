@@ -388,6 +388,11 @@ export interface StorefrontConfig {
    * the standard Clarity tag on every page so the tenant can see
    * heatmaps + session recordings at clarity.microsoft.com. */
   clarityProjectId: string | null;
+  /** Google Maps JavaScript API key (Places + Maps enabled). When
+   * set, the address pickers throughout the storefront use Google
+   * Maps + Places Autocomplete instead of Leaflet/OSM. Per-tenant
+   * billing — each merchant manages their own GCP project. */
+  googleMapsApiKey: string | null;
   /** Pickup option — non-null when the tenant has enabled "Pickup at
    * store" and configured a pickup address. Storefront uses this to
    * show the "Pickup at store" choice in checkout step 1 and render
@@ -416,13 +421,14 @@ const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
   googleAdsPurchaseLabel: null,
   googleAnalyticsId: null,
   clarityProjectId: null,
+  googleMapsApiKey: null,
   pickup: null,
 };
 
 export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
   try {
     const response = await serverFetch<{
-      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel" | "googleAnalyticsId" | "clarityProjectId" | "pickup">>;
+      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel" | "googleAnalyticsId" | "clarityProjectId" | "googleMapsApiKey" | "pickup">>;
       store_name?: string;
       chat_widget?: { token?: string | null };
       analytics?: {
@@ -430,6 +436,9 @@ export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
         google_ads_purchase_label?: string | null;
         google_analytics_id?: string | null;
         clarity_project_id?: string | null;
+      };
+      maps?: {
+        google_maps_api_key?: string | null;
       };
       pickup?: {
         enabled?: boolean;
@@ -456,6 +465,7 @@ export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
       googleAdsPurchaseLabel: response.analytics?.google_ads_purchase_label || null,
       googleAnalyticsId: response.analytics?.google_analytics_id || null,
       clarityProjectId: response.analytics?.clarity_project_id || null,
+      googleMapsApiKey: response.maps?.google_maps_api_key || null,
       pickup: pickup?.enabled
         ? {
             address: pickup.address || "",

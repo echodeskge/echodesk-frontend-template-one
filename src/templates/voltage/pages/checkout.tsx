@@ -52,7 +52,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Btn, Pill } from "../components";
 import { useTranslate } from "../use-translate";
-import { AddressMapPicker } from "@/components/checkout/address-map-picker";
+import { SmartAddressPicker } from "@/components/checkout/smart-address-picker";
 import { useStorefrontConfig } from "@/contexts/storefront-config-context";
 
 interface NormalizedItem {
@@ -143,7 +143,7 @@ export function VoltageCheckoutPage() {
 
   // Pickup config from server-decided storefront config (set by the
   // SSR pass on the layout). Non-null = tenant offers pickup.
-  const { pickup: pickupConfig } = useStorefrontConfig();
+  const { pickup: pickupConfig, googleMapsApiKey } = useStorefrontConfig();
 
   // Step state
   const [step, setStep] = useState<Step>(1);
@@ -763,12 +763,19 @@ export function VoltageCheckoutPage() {
                           {t("checkout.dropPin", "Drop a pin on the delivery point")}
                           <span style={{ color: "var(--accent)", marginLeft: 4 }}>*</span>
                         </div>
-                        <AddressMapPicker
+                        <SmartAddressPicker
                           latitude={pinLat}
                           longitude={pinLng}
                           onChange={(lat, lng) => {
                             setPinLat(lat);
                             setPinLng(lng);
+                          }}
+                          onAddressSelected={(resolved) => {
+                            // Auto-fill the address + city fields when
+                            // the visitor picks a Google Places
+                            // suggestion. They can still edit either.
+                            if (resolved.street) setAddress(resolved.street);
+                            if (resolved.city) setCity(resolved.city);
                           }}
                           heightPx={280}
                           helperText={

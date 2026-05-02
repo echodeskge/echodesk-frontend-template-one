@@ -48,7 +48,7 @@ import {
   ClipboardList,
   Tag,
 } from "lucide-react";
-import { AddressMapPicker } from "@/components/checkout/address-map-picker";
+import { SmartAddressPicker } from "@/components/checkout/smart-address-picker";
 
 interface SavedCard {
   id: number;
@@ -1050,7 +1050,7 @@ export default function CheckoutPage() {
                               "We need an exact location to give you a courier price. Click the map to drop a pin where the courier should deliver."}
                           </p>
                         </div>
-                        <AddressMapPicker
+                        <SmartAddressPicker
                           latitude={pendingPinLat}
                           longitude={pendingPinLng}
                           onChange={(lat, lng) => {
@@ -1243,12 +1243,20 @@ export default function CheckoutPage() {
                             {t("addresses.mapPinHelper") ||
                               "The courier needs an exact location to deliver to your door. Click the map to drop a pin, then drag to refine."}
                           </p>
-                          <AddressMapPicker
+                          <SmartAddressPicker
                             latitude={newAddressLat}
                             longitude={newAddressLng}
                             onChange={(lat, lng) => {
                               setNewAddressLat(lat);
                               setNewAddressLng(lng);
+                            }}
+                            onAddressSelected={(resolved) => {
+                              if (resolved.street) {
+                                setNewAddress((prev) => ({ ...prev, address: resolved.street }));
+                              }
+                              if (resolved.city) {
+                                setNewAddress((prev) => ({ ...prev, city: resolved.city }));
+                              }
                             }}
                           />
                         </div>
