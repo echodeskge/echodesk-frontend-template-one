@@ -1054,11 +1054,12 @@ export function VoltageCheckoutPage() {
                     <PayOption
                       checked={pay === "card"}
                       onClick={() => setPay("card")}
-                      label={t("checkout.cardPayment", "Card · Bank of Georgia")}
+                      label={t("checkout.cardPayment", "Card payment")}
                       hint={t(
                         "checkout.cardHint",
-                        "Secure 3-D checkout — you'll be redirected to BOG.",
+                        "Secure 3-D checkout — Visa, Mastercard, Amex accepted.",
                       )}
+                      trailing={<CardBrands />}
                     />
                   )}
                 </div>
@@ -1444,11 +1445,15 @@ function PayOption({
   onClick,
   label,
   hint,
+  trailing,
 }: {
   checked: boolean;
   onClick: () => void;
   label: string;
   hint: string;
+  /** Optional element rendered to the right of the label — used to
+   * surface card brand pills (Visa / MC / Amex) on the card option. */
+  trailing?: React.ReactNode;
 }) {
   return (
     <button
@@ -1496,10 +1501,46 @@ function PayOption({
             />
           )}
         </span>
-        {label}
+        <span style={{ flex: 1 }}>{label}</span>
+        {trailing}
       </div>
       <div style={{ fontSize: 12, opacity: 0.7, paddingLeft: 26 }}>{hint}</div>
     </button>
+  );
+}
+
+/** Card brand pills rendered next to the "Card payment" option. The
+ *  exact bank that processes the payment (BOG, TBC, etc.) is an
+ *  implementation detail — the customer just needs to know which
+ *  cards are accepted. */
+function CardBrands() {
+  const pill = (bg: string, label: string) => (
+    <span
+      key={label}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 22,
+        padding: "0 8px",
+        borderRadius: 4,
+        background: bg,
+        color: "white",
+        fontSize: 10,
+        fontWeight: 800,
+        letterSpacing: "0.04em",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
+      {label}
+    </span>
+  );
+  return (
+    <div style={{ display: "flex", gap: 4, flexShrink: 0 }} aria-hidden>
+      {pill("#1a1f71", "VISA")}
+      {pill("#eb001b", "MC")}
+      {pill("#006fcf", "AMEX")}
+    </div>
   );
 }
 
