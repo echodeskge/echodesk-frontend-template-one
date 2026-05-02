@@ -23,7 +23,7 @@
  * pin is dropped.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -147,6 +147,31 @@ export function VoltageCheckoutPage() {
 
   // Step state
   const [step, setStep] = useState<Step>(1);
+  const formTopRef = useRef<HTMLDivElement | null>(null);
+
+  // Smooth-scroll the form column to the top of the viewport so the
+  // visitor sees the new step's heading instead of being stranded
+  // mid-page after tapping Continue. Uses rAF to wait for the new
+  // step's content to mount before measuring the scroll target.
+  const scrollToFormTop = () => {
+    requestAnimationFrame(() => {
+      const el = formTopRef.current;
+      if (!el) return;
+      // Header is sticky at top:0 with a height around 60-72px;
+      // offset the scroll so the form's top isn't tucked under it.
+      const offset = 80;
+      const y = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    });
+  };
+
+  // Whenever the step changes (forward or backward), scroll up.
+  useEffect(() => {
+    scrollToFormTop();
+    // Scroll exactly when step transitions; we don't need this on
+    // any other dep change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // Delivery method — courier vs pickup. Default to courier when the
   // tenant has Quickshipper, pickup when only pickup is configured.
@@ -578,7 +603,7 @@ export function VoltageCheckoutPage() {
         }}
       >
         {/* Left — stepped form */}
-        <div style={{ display: "grid", gap: 20 }}>
+        <div ref={formTopRef} style={{ display: "grid", gap: 20 }}>
           <h1
             className="display"
             style={{
