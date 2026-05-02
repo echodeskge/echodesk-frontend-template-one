@@ -376,12 +376,14 @@ export interface StorefrontConfig {
    * snippet. */
   chatWidgetToken: string | null;
   /** Per-tenant Google Ads / GA4 tracking. The storefront only injects
-   * gtag.js when `googleAdsConversionId` is non-empty. The
-   * `purchase` conversion event on /order-confirmation only fires when
-   * BOTH id + label are set — the label is the conversion-action
-   * suffix that turns the bootstrap script into an actual conversion. */
+   * gtag.js when at least one of `googleAdsConversionId` /
+   * `googleAnalyticsId` is non-empty. The `purchase` conversion
+   * event on /order-confirmation only fires when both Google Ads
+   * id + label are set — the label is the conversion-action suffix
+   * that turns the bootstrap script into an actual conversion. */
   googleAdsConversionId: string | null;
   googleAdsPurchaseLabel: string | null;
+  googleAnalyticsId: string | null;
   /** Pickup option — non-null when the tenant has enabled "Pickup at
    * store" and configured a pickup address. Storefront uses this to
    * show the "Pickup at store" choice in checkout step 1 and render
@@ -408,18 +410,20 @@ const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
   chatWidgetToken: null,
   googleAdsConversionId: null,
   googleAdsPurchaseLabel: null,
+  googleAnalyticsId: null,
   pickup: null,
 };
 
 export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
   try {
     const response = await serverFetch<{
-      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel" | "pickup">>;
+      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel" | "googleAnalyticsId" | "pickup">>;
       store_name?: string;
       chat_widget?: { token?: string | null };
       analytics?: {
         google_ads_conversion_id?: string | null;
         google_ads_purchase_label?: string | null;
+        google_analytics_id?: string | null;
       };
       pickup?: {
         enabled?: boolean;
@@ -444,6 +448,7 @@ export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
       chatWidgetToken: response.chat_widget?.token ?? null,
       googleAdsConversionId: response.analytics?.google_ads_conversion_id || null,
       googleAdsPurchaseLabel: response.analytics?.google_ads_purchase_label || null,
+      googleAnalyticsId: response.analytics?.google_analytics_id || null,
       pickup: pickup?.enabled
         ? {
             address: pickup.address || "",

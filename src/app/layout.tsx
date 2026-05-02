@@ -198,16 +198,19 @@ export default async function RootLayout({
             src={`https://echodesk.ge/widget.js?t=${encodeURIComponent(storefront.chatWidgetToken)}`}
           />
         )}
-        {/* Google Ads / GA4 — bootstrap loads only when the tenant has
-            configured a conversion ID in admin → Ecommerce → Marketing.
-            Tenants without it don't ship any analytics scripts. The
-            `purchase` event itself fires from /order-confirmation when
-            the order details load (see VoltageOrderConfirmationPage). */}
-        {storefront.googleAdsConversionId && (
+        {/* Google Ads + GA4 — bootstrap loads only when the tenant has
+            configured at least one of (Ads conversion ID, GA4
+            measurement ID) in admin → Ecommerce → Marketing. Tenants
+            without either don't ship any analytics scripts. Both
+            products use the same gtag.js library, so we load it once
+            and call `gtag('config', ...)` per ID. The `purchase`
+            event itself fires from /order-confirmation when the
+            order details load. */}
+        {(storefront.googleAdsConversionId || storefront.googleAnalyticsId) && (
           <>
             <script
               async
-              src={`https://www.googletagmanager.com/gtag/js?id=${storefront.googleAdsConversionId}`}
+              src={`https://www.googletagmanager.com/gtag/js?id=${storefront.googleAdsConversionId || storefront.googleAnalyticsId}`}
             />
             <script
               dangerouslySetInnerHTML={{
@@ -215,7 +218,8 @@ export default async function RootLayout({
                   window.dataLayer = window.dataLayer || [];
                   function gtag(){dataLayer.push(arguments);}
                   gtag('js', new Date());
-                  gtag('config', '${storefront.googleAdsConversionId}');
+                  ${storefront.googleAdsConversionId ? `gtag('config', '${storefront.googleAdsConversionId}');` : ''}
+                  ${storefront.googleAnalyticsId ? `gtag('config', '${storefront.googleAnalyticsId}');` : ''}
                 `,
               }}
             />
