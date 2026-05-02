@@ -107,10 +107,12 @@ export default async function ProductOpengraphImage({
   const rawImageUrl = splitImage(product.image);
 
   // Pre-fetch the product photo server-side and inline as a data URL.
-  // Running on Node runtime (see export const runtime above) so
-  // Buffer + native fetch are both reliable. Inlining bypasses the
-  // Satori-internal image fetch path that was silently failing for
-  // every WebP from the DigitalOcean Spaces CDN.
+  // Satori (the renderer behind next/og) can only decode JPEG and PNG
+  // natively — WebP/AVIF bytes blow up the entire ImageResponse with
+  // a 500. DigitalOcean Spaces serves every product photo as WebP, so
+  // we sniff the magic bytes and skip the inline when the format
+  // isn't supported. The card then renders the placeholder letter
+  // half instead of breaking the OG card entirely.
   let imageDataUrl: string | null = null;
   if (rawImageUrl) {
     try {
@@ -120,12 +122,15 @@ export default async function ProductOpengraphImage({
       clearTimeout(timer);
       if (res.ok) {
         const buf = Buffer.from(await res.arrayBuffer());
-        // Some social previewers struggle with image/webp inside a PNG
-        // OG card. Pretend the bytes are a JPEG — Satori auto-decodes
-        // the actual format from magic bytes regardless of the MIME
-        // claimed in the data URL.
-        const mime = res.headers.get("content-type") || "image/jpeg";
-        imageDataUrl = `data:${mime};base64,${buf.toString("base64")}`;
+        // Magic-byte sniff: JPEG (FF D8 FF) and PNG (89 50 4E 47).
+        // Anything else (WebP "RIFF…WEBP", AVIF, etc.) — skip.
+        const isJpeg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+        const isPng =
+          buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+        if (isJpeg || isPng) {
+          const mime = isJpeg ? "image/jpeg" : "image/png";
+          imageDataUrl = `data:${mime};base64,${buf.toString("base64")}`;
+        }
       }
     } catch {
       /* fall through to placeholder letter */
@@ -133,6 +138,7 @@ export default async function ProductOpengraphImage({
   }
   void baseUrl;
 
+  try {
   return new ImageResponse(
     (
       <div
@@ -264,4 +270,30 @@ export default async function ProductOpengraphImage({
     ),
     { ...size },
   );
+  } catch {
+    // Last-resort safety net: if the rich card blows up for any reason
+    // (font loading, RSC payload edge case, etc.), still return *something*
+    // so social scrapers don't 500 and the share preview isn't blank.
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#f7e98a",
+            fontSize: 96,
+            fontWeight: 800,
+            color: "#1a1a2e",
+            letterSpacing: "-0.04em",
+          }}
+        >
+          {storeName}.
+        </div>
+      ),
+      { ...size },
+    );
+  }
 }
