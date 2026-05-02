@@ -270,39 +270,22 @@ export default async function ProductOpengraphImage({
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
-              gap: 14,
+              alignItems: "center",
+              gap: 16,
+              paddingLeft: 28,
+              paddingRight: 28,
+              paddingTop: 14,
+              paddingBottom: 14,
+              background: "#f7e98a",
+              color: "#1a1a2e",
+              borderRadius: 999,
+              fontSize: 28,
+              fontWeight: 800,
+              letterSpacing: "-0.01em",
+              alignSelf: "flex-start",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 16,
-                paddingLeft: 28,
-                paddingRight: 28,
-                paddingTop: 14,
-                paddingBottom: 14,
-                background: "#f7e98a",
-                color: "#1a1a2e",
-                borderRadius: 999,
-                fontSize: 28,
-                fontWeight: 800,
-                letterSpacing: "-0.01em",
-                alignSelf: "flex-start",
-              }}
-            >
-              Buy now →
-            </div>
-            <div
-              style={{
-                fontSize: 18,
-                opacity: 0.6,
-                letterSpacing: "0.04em",
-              }}
-            >
-              Free same-day delivery in Tbilisi
-            </div>
+            Buy now →
           </div>
         </div>
       </div>
