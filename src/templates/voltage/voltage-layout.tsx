@@ -59,7 +59,10 @@ export function VoltageLayout({ children }: VoltageLayoutProps) {
         {children}
       </main>
       <VoltageFooter storeName={config.store?.name || "Storefront"} />
-      <VoltageCookieConsent />
+      {/* Cookie consent banner — temporarily hidden. Re-enable by
+          un-commenting the line below when you're ready to ship the
+          banner again. The component itself is preserved. */}
+      {/* <VoltageCookieConsent /> */}
     </div>
   );
 }

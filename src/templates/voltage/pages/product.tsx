@@ -87,7 +87,11 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
+      // Guests jump straight to /checkout — fewer clicks to a sale.
+      // The cart UI is a step they don't need; the checkout's order
+      // summary already shows the item.
       guestCart.addItem(product.id, qty);
+      router.push("/checkout");
       return;
     }
     if (!cart?.id) return;
@@ -302,6 +306,8 @@ export function VoltageProductPage({ product }: VoltageProductPageProps) {
                 ? t("product.outOfStock", "Out of stock")
                 : addToCart.isPending
                 ? t("product.adding", "Adding…")
+                : !isAuthenticated
+                ? t("product.buyNow", "Buy now")
                 : t("product.addToCart", "Add to cart")}
             </Btn>
             <button

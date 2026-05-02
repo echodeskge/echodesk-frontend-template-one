@@ -252,7 +252,11 @@ export default async function RootLayout({
                     <StoreConfigProvider initialShopName={storefront.storeName}>
                       {children}
                       <Toaster position="bottom-right" />
-                      <CookieConsent />
+                      {/* Cookie consent banner — temporarily hidden.
+                          Re-enable by un-commenting <CookieConsent />
+                          when you're ready to ship the banner again.
+                          The component itself is preserved. */}
+                      {/* <CookieConsent /> */}
                       <ThemeSwitcher />
                     </StoreConfigProvider>
                   </LanguageProvider>
