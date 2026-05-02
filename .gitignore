@@ -41,3 +41,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Google Cloud OAuth client JSONs (must never be committed)
+client_secret_*.json
+*.client_secret.json
