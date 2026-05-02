@@ -1509,37 +1509,35 @@ function PayOption({
   );
 }
 
-/** Card brand pills rendered next to the "Card payment" option. The
+/** Card brand logos rendered next to the "Card payment" option. The
  *  exact bank that processes the payment (BOG, TBC, etc.) is an
  *  implementation detail — the customer just needs to know which
- *  cards are accepted. */
+ *  cards are accepted. Real brand SVGs sit in /public/brands/. */
 function CardBrands() {
-  const pill = (bg: string, label: string) => (
-    <span
-      key={label}
+  // eslint-disable-next-line @next/next/no-img-element
+  const logo = (src: string, alt: string, w: number) => (
+    <img
+      key={alt}
+      src={src}
+      alt={alt}
+      width={w}
+      height={20}
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: 22,
-        padding: "0 8px",
+        height: 20,
+        width: "auto",
+        background: "white",
+        border: "1px solid var(--line)",
         borderRadius: 4,
-        background: bg,
-        color: "white",
-        fontSize: 10,
-        fontWeight: 800,
-        letterSpacing: "0.04em",
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        padding: "2px 4px",
+        display: "block",
       }}
-    >
-      {label}
-    </span>
+    />
   );
   return (
-    <div style={{ display: "flex", gap: 4, flexShrink: 0 }} aria-hidden>
-      {pill("#1a1f71", "VISA")}
-      {pill("#eb001b", "MC")}
-      {pill("#006fcf", "AMEX")}
+    <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }} aria-hidden>
+      {logo("/brands/visa.svg", "Visa", 36)}
+      {logo("/brands/mastercard.svg", "Mastercard", 28)}
+      {logo("/brands/amex.svg", "American Express", 30)}
     </div>
   );
 }
