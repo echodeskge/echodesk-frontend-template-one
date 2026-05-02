@@ -3,6 +3,14 @@ import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 
 // Store tenant API URL set by TenantProvider
 let _tenantApiUrl: string | null = null;
 
+// Module-scoped flags used by the response interceptor to avoid
+// concurrent / recursive refresh attempts and double-redirect storms.
+// `refreshPromise` lets many in-flight 401'd requests share a single
+// refresh call. `signedOutOnce` ensures the terminal-failure cleanup
+// (clear tokens + signOut + redirect) runs at most once per page.
+let refreshPromise: Promise<string> | null = null;
+let signedOutOnce = false;
+
 /**
  * Set the tenant API URL (called by TenantProvider on client-side)
  * This allows axios to use the correct API URL for the current tenant
@@ -100,16 +108,36 @@ const createAxiosInstance = (baseURL?: string): AxiosInstance => {
     }
   );
 
-  // Response interceptor for error handling and token refresh
+  // Response interceptor for error handling and token refresh.
+  //
+  // Refresh-loop safety:
+  //   `_retry` flag prevents the same original request from triggering
+  //   another refresh attempt after one has already happened on it.
+  //   `isRefreshing` (module-scoped below) prevents *concurrent* refresh
+  //   attempts from many in-flight requests landing 401 at once. The
+  //   refresh-token URL is also skipped explicitly so a 401 on the
+  //   refresh call itself can't re-enter this branch.
+  //
+  // On terminal refresh failure we have to wipe BOTH layers of session
+  // state — localStorage *and* the NextAuth session cookie. Wiping
+  // only localStorage left the cookie as a "phantom logged-in" signal
+  // that the middleware would honour, redirecting /login → / on every
+  // load and bouncing the visitor in an infinite loop.
   instance.interceptors.response.use(
     (response: AxiosResponse) => {
       return response;
     },
     async (error) => {
       const originalRequest = error.config;
+      const isRefreshCall = (originalRequest?.url || '').includes(
+        '/refresh-token/',
+      );
 
-      // Handle 401 - attempt token refresh
-      if (error.response?.status === 401 && !originalRequest._retry) {
+      if (
+        error.response?.status === 401 &&
+        !originalRequest._retry &&
+        !isRefreshCall
+      ) {
         originalRequest._retry = true;
 
         try {
@@ -117,34 +145,59 @@ const createAxiosInstance = (baseURL?: string): AxiosInstance => {
             ? localStorage.getItem('ecommerce_refresh_token')
             : null;
 
-          if (refreshToken) {
-            const response = await axios.post(
-              `${getApiUrl()}/api/ecommerce/clients/refresh-token/`,
-              { refresh: refreshToken }
-            );
-
-            const { access } = response.data;
-
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('ecommerce_access_token', access);
-            }
-
-            // Retry original request with new token
-            originalRequest.headers.Authorization = `Bearer ${access}`;
-            return instance(originalRequest);
+          if (!refreshToken) {
+            // No refresh token at all → don't try to refresh, don't
+            // wipe state (visitor was already a guest), just propagate
+            // the 401 so the caller can decide what to do.
+            return Promise.reject(error);
           }
-        } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
+
+          // Dedupe concurrent refreshes — many in-flight requests will
+          // 401 simultaneously after a token expires; wait for one
+          // shared refresh promise instead of firing N parallel ones.
+          if (!refreshPromise) {
+            refreshPromise = axios
+              .post(
+                `${getApiUrl()}/api/ecommerce/clients/refresh-token/`,
+                { refresh: refreshToken },
+              )
+              .then((res) => res.data.access as string)
+              .finally(() => {
+                refreshPromise = null;
+              });
+          }
+          const access = await refreshPromise;
+
           if (typeof window !== 'undefined') {
+            localStorage.setItem('ecommerce_access_token', access);
+          }
+
+          // Retry original request with new token
+          originalRequest.headers.Authorization = `Bearer ${access}`;
+          return instance(originalRequest);
+        } catch (refreshError) {
+          // Refresh failed terminally — wipe both layers of session
+          // state and bounce to /login exactly once. The flag stops
+          // any other in-flight 401 handlers from also redirecting.
+          if (typeof window !== 'undefined' && !signedOutOnce) {
+            signedOutOnce = true;
             localStorage.removeItem('ecommerce_access_token');
             localStorage.removeItem('ecommerce_refresh_token');
             localStorage.removeItem('ecommerce_user');
-
-            // Redirect to login
+            // Kill the NextAuth session cookie too — otherwise the
+            // edge middleware reads it as "authenticated" and
+            // redirects /login → / in a loop.
+            try {
+              const { signOut } = await import('next-auth/react');
+              await signOut({ redirect: false });
+            } catch {
+              /* signOut import / call failed — non-fatal */
+            }
             if (!window.location.pathname.includes('/login')) {
-              window.location.href = '/login';
+              window.location.replace('/login');
             }
           }
+          return Promise.reject(refreshError);
         }
       }
 

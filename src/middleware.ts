@@ -218,10 +218,17 @@ function handleAuthRoutes(
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages — but only when
+  // they landed there organically. If `?callbackUrl=` is set, they
+  // were *just* bounced here by a failed auth check, which means the
+  // session cookie probably outlived the access/refresh tokens. Don't
+  // yank them straight back out — that's exactly the loop pattern.
+  // Letting them sit on /login lets the page's signOut + sign-in form
+  // resolve the stale-cookie state.
   const isAuthRoute = authRoutes.some((route) => pathname === route);
+  const hasCallbackUrl = req.nextUrl.searchParams.has("callbackUrl");
 
-  if (isAuthRoute && isAuthenticated) {
+  if (isAuthRoute && isAuthenticated && !hasCallbackUrl) {
     const homeUrl = req.nextUrl.clone();
     homeUrl.pathname = "/";
     homeUrl.search = "";
