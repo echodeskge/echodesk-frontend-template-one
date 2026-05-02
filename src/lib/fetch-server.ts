@@ -375,6 +375,13 @@ export interface StorefrontConfig {
    * see the chat bubble automatically without the tenant pasting any
    * snippet. */
   chatWidgetToken: string | null;
+  /** Per-tenant Google Ads / GA4 tracking. The storefront only injects
+   * gtag.js when `googleAdsConversionId` is non-empty. The
+   * `purchase` conversion event on /order-confirmation only fires when
+   * BOTH id + label are set — the label is the conversion-action
+   * suffix that turns the bootstrap script into an actual conversion. */
+  googleAdsConversionId: string | null;
+  googleAdsPurchaseLabel: string | null;
 }
 
 const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
@@ -388,14 +395,20 @@ const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
   },
   storeName: null,
   chatWidgetToken: null,
+  googleAdsConversionId: null,
+  googleAdsPurchaseLabel: null,
 };
 
 export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
   try {
     const response = await serverFetch<{
-      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken">>;
+      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel">>;
       store_name?: string;
       chat_widget?: { token?: string | null };
+      analytics?: {
+        google_ads_conversion_id?: string | null;
+        google_ads_purchase_label?: string | null;
+      };
     }>("/api/ecommerce/client/theme/", {
       next: { revalidate: 300, tags: ["storefront-config"] },
     });
@@ -408,6 +421,8 @@ export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
       },
       storeName: response.store_name ?? null,
       chatWidgetToken: response.chat_widget?.token ?? null,
+      googleAdsConversionId: response.analytics?.google_ads_conversion_id || null,
+      googleAdsPurchaseLabel: response.analytics?.google_ads_purchase_label || null,
     };
   } catch (error) {
     console.error("Error fetching storefront config:", error);

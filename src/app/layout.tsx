@@ -198,6 +198,29 @@ export default async function RootLayout({
             src={`https://echodesk.ge/widget.js?t=${encodeURIComponent(storefront.chatWidgetToken)}`}
           />
         )}
+        {/* Google Ads / GA4 — bootstrap loads only when the tenant has
+            configured a conversion ID in admin → Ecommerce → Marketing.
+            Tenants without it don't ship any analytics scripts. The
+            `purchase` event itself fires from /order-confirmation when
+            the order details load (see VoltageOrderConfirmationPage). */}
+        {storefront.googleAdsConversionId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${storefront.googleAdsConversionId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${storefront.googleAdsConversionId}');
+                `,
+              }}
+            />
+          </>
+        )}
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <TenantProvider config={tenantConfig}>

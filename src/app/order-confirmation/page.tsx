@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { StoreLayout } from "@/components/layout/store-layout";
@@ -14,6 +14,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { useOrder } from "@/hooks/use-orders";
 import { formatPrice } from "@/lib/store-config";
 import { useStorefrontTemplate } from "@/hooks/use-storefront-template";
+import { useStorefrontConfig } from "@/contexts/storefront-config-context";
 import { VoltageOrderConfirmationPage } from "@/templates/voltage/pages/order-confirmation";
 import {
   CheckCircle,
@@ -36,6 +37,7 @@ function OrderConfirmationContent() {
   const config = useStoreConfig();
   const { t, getLocalizedValue } = useLanguage();
   const { template } = useStorefrontTemplate();
+  const { googleAdsConversionId, googleAdsPurchaseLabel } = useStorefrontConfig();
 
   const { data: order, isLoading, isError } = useOrder(orderId, publicToken);
 
@@ -52,6 +54,29 @@ function OrderConfirmationContent() {
       router.push("/");
     }
   }, [isError, isLoading, router]);
+
+  // Fire Google Ads `purchase` conversion event once per order. Only
+  // runs when the tenant has both conversion_id + purchase_label
+  // configured AND we have a paid/confirmed order. The `firedRef`
+  // gate prevents double-firing if the user refreshes the page or
+  // React strict-mode re-runs the effect.
+  const firedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!order || !googleAdsConversionId || !googleAdsPurchaseLabel) return;
+    const transactionId = String(order.order_number || order.id || "");
+    if (!transactionId || firedRef.current === transactionId) return;
+    if (typeof window === "undefined") return;
+    const w = window as unknown as { gtag?: (...args: unknown[]) => void };
+    if (typeof w.gtag !== "function") return;
+    const value = Number(order.total_amount) || 0;
+    w.gtag("event", "conversion", {
+      send_to: `${googleAdsConversionId}/${googleAdsPurchaseLabel}`,
+      value,
+      currency: "GEL",
+      transaction_id: transactionId,
+    });
+    firedRef.current = transactionId;
+  }, [order, googleAdsConversionId, googleAdsPurchaseLabel]);
 
   if (!orderId) {
     return null;
