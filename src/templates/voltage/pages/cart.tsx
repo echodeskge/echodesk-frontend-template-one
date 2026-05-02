@@ -51,9 +51,12 @@ export function VoltageCartPage() {
       }));
   const isLoading = isAuthenticated ? backendLoading : guestCart.isLoading;
   const subtotal = items.reduce((s, it) => s + it.subtotal, 0);
-  const ship = subtotal > 99 ? 0 : 9;
-  const tax = Math.round(subtotal * 0.08);
-  const total = subtotal + ship + tax;
+  // Cart is pre-checkout — we don't know the delivery method or address
+  // yet, and Georgian retail prices already include 18% VAT, so don't
+  // fabricate a "Tax" line. Shipping shows as "Calculated at checkout"
+  // and the total mirrors the subtotal until the visitor picks an
+  // address + courier on /checkout.
+  const total = subtotal;
 
   const localized = (val: unknown): string => {
     if (typeof val === "string") return val;
@@ -269,9 +272,8 @@ export function VoltageCartPage() {
                 <SummaryRow label={t("cart.subtotal", "Subtotal")} value={`${subtotal.toFixed(0)}₾`} />
                 <SummaryRow
                   label={t("cart.shipping", "Shipping")}
-                  value={ship === 0 ? (t("cart.free", "FREE")) : `${ship}₾`}
+                  value={t("cart.shippingPending", "Calculated at checkout")}
                 />
-                <SummaryRow label={t("cart.tax", "Tax")} value={`${tax}₾`} />
                 <div
                   style={{
                     height: 1.5,
@@ -286,6 +288,9 @@ export function VoltageCartPage() {
                   <span className="display" style={{ fontSize: 28 }}>
                     {total.toFixed(0)}₾
                   </span>
+                </div>
+                <div style={{ fontSize: 11, opacity: 0.55, textAlign: "right" }}>
+                  {t("cart.totalHint", "+ shipping (added at checkout)")}
                 </div>
               </div>
               <Btn

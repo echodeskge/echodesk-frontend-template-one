@@ -82,10 +82,11 @@ const createAxiosInstance = (baseURL?: string): AxiosInstance => {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
 
-      // Add origin header for CORS
-      if (typeof window !== 'undefined' && config.headers) {
-        config.headers.Origin = window.location.origin;
-      }
+      // Note: `Origin` is a browser-controlled header — manually setting
+      // it triggers a "Refused to set unsafe header" warning and is a
+      // no-op. The browser already sends it automatically based on the
+      // page's URL. The backend reads request.META["HTTP_ORIGIN"] which
+      // works fine without us touching it.
 
       // Remove default Content-Type for FormData requests
       if (config.data instanceof FormData && config.headers) {
