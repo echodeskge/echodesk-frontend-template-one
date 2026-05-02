@@ -310,7 +310,7 @@ export function VoltageCartPage() {
                   textAlign: "center",
                 }}
               >
-                {t("cart.fineprint", "Free shipping on orders over 100₾ · 30-day returns · 1-month warranty")}
+                {t("cart.fineprint", "30-day returns · 1-month warranty · Same-day Tbilisi delivery")}
               </div>
             </aside>
           </div>

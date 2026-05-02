@@ -252,7 +252,7 @@ export function VoltageHomePage({ featuredProducts, itemLists }: VoltageHomePage
               <div style={{ fontSize: 11 }}>
                 {featuredProducts.length > 0
                   ? `${featuredProducts.length}+ ${t("home.productsCount", "products")}`
-                  : t("home.heroPriceTagFallback", "Free same-day delivery")}
+                  : t("home.heroPriceTagFallback", "Same-day Tbilisi delivery")}
               </div>
             </div>
           </div>
