@@ -384,6 +384,10 @@ export interface StorefrontConfig {
   googleAdsConversionId: string | null;
   googleAdsPurchaseLabel: string | null;
   googleAnalyticsId: string | null;
+  /** Microsoft Clarity project ID. When set the storefront drops in
+   * the standard Clarity tag on every page so the tenant can see
+   * heatmaps + session recordings at clarity.microsoft.com. */
+  clarityProjectId: string | null;
   /** Pickup option — non-null when the tenant has enabled "Pickup at
    * store" and configured a pickup address. Storefront uses this to
    * show the "Pickup at store" choice in checkout step 1 and render
@@ -411,19 +415,21 @@ const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
   googleAdsConversionId: null,
   googleAdsPurchaseLabel: null,
   googleAnalyticsId: null,
+  clarityProjectId: null,
   pickup: null,
 };
 
 export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
   try {
     const response = await serverFetch<{
-      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel" | "googleAnalyticsId" | "pickup">>;
+      storefront?: Partial<Omit<StorefrontConfig, "storeName" | "chatWidgetToken" | "googleAdsConversionId" | "googleAdsPurchaseLabel" | "googleAnalyticsId" | "clarityProjectId" | "pickup">>;
       store_name?: string;
       chat_widget?: { token?: string | null };
       analytics?: {
         google_ads_conversion_id?: string | null;
         google_ads_purchase_label?: string | null;
         google_analytics_id?: string | null;
+        clarity_project_id?: string | null;
       };
       pickup?: {
         enabled?: boolean;
@@ -449,6 +455,7 @@ export async function fetchStorefrontConfig(): Promise<StorefrontConfig> {
       googleAdsConversionId: response.analytics?.google_ads_conversion_id || null,
       googleAdsPurchaseLabel: response.analytics?.google_ads_purchase_label || null,
       googleAnalyticsId: response.analytics?.google_analytics_id || null,
+      clarityProjectId: response.analytics?.clarity_project_id || null,
       pickup: pickup?.enabled
         ? {
             address: pickup.address || "",
