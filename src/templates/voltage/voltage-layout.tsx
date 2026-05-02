@@ -256,7 +256,7 @@ function VoltageHeader() {
             </IconButton>
             <IconButton
               aria-label="Wishlist"
-              className="hidden md:inline-flex"
+              className="max-md:hidden"
               badge={favCount || null}
               onClick={() => router.push("/wishlist")}
             >
@@ -264,7 +264,7 @@ function VoltageHeader() {
             </IconButton>
             <IconButton
               aria-label="Account"
-              className="hidden md:inline-flex"
+              className="max-md:hidden"
               onClick={() => router.push(isAuthenticated ? "/account" : "/login")}
             >
               <User className="h-5 w-5" />
