@@ -523,7 +523,37 @@ export function VoltageCheckoutPage() {
 
   // ---------- render ----------
 
+  // Resolve the current step's primary action so the sticky mobile
+  // bar can mirror it. Same handlers as the in-page Btns.
+  const currentStepAction =
+    step === 1
+      ? {
+          label:
+            deliveryMethod === "pickup"
+              ? t("checkout.continueToPayment", "Continue to payment")
+              : t("checkout.continueToShipping", "Continue to shipping"),
+          onClick: goToStep2,
+          disabled: !step1Valid || createAddress.isPending,
+          loading: createAddress.isPending,
+        }
+      : step === 2
+      ? {
+          label: t("checkout.continueToPayment", "Continue to payment"),
+          onClick: goToStep3,
+          disabled: !step2Valid,
+          loading: false,
+        }
+      : {
+          label: submitting
+            ? t("checkout.placingOrder", "Placing order…")
+            : t("checkout.placeOrder", "Place order"),
+          onClick: placeOrder,
+          disabled: submitting || items.length === 0,
+          loading: submitting,
+        };
+
   return (
+    <>
     <div className="page-enter">
       <div style={{ maxWidth: 1320, margin: "0 auto", padding: "24px 24px 0" }}>
         <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6 }}>
@@ -824,6 +854,7 @@ export function VoltageCheckoutPage() {
               <Btn
                 variant="ink"
                 size="lg"
+                className="checkout-step-cta"
                 iconRight={
                   createAddress.isPending ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -996,6 +1027,7 @@ export function VoltageCheckoutPage() {
                 <Btn
                   variant="ink"
                   size="lg"
+                  className="checkout-step-cta"
                   iconRight={<ArrowRight className="h-5 w-5" />}
                   onClick={goToStep3}
                   disabled={!step2Valid}
@@ -1065,6 +1097,7 @@ export function VoltageCheckoutPage() {
                 <Btn
                   variant="ink"
                   size="lg"
+                  className="checkout-step-cta"
                   iconRight={
                     submitting ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
@@ -1214,6 +1247,40 @@ export function VoltageCheckoutPage() {
         </aside>
       </section>
     </div>
+
+    {/* Sticky checkout CTA — mobile only. Always visible on phones
+        regardless of scroll position. Mirrors whatever step is
+        active and shows the running total inline on the left so
+        the visitor sees what they're committing to. The in-page
+        step buttons (with class `.checkout-step-cta`) are hidden
+        below 720px via voltage.css so this is the only CTA. */}
+    <div className="checkout-sticky-cta" aria-hidden={false}>
+      <div className="checkout-sticky-inner">
+        <div className="checkout-sticky-price">
+          <div className="checkout-sticky-price-label">{t("cart.total", "Total")}</div>
+          <div className="checkout-sticky-price-value">{total.toFixed(0)}₾</div>
+        </div>
+        <Btn
+          variant="ink"
+          size="md"
+          iconRight={
+            currentStepAction.loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : step === 3 ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <ArrowRight className="h-4 w-4" />
+            )
+          }
+          onClick={currentStepAction.onClick}
+          disabled={currentStepAction.disabled}
+          style={{ flex: 1 }}
+        >
+          {currentStepAction.label}
+        </Btn>
+      </div>
+    </div>
+    </>
   );
 }
 
@@ -1318,8 +1385,11 @@ function Card({
 }
 
 function Row({ children }: { children: React.ReactNode }) {
+  // Stack to one column on mobile so each input gets full width;
+  // side-by-side from sm: up so two short fields (e.g. first / last
+  // name) sit on one line.
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {children}
     </div>
   );

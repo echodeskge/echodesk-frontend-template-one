@@ -282,6 +282,59 @@ html[data-template="voltage"][data-theme="rose"]    { --accent: oklch(0.68 0.21 
     [data-template="voltage"] .checkout-summary { gap: 12px !important; }
   }
 
+  /* ---------- Sticky checkout CTA (mobile only) ----------
+     Hidden on tablet/desktop where the in-page step buttons live.
+     Below 720px the in-page CTAs collapse and this bar takes over —
+     always pinned to the bottom of the viewport with the running
+     total + the action label of the current step. */
+  [data-template="voltage"] .checkout-sticky-cta { display: none; }
+  @media (max-width: 720px) {
+    [data-template="voltage"] .checkout-step-cta {
+      display: none !important;
+    }
+    [data-template="voltage"] .checkout-sticky-cta {
+      display: block !important;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 60;
+      background: var(--bg);
+      border-top: 1.5px solid var(--ink);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    }
+    [data-template="voltage"] .checkout-sticky-cta .checkout-sticky-inner {
+      max-width: 540px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    [data-template="voltage"] .checkout-sticky-cta .checkout-sticky-price {
+      flex-shrink: 0;
+      min-width: 60px;
+      line-height: 1.1;
+    }
+    [data-template="voltage"] .checkout-sticky-cta .checkout-sticky-price-label {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.55;
+      font-weight: 700;
+    }
+    [data-template="voltage"] .checkout-sticky-cta .checkout-sticky-price-value {
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    /* Reserve space at the bottom of the page so the sticky bar
+       doesn't cover the last bit of summary content. */
+    [data-template="voltage"] body:has(.checkout-sticky-cta) {
+      padding-bottom: 88px;
+    }
+  }
+
   /* ---------- Sticky Buy now bar (PDP, mobile only) ----------
      Shown when the in-page CTA scrolls out of viewport. The
      `.pdp-sticky-cta--visible` class is toggled by an
