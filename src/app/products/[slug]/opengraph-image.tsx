@@ -106,13 +106,13 @@ export default async function ProductOpengraphImage({
   const was = wasRaw ? `${Number(wasRaw).toFixed(0)} GEL` : null;
   const rawImageUrl = splitImage(product.image);
 
-  // Pre-fetch the product photo server-side and inline as a data URL.
-  // Satori (the renderer behind next/og) can only decode JPEG and PNG
-  // natively — WebP/AVIF bytes blow up the entire ImageResponse with
-  // a 500. DigitalOcean Spaces serves every product photo as WebP, so
-  // we sniff the magic bytes and skip the inline when the format
-  // isn't supported. The card then renders the placeholder letter
-  // half instead of breaking the OG card entirely.
+  // Pre-fetch the product photo server-side, transcode to JPEG, and
+  // inline as a data URL. Satori (the renderer behind next/og) only
+  // decodes JPEG / PNG natively — WebP / AVIF blow up the entire
+  // ImageResponse with a 500. DigitalOcean Spaces serves every
+  // product photo as WebP, so we run the bytes through `sharp` to
+  // get a Satori-compatible JPEG. Sharp is already a transitive
+  // dependency of next/image; we just import it directly here.
   let imageDataUrl: string | null = null;
   if (rawImageUrl) {
     try {
@@ -121,15 +121,26 @@ export default async function ProductOpengraphImage({
       const res = await fetch(rawImageUrl, { signal: ctrl.signal });
       clearTimeout(timer);
       if (res.ok) {
-        const buf = Buffer.from(await res.arrayBuffer());
-        // Magic-byte sniff: JPEG (FF D8 FF) and PNG (89 50 4E 47).
-        // Anything else (WebP "RIFF…WEBP", AVIF, etc.) — skip.
-        const isJpeg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+        const srcBuf = Buffer.from(await res.arrayBuffer());
+        // Detect format via magic bytes — JPEG / PNG can be inlined as-is,
+        // anything else gets transcoded with sharp.
+        const isJpeg =
+          srcBuf[0] === 0xff && srcBuf[1] === 0xd8 && srcBuf[2] === 0xff;
         const isPng =
-          buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+          srcBuf[0] === 0x89 &&
+          srcBuf[1] === 0x50 &&
+          srcBuf[2] === 0x4e &&
+          srcBuf[3] === 0x47;
         if (isJpeg || isPng) {
           const mime = isJpeg ? "image/jpeg" : "image/png";
-          imageDataUrl = `data:${mime};base64,${buf.toString("base64")}`;
+          imageDataUrl = `data:${mime};base64,${srcBuf.toString("base64")}`;
+        } else {
+          const sharp = (await import("sharp")).default;
+          const jpegBuf = await sharp(srcBuf)
+            .resize({ width: 600, height: 630, fit: "cover", position: "center" })
+            .jpeg({ quality: 82 })
+            .toBuffer();
+          imageDataUrl = `data:image/jpeg;base64,${jpegBuf.toString("base64")}`;
         }
       }
     } catch {
