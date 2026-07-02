@@ -48,7 +48,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@gordela/api-generator": "^1.2.0",
+    "@gordela/api-generator": "^1.3.1",
     "@tailwindcss/postcss": "^4",
     "@types/google.maps": "^3.64.0",
     "@types/node": "^20",

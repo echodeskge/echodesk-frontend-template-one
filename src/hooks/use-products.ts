@@ -76,6 +76,7 @@ export function useFeaturedProducts(limit?: number) {
       ecommerceClientProductsList(
         undefined, // attr_Furniture
         undefined, // attrColor
+        undefined, // attrEbayRefurbishedState
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
@@ -106,6 +107,7 @@ export function useProductsOnSale(limit?: number) {
       ecommerceClientProductsList(
         undefined, // attr_Furniture
         undefined, // attrColor
+        undefined, // attrEbayRefurbishedState
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
@@ -150,6 +152,7 @@ export function useProductBySlug(slug: string | null, language?: string) {
       const result = await ecommerceClientProductsList(
         undefined, // attr_Furniture
         undefined, // attrColor
+        undefined, // attrEbayRefurbishedState
         undefined, // attrMaterial
         undefined, // attrNumberOfLamps
         undefined, // attrSubcategory
