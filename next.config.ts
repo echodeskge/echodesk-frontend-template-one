@@ -16,7 +16,13 @@ const remotePatterns = imageHostnames.map((hostname) => ({
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      // Default pattern for DigitalOcean Spaces (Echodesk default)
+      // Hetzner object storage (current EchoDesk media host)
+      {
+        protocol: "https",
+        hostname: "echodesk-media.fsn1.your-objectstorage.com",
+        pathname: "/**",
+      },
+      // Legacy DigitalOcean Spaces (pre-2026-06 media URLs still in DB)
       {
         protocol: "https",
         hostname: "echodesk-spaces.fra1.digitaloceanspaces.com",
