@@ -1,0 +1,11 @@
+# Netlify Image CDN allowlist. /_next/image on Netlify is served by their
+# Image CDN, which rejects any remote source not matching these regexes
+# ("url ... is not an allowed pattern"). Keep in sync with the
+# images.remotePatterns list in next.config.ts.
+[images]
+  remote_images = [
+    # Hetzner object storage (current EchoDesk media host)
+    "https://echodesk-media\\.fsn1\\.your-objectstorage\\.com/.*",
+    # Legacy DigitalOcean Spaces (pre-2026-06 media URLs still in DB)
+    "https://echodesk-spaces\\.fra1\\.digitaloceanspaces\\.com/.*",
+  ]
